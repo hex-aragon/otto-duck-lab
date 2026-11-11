@@ -35,7 +35,7 @@
 <body>
 <header>
   <h1>Otto-NU 컨트롤러</h1>
-  <div class="mute">누코드 NU40 오또봇 · Web Bluetooth (크롬/엣지, HTTPS 또는 localhost) · <span id="support"></span></div>
+  <div class="mute">누코드 NU40 오또봇 · Web Bluetooth (안드로이드 · PC 크롬/엣지, HTTPS 또는 localhost) · <span id="support"></span></div>
 </header>
 <main>
   <section class="card">
@@ -44,11 +44,6 @@
       <button class="primary" id="btnOtto">오또봇 연결</button>
       <span><span class="dot" id="dotOtto"></span><span id="nameOtto">끊김</span></span>
     </div>
-    <div class="row" style="margin-top:8px">
-      <button id="btnStick">에어밴드 스틱 연결</button>
-      <span><span class="dot" id="dotStick"></span><span id="nameStick">끊김</span></span>
-    </div>
-    <p class="mute">스틱 중계: 스네어 → 앞으로 · 하이햇 → 왼쪽 · 탐 → 오른쪽 · 크래시 → 춤 · 지휘 박 → 위아래. 스틱 펌웨어는 고치지 않는다.</p>
   </section>
 
   <section class="card">
@@ -125,8 +120,6 @@ const STATES = ['대기','동작 중','넘어짐 → 정지','들림 → 정지'
 const POSTURE_CLASSES = ['서 있음','걷는 중','앞으로 넘어짐','뒤로 넘어짐','옆으로 넘어짐','들어 올림'];
 const EVENTS = { 1:'넘어짐 감지 — 서보 힘 뺌', 2:'들림 감지 — 서보 힘 뺌', 3:'다시 섬', 4:'동작 끝', 5:'명령 끊김 → 정지' };
 const FEATURE_COUNT = 8;
-// 에어밴드 스틱 타격 class → 오또 동작 (air-band README의 BLE 스펙)
-const STICK_MAP = { 0: 1, 2: 3, 3: 4, 4: 7 };   // 스네어·하이햇·탐·크래시
 
 const $ = (id) => document.getElementById(id);
 const log = (s) => { const el = $('log'); el.textContent += new Date().toLocaleTimeString() + '  ' + s + '\n'; el.scrollTop = el.scrollHeight; };
@@ -232,27 +225,6 @@ function renderTrims() {
 }
 renderTrims();
 $('btnSaveTrim').onclick = () => { send([CMD.SAVE]); log('트림 저장 요청'); };
-
-// ───────── 에어밴드 스틱 중계 ─────────
-$('btnStick').onclick = async () => {
-  try {
-    const dev = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'AirBand' }], optionalServices: [NUS] });
-    dev.addEventListener('gattserverdisconnected', () => { $('dotStick').classList.remove('on'); $('nameStick').textContent = '끊김'; });
-    const tx = await (await (await dev.gatt.connect()).getPrimaryService(NUS)).getCharacteristic(NUS_TX);
-    tx.addEventListener('characteristicvaluechanged', (e) => {
-      const b = new Uint8Array(e.target.value.buffer);
-      for (let o = 0; o + 8 <= b.length; o += 8) {          // 스틱은 8바이트 패킷 여러 개를 붙여 보낼 수 있다
-        if (b[o] >= 0x80) continue;                          // 모션(0x80) · 축 맞추기(0x81) 패킷은 건너뜀
-        const mode = b[o + 1], cls = b[o + 2];
-        const act = mode === 1 ? 5 : STICK_MAP[cls];         // 지휘 모드의 박 → 위아래
-        if (act !== undefined) { action(act, 2); log(`스틱 ${mode === 1 ? '박' : '타격 ' + cls} → ${ACTIONS[act]}`); }
-      }
-    });
-    await tx.startNotifications();
-    $('dotStick').classList.add('on'); $('nameStick').textContent = dev.name;
-    log('스틱 연결: ' + dev.name);
-  } catch (e) { log('스틱 연결 실패: ' + e.message); }
-};
 
 // ───────── TinyML: 데이터 · 학습 · 내보내기 ─────────
 let data = [], recording = false, model = null;

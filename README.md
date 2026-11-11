@@ -47,7 +47,7 @@ otto-duck-lab/
 │  ├ gait.h               사인파 동작 (걷기 · 돌기 · 춤) — 순수 계산
 │  ├ imu.h                LSM6DS / MPU-6050 자동 감지, 기울기 추정
 │  └ posture.h            자세 분류: 규칙 또는 TinyML 모델(posture_model.h)
-├ web/index.html          조종 · 트림 · 스틱 중계 · TinyML 학습기 (빌드 없음, 파일 하나)
+├ web/index.html          조종 · 트림 · TinyML 학습기 (빌드 없음, 파일 하나)
 └ docs/                   계획 · 조사 문서
 ```
 
@@ -66,7 +66,6 @@ otto-duck-lab/
 
 ## 관련 저장소
 
-- [hex-aragon/air-band](https://github.com/hex-aragon/air-band) — 같은 NU40 + IMU로 만든 에어 드럼. 스틱을 오또 조종기로 그대로 쓴다 (웹 중계, 스틱 펌웨어 수정 없음)
 - [OttoDIY/OttoDIYLib](https://github.com/OttoDIY/OttoDIYLib) — 오또봇 원본 라이브러리 (GPL-3.0). 이 저장소의 동작 파라미터 초기값을 참고했다. 코드는 새로 작성
 - [apirrone/Open_Duck_Mini](https://github.com/apirrone/Open_Duck_Mini) — 2단계 대상
 - [pollen-robotics/microduck](https://github.com/pollen-robotics/microduck) — 3단계 대상
@@ -80,5 +79,6 @@ otto-duck-lab/
 
 - 오또봇 동작 파라미터 초기값은 [OttoDIYLib](https://github.com/OttoDIY/OttoDIYLib)(GPL-3.0)의 공개 동작을 참고했다. **원본 코드는 복사하지 않았고**, 이 저장소의 코드는 새로 작성했다.
 - 오또봇 3D 파일(CC BY-SA 4.0)이나 Otto 원본 코드(GPL-3.0)를 이 저장소에 넣을 때는 해당 파일에 원래 라이선스를 그대로 적용하고 출처를 남긴다. MIT로 바꿔 올리지 않는다.
-- Open Duck Mini · Microduck 관련 문서는 각 프로젝트의 공개 자료를 요약하고 링크한 조사 메모다. 원본 문서 번역본은 원본 일부 저장소에 라이선스 표시가 없어 넣지 않았다.
+- Open Duck Mini · Microduck 관련 문서는 각 프로젝트의 공개 자료를 요약하고 링크한 조사 메모다.
+- `docs/next/open-duck-mini/번역/`은 [apirrone/Open_Duck_Mini](https://github.com/apirrone/Open_Duck_Mini)(Apache-2.0) 문서의 비공식 한글 번역이며 **Apache-2.0**을 따른다 (라이선스 사본 · 변경 고지 포함). 라이선스 표시가 없는 Runtime · Playground · 기준 걸음 저장소의 번역은 넣지 않았다.
 - 상표(Otto DIY, Open Duck Mini, Microduck, Pollen Robotics, Hugging Face, NUCODE)는 각 소유자의 것이며, 이 저장소는 그들과 관계가 없다.

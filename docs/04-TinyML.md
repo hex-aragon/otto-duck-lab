@@ -5,9 +5,8 @@
 | 순위 | 과제 | 어디서 돌리나 | 입력 | 왜 하나 | 단계 |
 |---|---|---|---|---|---|
 | 1 | **로봇 자세 분류**: 서 있음 · 걷는 중 · 앞/뒤/옆으로 넘어짐 · 들어 올림 | 오또 NU40 | 몸통 IMU 1초 창 특징 8개 | 안전 정지. "들어 올림"은 임계값 규칙으로 못 잡는다 → 모델이 필요한 이유가 분명 | ✅ 1단계 핵심 |
-| 2 | **스틱 제스처 → 명령**: 원 그리기 · 좌우 흔들기 · 찌르기 · 정지 | 스틱 NU40 | 스틱 IMU 궤적 | 에어밴드 TinyML(타격 분류)을 명령 분류로 바꾼다 | 🟡 3~4주차 |
-| 3 | 걸음 이상 감지: 미끄러짐 · 걸림 · 서보 고장 | 오또 NU40 | 걷는 중 IMU + 명령 | 정상 걸음만 모아 이상 탐지 (오토인코더/거리) | 🟡 |
-| 4 | 박자 인식 → 춤 | 오또 NU40 | PDM 마이크 | BSP에 PDM 라이브러리 있음. **NU40 DK에 마이크가 있는지** `TODO: 확인 필요` | 🟡 |
+| 2 | 걸음 이상 감지: 미끄러짐 · 걸림 · 서보 고장 | 오또 NU40 | 걷는 중 IMU + 명령 | 정상 걸음만 모아 이상 탐지 (오토인코더/거리) | 🟡 |
+| 3 | 박자 인식 → 춤 | 오또 NU40 | PDM 마이크 | BSP에 PDM 라이브러리 있음. **NU40 DK에 마이크가 있는지** `TODO: 확인 필요` | 🟡 |
 
 1번을 먼저 하는 이유: 데이터 모으기가 쉽고(로봇을 손으로 눕히고 들면 된다), 결과가 바로 안전 기능이 되며, 2단계 오리 로봇에서도 그대로 필요한 기능이다.
 
@@ -68,14 +67,7 @@
 
 nRF52840(Cortex-M4F)은 Edge Impulse가 공식 지원하는 Nano 33 BLE Sense와 같은 칩이라 돌아갈 것으로 보지만, 누코드 BSP에서 그 라이브러리가 컴파일되는지는 `TODO: 확인 필요`.
 
-## 4. 스틱 제스처 (2번, 3~4주차)
-
-에어밴드 저장소에 이미 브라우저 학습기(`web/src/tinyml/model.ts`, 18 → 16 → 5 신경망)와 펌웨어 `classifyHit()` 자리가 있다. 이걸 복사해서:
-
-- 클래스를 드럼 → 명령(앞으로 · 왼쪽 · 오른쪽 · 춤 · 노이즈)으로 바꾼다
-- 출력은 기존 타격 패킷의 class 필드를 그대로 쓴다 → 오또 웹 중계 `STICK_MAP`만 고치면 된다
-
-## 5. 2단계와 이어지는 점
+## 4. 2단계와 이어지는 점
 
 | 오또에서 한 것 | Open Duck Mini · Microduck에서 |
 |---|---|
@@ -88,4 +80,3 @@ nRF52840(Cortex-M4F)은 Edge Impulse가 공식 지원하는 Nano 33 BLE Sense와
 - 『TinyML』 Pete Warden · Daniel Situnayake (O'Reilly) — 개념 입문
 - [Edge Impulse 문서](https://docs.edgeimpulse.com/) — 데이터 포워더, Arduino 라이브러리 배포
 - [TensorFlow Lite for Microcontrollers](https://github.com/tensorflow/tflite-micro) — 더 큰 모델이 필요할 때
-- 에어밴드 TinyML: [hex-aragon/air-band](https://github.com/hex-aragon/air-band) `web/src/tinyml/`

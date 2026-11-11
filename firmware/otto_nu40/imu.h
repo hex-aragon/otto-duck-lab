@@ -1,6 +1,6 @@
 // imu.h — 6축 IMU 최소 드라이버 + 기울기(pitch/roll) 추정
 //
-// 에어 밴드(air-band) 펌웨어와 같은 두 계열을 WHO_AM_I로 자동 감지한다.
+// 흔한 6축 IMU 두 계열을 WHO_AM_I로 자동 감지한다.
 //   - ST LSM6DS3 / LSM6DS3TR-C / LSM6DSL / LSM6DSO (I2C 0x6A / 0x6B)
 //   - InvenSense MPU-6050 / 6500 / 9250             (I2C 0x68 / 0x69)
 // 다른 IMU를 쓰면 imuBegin() / imuRead() 두 함수에만 드라이버를 추가하면 된다.
