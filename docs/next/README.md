@@ -8,6 +8,7 @@
 > |---|---|
 > | [open-duck-mini/README.md](open-duck-mini/README.md) | ODM v2 저장소 지도, 구조, 모터 ID, 핀, 미해결 문제, 부품표 금액, GPT 자료 대조 |
 > | [open-duck-mini/국내-제작-계획.md](open-duck-mini/국내-제작-계획.md) | 국내 판매처 · 품번 · 가격, 예산안 3개 비교, 단계별 시험 기준, 실행 코드 주의점 (11/4~6 초안) |
+> | [../00-기초-개념.md](../00-기초-개념.md) · [../06-팀-운영.md](../06-팀-운영.md) | 기초 개념, 팀 운영 · 제작 지원 (11/4 팀 설명 슬라이드에서 옮김) |
 > | [open-duck-mini/번역/](open-duck-mini/번역/README.md) | Open_Duck_Mini 문서 한글 번역 (Apache-2.0) |
 > | [microduck/README.md](microduck/README.md) | Microduck 결론 · 결정할 것 · 자료끼리 어긋나는 점 |
 > | [microduck/01-지식-맵.md](microduck/01-지식-맵.md) | 필요한 지식, 공부 순서 |
