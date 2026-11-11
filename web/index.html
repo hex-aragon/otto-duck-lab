@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Otto-NU 컨트롤러</title>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --mute:#6b6b66; --line:#e2e2dc; --accent:#e8a317; --ok:#2f8f4e; --bad:#c2412d; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --card:#20201d; --ink:#ecebe6; --mute:#9b9a92; --line:#34342f; --accent:#f0b43a; --ok:#5cc07c; --bad:#ec6a55; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width: 980px; margin: 0 auto; padding: 16px; display:grid; gap:14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  header { max-width:980px; margin:0 auto; padding:16px 16px 0; }
+  h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:15px; margin:0 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .wide { grid-column: 1 / -1; }
+  button, select { font:inherit; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#1d1d1b; font-weight:600; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .pad { display:grid; grid-template-columns: repeat(3, 64px); gap:6px; justify-content:center; margin:8px 0; }
+  .pad button { height:52px; }
+  .kv { display:grid; grid-template-columns: auto 1fr; gap:2px 12px; font-variant-numeric: tabular-nums; }
+  .kv span:nth-child(odd) { color:var(--mute); }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--bad); margin-right:6px; }
+  .dot.on { background:var(--ok); }
+  .mute { color:var(--mute); font-size:13px; }
+  input[type=range] { width: 100%; }
+  table { border-collapse: collapse; width:100%; font-size:13px; font-variant-numeric: tabular-nums; }
+  td, th { border-bottom:1px solid var(--line); padding:4px 6px; text-align:left; }
+  #log { height:120px; overflow:auto; font:12px ui-monospace, monospace; background:var(--bg); border-radius:8px; padding:8px; white-space:pre-wrap; }
+  .warn { color:var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Otto-NU 컨트롤러</h1>
+  <div class="mute">누코드 NU40 오또봇 · Web Bluetooth (크롬/엣지, HTTPS 또는 localhost) · <span id="support"></span></div>
+</header>
+<main>
+  <section class="card">
+    <h2>연결</h2>
+    <div class="row">
+      <button class="primary" id="btnOtto">오또봇 연결</button>
+      <span><span class="dot" id="dotOtto"></span><span id="nameOtto">끊김</span></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="btnStick">에어밴드 스틱 연결</button>
+      <span><span class="dot" id="dotStick"></span><span id="nameStick">끊김</span></span>
+    </div>
+    <p class="mute">스틱 중계: 스네어 → 앞으로 · 하이햇 → 왼쪽 · 탐 → 오른쪽 · 크래시 → 춤 · 지휘 박 → 위아래. 스틱 펌웨어는 고치지 않는다.</p>
+  </section>
+
+  <section class="card">
+    <h2>조종 <span class="mute">(키보드 W A S D 누르고 있기 · Space 정지)</span></h2>
+    <div class="pad">
+      <span></span><button data-hold="1">▲</button><span></span>
+      <button data-hold="3">◀</button><button id="btnStop">■</button><button data-hold="4">▶</button>
+      <span></span><button data-hold="2">▼</button><span></span>
+    </div>
+    <div class="row">
+      <button data-act="5">위아래</button><button data-act="6">흔들기</button>
+      <button data-act="7">문워크</button><button data-act="9">까치발</button>
+      <button data-act="0">차렷</button><button id="btnRelax">힘 빼기</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="mute">걸음 주기 <input id="period" type="range" min="50" max="200" value="100" style="width:140px"></label>
+      <span id="periodVal" class="mute">1000ms</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>상태</h2>
+    <div class="kv">
+      <span>상태</span><b id="tState">-</b>
+      <span>동작</span><span id="tAction">-</span>
+      <span>자세 분류</span><span id="tPosture">-</span>
+      <span>앞뒤 기울기</span><span id="tPitch">-</span>
+      <span>좌우 기울기</span><span id="tRoll">-</span>
+      <span>가속도 크기</span><span id="tAcc">-</span>
+      <span>분류기</span><span id="tFlags">-</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>트림 (차렷 자세가 반듯하도록)</h2>
+    <div id="trims"></div>
+    <div class="row"><button id="btnSaveTrim">보드에 저장</button><span class="mute">저장하면 전원을 꺼도 유지된다</span></div>
+  </section>
+
+  <section class="card wide">
+    <h2>TinyML — 자세 분류 학습</h2>
+    <p class="mute">① 로봇을 해당 상태로 두고 라벨을 고른 뒤 기록 → ② 라벨마다 30개 이상 → ③ 학습 → ④ <code>posture_model.h</code>를 <code>firmware/otto_nu40/</code>에 넣고 다시 업로드.
+      특징값은 보드가 200ms마다 1초 창으로 계산해 보낸다 (펌웨어 posture.h와 같은 값).</p>
+    <div class="row">
+      <select id="label"></select>
+      <button id="btnRec">기록 시작</button>
+      <span id="recInfo" class="mute"></span>
+    </div>
+    <table style="margin-top:10px"><thead><tr><th>라벨</th><th>개수</th></tr></thead><tbody id="counts"></tbody></table>
+    <div class="row" style="margin-top:10px">
+      <button id="btnTrain" class="primary">학습</button>
+      <button id="btnExport" disabled>posture_model.h 내보내기</button>
+      <button id="btnCsv">CSV 저장</button>
+      <label class="mute">CSV 불러오기 <input id="csvIn" type="file" accept=".csv"></label>
+      <button id="btnClear">데이터 지우기</button>
+    </div>
+    <div id="trainOut" class="mute" style="margin-top:8px"></div>
+  </section>
+
+  <section class="card wide">
+    <h2>로그</h2>
+    <div id="log"></div>
+  </section>
+</main>
+
+<script>
+// ───────── 프로토콜 (firmware/otto_nu40/otto_nu40.ino와 같아야 한다) ─────────
+const NUS = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';  // 브라우저 → 보드 (write)
+const NUS_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';  // 보드 → 브라우저 (notify)
+const CMD = { ACTION: 1, STOP: 2, TRIM: 3, SAVE: 4, STREAM: 5, RELAX: 6, PING: 7 };
+const ACTIONS = ['차렷','앞으로','뒤로','왼쪽 돌기','오른쪽 돌기','위아래','흔들기','문워크(왼)','문워크(오)','까치발'];
+const STATES = ['대기','동작 중','넘어짐 → 정지','들림 → 정지','힘 뺌'];
+const POSTURE_CLASSES = ['서 있음','걷는 중','앞으로 넘어짐','뒤로 넘어짐','옆으로 넘어짐','들어 올림'];
+const EVENTS = { 1:'넘어짐 감지 — 서보 힘 뺌', 2:'들림 감지 — 서보 힘 뺌', 3:'다시 섬', 4:'동작 끝', 5:'명령 끊김 → 정지' };
+const FEATURE_COUNT = 8;
+// 에어밴드 스틱 타격 class → 오또 동작 (air-band README의 BLE 스펙)
+const STICK_MAP = { 0: 1, 2: 3, 3: 4, 4: 7 };   // 스네어·하이햇·탐·크래시
+
+const $ = (id) => document.getElementById(id);
+const log = (s) => { const el = $('log'); el.textContent += new Date().toLocaleTimeString() + '  ' + s + '\n'; el.scrollTop = el.scrollHeight; };
+
+$('support').textContent = navigator.bluetooth ? 'Web Bluetooth 사용 가능' : '이 브라우저는 Web Bluetooth를 지원하지 않음 (iOS Safari 불가 → 안드로이드/PC 크롬)';
+if (!navigator.bluetooth) $('support').classList.add('warn');
+
+let otto = null, ottoRx = null, writing = Promise.resolve();
+function send(bytes) {
+  if (!ottoRx) return;
+  // 쓰기를 줄 세운다: GATT는 동시에 두 번 쓰면 오류가 난다
+  writing = writing.then(() => ottoRx.writeValueWithoutResponse(new Uint8Array(bytes))).catch(e => log('보내기 실패: ' + e.message));
+}
+const periodTicks = () => +$('period').value;   // 10ms 단위
+const action = (id, steps = 4) => send([CMD.ACTION, id, steps, periodTicks()]);
+
+// ───────── 오또 연결 ─────────
+$('btnOtto').onclick = async () => {
+  try {
+    const dev = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'Otto' }], optionalServices: [NUS] });
+    dev.addEventListener('gattserverdisconnected', () => { ottoRx = null; $('dotOtto').classList.remove('on'); $('nameOtto').textContent = '끊김'; log('오또 연결 끊김'); });
+    const srv = await (await dev.gatt.connect()).getPrimaryService(NUS);
+    ottoRx = await srv.getCharacteristic(NUS_RX);
+    const tx = await srv.getCharacteristic(NUS_TX);
+    tx.addEventListener('characteristicvaluechanged', (e) => onOtto(new Uint8Array(e.target.value.buffer)));
+    await tx.startNotifications();
+    otto = dev;
+    $('dotOtto').classList.add('on'); $('nameOtto').textContent = dev.name;
+    send([CMD.STREAM, 0b001 | (recording ? 0b010 : 0)]);
+    send(['t'.charCodeAt(0)]);  // 트림 값 받아오기
+    log('오또 연결: ' + dev.name);
+  } catch (e) { log('오또 연결 실패: ' + e.message); }
+};
+
+const i16 = (b, o) => { const v = b[o] | (b[o + 1] << 8); return v & 0x8000 ? v - 0x10000 : v; };
+let trims = [0, 0, 0, 0];
+
+function onOtto(b) {
+  switch (b[0]) {
+    case 0x90: {
+      $('tState').textContent = STATES[b[1]] ?? b[1];
+      $('tAction').textContent = ACTIONS[b[2]] ?? b[2];
+      $('tPosture').textContent = `${POSTURE_CLASSES[b[3]] ?? b[3]} (${Math.round(b[10] / 2.55)}%)`;
+      $('tPitch').textContent = (i16(b, 4) / 100).toFixed(1) + '°';
+      $('tRoll').textContent = (i16(b, 6) / 100).toFixed(1) + '°';
+      $('tAcc').textContent = (i16(b, 8) / 1000).toFixed(2) + ' g';
+      $('tFlags').textContent = `${b[11] & 1 ? 'IMU 있음' : 'IMU 없음'} · ${b[11] & 2 ? 'TinyML 모델' : '규칙'} · 서보 ${b[11] & 4 ? '힘 줌' : '힘 뺌'}`;
+      break;
+    }
+    case 0x92: {
+      if (!recording) break;
+      const f = []; for (let i = 0; i < FEATURE_COUNT; i++) f.push(i16(b, 1 + i * 2) / 1000);
+      data.push({ x: f, y: +$('label').value });
+      updateCounts();
+      break;
+    }
+    case 0x94: log('이벤트: ' + (EVENTS[b[1]] ?? b[1])); break;
+    case 0x95: trims = [...b.slice(1, 5)].map(v => v > 127 ? v - 256 : v); renderTrims(); break;
+  }
+}
+
+// ───────── 조종 ─────────
+document.querySelectorAll('[data-act]').forEach(btn => btn.onclick = () => action(+btn.dataset.act));
+$('btnStop').onclick = () => send([CMD.STOP]);
+$('btnRelax').onclick = () => send([CMD.RELAX]);
+$('period').oninput = () => $('periodVal').textContent = periodTicks() * 10 + 'ms';
+
+// 누르고 있는 동안: steps=0(계속)으로 300ms마다 다시 보낸다. 보드는 1초 끊기면 스스로 멈춘다.
+let holdTimer = null, holdAct = -1;
+function holdStart(id) {
+  if (holdAct === id) return;
+  holdStop(false); holdAct = id;
+  action(id, 0);
+  holdTimer = setInterval(() => action(id, 0), 300);
+}
+function holdStop(sendStop = true) {
+  if (holdTimer) clearInterval(holdTimer);
+  holdTimer = null;
+  if (holdAct >= 0 && sendStop) send([CMD.STOP]);
+  holdAct = -1;
+}
+document.querySelectorAll('[data-hold]').forEach(btn => {
+  btn.onpointerdown = () => holdStart(+btn.dataset.hold);
+  btn.onpointerup = btn.onpointerleave = () => holdStop();
+});
+const KEYS = { w: 1, s: 2, a: 3, d: 4 };
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (KEYS[e.key] !== undefined) holdStart(KEYS[e.key]);
+  if (e.key === ' ') { e.preventDefault(); holdStop(); send([CMD.STOP]); }
+});
+addEventListener('keyup', (e) => { if (KEYS[e.key] === holdAct) holdStop(); });
+
+// ───────── 트림 ─────────
+const SERVO_NAMES = ['왼다리', '오른다리', '왼발', '오른발'];
+function renderTrims() {
+  $('trims').innerHTML = SERVO_NAMES.map((n, i) =>
+    `<label class="mute">${n} <b id="tv${i}">${trims[i]}</b>°<input type="range" min="-30" max="30" value="${trims[i]}" data-trim="${i}"></label>`).join('');
+  document.querySelectorAll('[data-trim]').forEach(r => r.oninput = () => {
+    const i = +r.dataset.trim; trims[i] = +r.value; $('tv' + i).textContent = r.value;
+    send([CMD.TRIM, i, (trims[i] + 256) & 0xFF]);
+  });
+}
+renderTrims();
+$('btnSaveTrim').onclick = () => { send([CMD.SAVE]); log('트림 저장 요청'); };
+
+// ───────── 에어밴드 스틱 중계 ─────────
+$('btnStick').onclick = async () => {
+  try {
+    const dev = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'AirBand' }], optionalServices: [NUS] });
+    dev.addEventListener('gattserverdisconnected', () => { $('dotStick').classList.remove('on'); $('nameStick').textContent = '끊김'; });
+    const tx = await (await (await dev.gatt.connect()).getPrimaryService(NUS)).getCharacteristic(NUS_TX);
+    tx.addEventListener('characteristicvaluechanged', (e) => {
+      const b = new Uint8Array(e.target.value.buffer);
+      for (let o = 0; o + 8 <= b.length; o += 8) {          // 스틱은 8바이트 패킷 여러 개를 붙여 보낼 수 있다
+        if (b[o] >= 0x80) continue;                          // 모션(0x80) · 축 맞추기(0x81) 패킷은 건너뜀
+        const mode = b[o + 1], cls = b[o + 2];
+        const act = mode === 1 ? 5 : STICK_MAP[cls];         // 지휘 모드의 박 → 위아래
+        if (act !== undefined) { action(act, 2); log(`스틱 ${mode === 1 ? '박' : '타격 ' + cls} → ${ACTIONS[act]}`); }
+      }
+    });
+    await tx.startNotifications();
+    $('dotStick').classList.add('on'); $('nameStick').textContent = dev.name;
+    log('스틱 연결: ' + dev.name);
+  } catch (e) { log('스틱 연결 실패: ' + e.message); }
+};
+
+// ───────── TinyML: 데이터 · 학습 · 내보내기 ─────────
+let data = [], recording = false, model = null;
+$('label').innerHTML = POSTURE_CLASSES.map((n, i) => `<option value="${i}">${i} ${n}</option>`).join('');
+function updateCounts() {
+  const c = POSTURE_CLASSES.map(() => 0); data.forEach(d => c[d.y]++);
+  $('counts').innerHTML = POSTURE_CLASSES.map((n, i) => `<tr><td>${n}</td><td>${c[i]}</td></tr>`).join('');
+  $('recInfo').textContent = `전체 ${data.length}개`;
+}
+updateCounts();
+$('btnRec').onclick = () => {
+  recording = !recording;
+  $('btnRec').textContent = recording ? '기록 멈춤' : '기록 시작';
+  send([CMD.STREAM, 0b001 | (recording ? 0b010 : 0)]);
+};
+$('btnClear').onclick = () => { if (confirm('모은 데이터를 지울까요?')) { data = []; updateCounts(); } };
+$('btnCsv').onclick = () => {
+  const csv = ['label,' + [...Array(FEATURE_COUNT).keys()].map(i => 'f' + i).join(','), ...data.map(d => d.y + ',' + d.x.join(','))].join('\n');
+  download('otto_posture_data.csv', csv);
+};
+$('csvIn').onchange = async (e) => {
+  const lines = (await e.target.files[0].text()).trim().split('\n').slice(1);
+  lines.forEach(l => { const v = l.split(',').map(Number); if (v.length === FEATURE_COUNT + 1) data.push({ y: v[0], x: v.slice(1) }); });
+  updateCounts(); log(`CSV ${lines.length}줄 불러옴`);
+};
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = name; a.click();
+}
+
+// 작은 신경망 (8 → 12 → 클래스 수). 배열 연산 라이브러리 없이 직접 역전파한다.
+function train(samples, classes, hidden = 12, epochs = 300, lr = 0.01) {
+  const D = FEATURE_COUNT, K = classes.length, H = hidden;
+  const mean = Array(D).fill(0), std = Array(D).fill(0);
+  samples.forEach(s => s.x.forEach((v, i) => mean[i] += v / samples.length));
+  samples.forEach(s => s.x.forEach((v, i) => std[i] += (v - mean[i]) ** 2 / samples.length));
+  for (let i = 0; i < D; i++) std[i] = Math.sqrt(std[i]) || 1;
+  const rnd = (n, s) => Array.from({ length: n }, () => (Math.random() * 2 - 1) * s);
+  const P = { W1: rnd(D * H, Math.sqrt(6 / (D + H))), B1: Array(H).fill(0), W2: rnd(H * K, Math.sqrt(6 / (H + K))), B2: Array(K).fill(0) };
+  const m = {}, v = {}; for (const k in P) { m[k] = P[k].map(() => 0); v[k] = P[k].map(() => 0); }
+  let t = 0;
+  const norm = (x) => x.map((xi, i) => (xi - mean[i]) / std[i]);
+  const forward = (x) => {
+    const h = Array(H); for (let j = 0; j < H; j++) { let a = P.B1[j]; for (let i = 0; i < D; i++) a += x[i] * P.W1[i * H + j]; h[j] = Math.max(0, a); }
+    const o = Array(K); for (let k = 0; k < K; k++) { let a = P.B2[k]; for (let j = 0; j < H; j++) a += h[j] * P.W2[j * K + k]; o[k] = a; }
+    const mx = Math.max(...o), e = o.map(z => Math.exp(z - mx)), s = e.reduce((a, b) => a + b);
+    return { h, p: e.map(z => z / s) };
+  };
+  const X = samples.map(s => norm(s.x)), Y = samples.map(s => classes.indexOf(s.y));
+  for (let ep = 0; ep < epochs; ep++) {
+    const G = {}; for (const k in P) G[k] = P[k].map(() => 0);
+    for (let n = 0; n < X.length; n++) {
+      const { h, p } = forward(X[n]);
+      const dO = p.map((pk, k) => (pk - (k === Y[n] ? 1 : 0)) / X.length);
+      const dH = Array(H).fill(0);
+      for (let k = 0; k < K; k++) { G.B2[k] += dO[k]; for (let j = 0; j < H; j++) { G.W2[j * K + k] += h[j] * dO[k]; dH[j] += P.W2[j * K + k] * dO[k]; } }
+      for (let j = 0; j < H; j++) { if (h[j] <= 0) continue; G.B1[j] += dH[j]; for (let i = 0; i < D; i++) G.W1[i * H + j] += X[n][i] * dH[j]; }
+    }
+    t++;  // Adam
+    for (const k in P) for (let i = 0; i < P[k].length; i++) {
+      m[k][i] = 0.9 * m[k][i] + 0.1 * G[k][i]; v[k][i] = 0.999 * v[k][i] + 0.001 * G[k][i] ** 2;
+      P[k][i] -= lr * (m[k][i] / (1 - 0.9 ** t)) / (Math.sqrt(v[k][i] / (1 - 0.999 ** t)) + 1e-8);
+    }
+  }
+  const predict = (x) => { const { p } = forward(norm(x)); return classes[p.indexOf(Math.max(...p))]; };
+  return { P, mean, std, classes, H, predict };
+}
+
+$('btnTrain').onclick = () => {
+  const classes = [...new Set(data.map(d => d.y))].sort((a, b) => a - b);
+  if (classes.length < 2 || data.length < 20) { $('trainOut').textContent = '라벨 2종 이상, 20개 이상 필요'; return; }
+  // 80/20으로 나눠 처음 보는 데이터 정확도를 본다 (연속 기록은 비슷한 값이 몰려 있으므로 섞는다)
+  const shuffled = [...data].sort(() => Math.random() - 0.5);
+  const cut = Math.floor(shuffled.length * 0.8);
+  const tr = shuffled.slice(0, cut), va = shuffled.slice(cut);
+  const mdl = train(tr, classes);
+  const acc = (set) => set.length ? set.filter(s => mdl.predict(s.x) === s.y).length / set.length : NaN;
+  const conf = classes.map(a => classes.map(b => va.filter(s => s.y === a && mdl.predict(s.x) === b).length));
+  model = train(data, classes);  // 내보낼 모델은 전체 데이터로 다시 학습
+  $('btnExport').disabled = false;
+  $('trainOut').innerHTML = `학습 정확도 ${(acc(tr) * 100).toFixed(1)}% · <b>검증 정확도 ${(acc(va) * 100).toFixed(1)}%</b> (검증 ${va.length}개)<br>` +
+    '<table><tr><th>정답 \\ 예측</th>' + classes.map(c => `<th>${POSTURE_CLASSES[c]}</th>`).join('') + '</tr>' +
+    conf.map((r, i) => `<tr><td>${POSTURE_CLASSES[classes[i]]}</td>` + r.map(n => `<td>${n}</td>`).join('') + '</tr>').join('') + '</table>';
+};
+
+$('btnExport').onclick = () => {
+  const { P, mean, std, classes, H } = model;
+  const arr = (a) => a.map(v => v.toFixed(6) + 'f').join(', ');
+  const h = `// posture_model.h — web/index.html에서 ${new Date().toISOString()} 생성. 직접 고치지 말 것.
+// 입력 ${FEATURE_COUNT} → 은닉 ${H}(ReLU) → 출력 ${classes.length}(softmax). 학습 데이터 ${data.length}개
+#pragma once
+#define POSTURE_MODEL_INPUTS  ${FEATURE_COUNT}
+#define POSTURE_MODEL_HIDDEN  ${H}
+#define POSTURE_MODEL_OUTPUTS ${classes.length}
+static const uint8_t POSTURE_MODEL_CLASSES[POSTURE_MODEL_OUTPUTS] = { ${classes.join(', ')} };
+static const float POSTURE_MODEL_MEAN[POSTURE_MODEL_INPUTS] = { ${arr(mean)} };
+static const float POSTURE_MODEL_STD[POSTURE_MODEL_INPUTS] = { ${arr(std)} };
+static const float POSTURE_MODEL_W1[POSTURE_MODEL_INPUTS * POSTURE_MODEL_HIDDEN] = { ${arr(P.W1)} };
+static const float POSTURE_MODEL_B1[POSTURE_MODEL_HIDDEN] = { ${arr(P.B1)} };
+static const float POSTURE_MODEL_W2[POSTURE_MODEL_HIDDEN * POSTURE_MODEL_OUTPUTS] = { ${arr(P.W2)} };
+static const float POSTURE_MODEL_B2[POSTURE_MODEL_OUTPUTS] = { ${arr(P.B2)} };
+`;
+  download('posture_model.h', h);
+  log('posture_model.h 내보냄 → firmware/otto_nu40/ 에 넣고 다시 업로드');
+};
+</script>
+</body>
+</html>

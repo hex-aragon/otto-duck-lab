@@ -1,0 +1,15 @@
+# 빌드 산출물
+*.hex
+*.zip
+*.elf
+build/
+
+# 에디터 · OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 실험용 모델 헤더는 커밋하지 않는다 (확정 모델만 강제로 추가)
+firmware/otto_nu40/posture_model.h
+
+node_modules/
