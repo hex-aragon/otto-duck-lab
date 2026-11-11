@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>otto-duck-lab</title>
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --ink:#1c1c1a; --mute:#6a6962; --line:#e3e1d9; --accent:#d98a0b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151513; --card:#1f1f1c; --ink:#ecebe5; --mute:#9d9b92; --line:#33322d; --accent:#f0b13d; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px; }
+  .k { color: var(--accent); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
+  h1 { font-size: 30px; margin: 6px 0 8px; letter-spacing: -.5px; }
+  p.lead { color: var(--mute); margin: 0 0 28px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--card); border: 1px solid var(--line);
+           border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; transition: border-color .15s; }
+  a.card:hover { border-color: var(--accent); }
+  a.card b { font-size: 18px; } a.card span { display: block; color: var(--mute); font-size: 14px; margin-top: 4px; }
+  footer { margin-top: 28px; color: var(--mute); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="k">OTTO-DUCK-LAB</div>
+  <h1>오또봇으로 배우고, 오리 로봇으로 간다</h1>
+  <p class="lead">누코드 NU40 + 오또봇 + TinyML → Open Duck Mini v2 → Microduck · 팀 공유 페이지</p>
+  <a class="card" href="docs/slides.html"><b>🎞️ 프로젝트 소개 슬라이드</b><span>25장 · 로봇 기초 개념, 우리 시스템, 4주 계획, 공부 경로 · 방향키로 넘기기</span></a>
+  <a class="card" href="docs/study.html"><b>📚 공부 자료</b><span>역할별 추천 경로 · 검색 · 다 본 자료 체크</span></a>
+  <a class="card" href="web/index.html"><b>🎮 오또봇 웹 컨트롤러</b><span>안드로이드 · PC 크롬에서 오또봇에 블루투스로 연결 (보드가 있어야 동작)</span></a>
+  <a class="card" href="https://github.com/hex-aragon/otto-duck-lab"><b>💻 GitHub 저장소</b><span>코드 · 문서 · 이슈 보드</span></a>
+  <footer>코드 MIT · 문서 CC BY 4.0</footer>
+</main>
+</body>
+</html>

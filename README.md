@@ -1,5 +1,7 @@
 # otto-duck-lab
 
+> 🔗 **팀 공유 페이지: https://hex-aragon.github.io/otto-duck-lab/** — 소개 슬라이드 · 공부 자료
+
 **오또봇으로 먼저 배우고, 오리 로봇으로 간다.**
 누코드 NU40 DK(nRF52840)로 움직이는 오또봇(Otto DIY)에 Open Duck Mini v2가 하는 일 중 작은 로봇에서 가능한 것을 옮기고, TinyML까지 붙이는 팀 프로젝트다.
 여기서 익힌 것을 그대로 들고 다음 단계인 Open Duck Mini v2 제작과 Microduck으로 넘어간다.
@@ -31,7 +33,7 @@
 
 | 문서 | 내용 |
 |---|---|
-| [슬라이드-프로젝트-소개.html](docs/슬라이드-프로젝트-소개.html) | **팀 소개 슬라이드 25장** — 내려받아 브라우저로 열기 (방향키로 넘김, 인터넷 필요) |
+| 🔗 [팀 소개 슬라이드](https://hex-aragon.github.io/otto-duck-lab/docs/slides.html) | **25장, 브라우저에서 바로 보기** (방향키로 넘김) · 파일: `docs/slides.html` |
 | [00-기초-개념](docs/00-기초-개념.md) | **처음 읽을 것.** 서보 · 영점 · 전원 · IMU · 정책 · sim2real · 용어 |
 | [01-기능-매핑](docs/01-기능-매핑.md) | Open Duck Mini v2 기능 → 오또봇에서 어떻게 하나, 무엇은 못 하나 |
 | [02-하드웨어](docs/02-하드웨어.md) | 부품, 배선, 전원, 확인할 것 |
@@ -39,7 +41,7 @@
 | [04-TinyML](docs/04-TinyML.md) | 무엇을 분류하나, 데이터 수집 → 학습 → 보드 탑재 |
 | [05-개발계획-1단계](docs/05-개발계획-1단계.md) | 4주 일정, 역할, 완료 기준 |
 | [06-팀-운영](docs/06-팀-운영.md) | 개발 여력 계산, 판단 시점, 역할 · 인계 방법, 제작 지원 시설 · 문의 초안, 예산 관리 |
-| [07-공부-자료](docs/07-공부-자료.md) · [HTML](docs/공부-자료.html) | 역할별 추천 경로, 오또 · BLE · IMU · TinyML · 강화학습 · 논문 · Git 자료 (무료 위주) |
+| [07-공부-자료](docs/07-공부-자료.md) · 🔗 [HTML](https://hex-aragon.github.io/otto-duck-lab/docs/study.html) | 역할별 추천 경로, 오또 · BLE · IMU · TinyML · 강화학습 · 논문 · Git 자료 (무료 위주) |
 | [next/](docs/next/README.md) | 2 · 3단계: Open Duck Mini v2 · Microduck 조사 · 공부 · 개발 계획 |
 
 ## 폴더
