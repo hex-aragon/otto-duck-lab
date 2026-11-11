@@ -73,5 +73,12 @@ otto-duck-lab/
 
 ## 라이선스 · 출처
 
-- 오또봇 설계와 자료는 Otto DIY(CC BY-SA 4.0, 코드 GPL-3.0). 오또봇 3D 파일이나 원본 코드를 이 저장소에 넣을 때는 그 라이선스를 따른다.
-- 이 저장소 자체의 라이선스는 아직 정하지 않았다. `TODO: 팀에서 결정`
+| 대상 | 라이선스 |
+|---|---|
+| 코드 (`firmware/`, `web/`) | [MIT](LICENSE) |
+| 문서 · 데이터 (`docs/`, `data/`, `*.md`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+
+- 오또봇 동작 파라미터 초기값은 [OttoDIYLib](https://github.com/OttoDIY/OttoDIYLib)(GPL-3.0)의 공개 동작을 참고했다. **원본 코드는 복사하지 않았고**, 이 저장소의 코드는 새로 작성했다.
+- 오또봇 3D 파일(CC BY-SA 4.0)이나 Otto 원본 코드(GPL-3.0)를 이 저장소에 넣을 때는 해당 파일에 원래 라이선스를 그대로 적용하고 출처를 남긴다. MIT로 바꿔 올리지 않는다.
+- Open Duck Mini · Microduck 관련 문서는 각 프로젝트의 공개 자료를 요약하고 링크한 조사 메모다. 원본 문서 번역본은 원본 일부 저장소에 라이선스 표시가 없어 넣지 않았다.
+- 상표(Otto DIY, Open Duck Mini, Microduck, Pollen Robotics, Hugging Face, NUCODE)는 각 소유자의 것이며, 이 저장소는 그들과 관계가 없다.
