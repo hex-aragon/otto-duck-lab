@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오또봇 · 오리 로봇 공부 자료</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1c1c1a; --mute: #6a6962; --line: #e3e1d9;
+    --accent: #d98a0b; --accent-soft: #fbefd6; --ok: #2f8a4c; --chip: #efede6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151513; --card: #1f1f1c; --ink: #ecebe5; --mute: #9d9b92; --line: #33322d;
+      --accent: #f0b13d; --accent-soft: #3a2e14; --ok: #5cc07c; --chip: #2a2a26;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151513; --card: #1f1f1c; --ink: #ecebe5; --mute: #9d9b92; --line: #33322d;
+    --accent: #f0b13d; --accent-soft: #3a2e14; --ok: #5cc07c; --chip: #2a2a26;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 16px 64px; }
+  header h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  header p { margin: 0; color: var(--mute); }
+  .note { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); font-size: 14px; }
+  .note a { color: inherit; font-weight: 600; }
+
+  .controls { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0 10px; margin-top: 18px;
+              border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .label { font-size: 13px; color: var(--mute); margin-right: 4px; min-width: 44px; }
+  .pill { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
+          padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  input[type=search] { flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
+                       background: var(--card); color: var(--ink); font: inherit; }
+  .progress { font-size: 13px; color: var(--mute); }
+  .bar { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; width: 140px; }
+  .bar > i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .2s; }
+
+  section.path { margin-top: 22px; }
+  .path table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
+  .path th, .path td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .path th { background: var(--chip); font-weight: 600; }
+  .path tr.hl td { background: var(--accent-soft); }
+  .path code { font-size: 12px; padding: 1px 6px; border-radius: 6px; background: var(--chip); }
+  .table-scroll { overflow-x: auto; }
+
+  h2 { font-size: 18px; margin: 30px 0 10px; display: flex; gap: 8px; align-items: baseline; }
+  h2 small { color: var(--mute); font-weight: 400; font-size: 13px; }
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; gap: 12px; }
+  .card.done { opacity: .55; }
+  .card input[type=checkbox] { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--ok); flex: none; cursor: pointer; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; line-height: 1.4; }
+  .card h3 a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .card h3 a:hover { border-color: var(--accent); }
+  .card p { margin: 0; color: var(--mute); font-size: 14px; }
+  .meta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--mute); }
+  .tag.id { font-weight: 700; color: var(--ink); }
+  .tag.paid { background: #f6dcd6; color: #8a2b17; }
+  .tag.ko { background: #dbe8f8; color: #1d4f8a; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.paid { background:#43211a; color:#f2a493; } :root:not([data-theme="light"]) .tag.ko { background:#182b42; color:#9cc3ef; } }
+  :root[data-theme="dark"] .tag.paid { background:#43211a; color:#f2a493; } :root[data-theme="dark"] .tag.ko { background:#182b42; color:#9cc3ef; }
+  .empty { color: var(--mute); padding: 20px 0; display: none; }
+
+  .rules { margin-top: 30px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  .rules h2 { margin-top: 0; }
+  .rules ul { margin: 0; padding-left: 20px; }
+  footer { margin-top: 24px; color: var(--mute); font-size: 13px; }
+  .theme { margin-left: auto; }
+
+  @media print {
+    .controls, .theme, .card input { display: none !important; }
+    body { background: #fff; color: #000; }
+    .card { break-inside: avoid; border-color: #ccc; }
+    .card h3 a::after { content: " — " attr(href); font-weight: 400; font-size: 11px; color: #555; word-break: break-all; }
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="row">
+      <h1>오또봇 · 오리 로봇 공부 자료</h1>
+      <button class="pill theme" id="theme" title="밝게 / 어둡게">🌓</button>
+    </div>
+    <p>otto-duck-lab 팀 공유용 · 2026-11-11 정리 · 무료 자료 위주 (유료는 표시) · 🇰🇷 = 한국어</p>
+    <div class="note">
+      먼저 레포의 <a href="https://github.com/hex-aragon/otto-duck-lab/blob/main/docs/00-기초-개념.md" target="_blank" rel="noopener">00-기초-개념</a>을 읽고,
+      아래에서 <b>자기 역할</b>을 눌러 그 줄만 따라가세요. 전부 볼 필요 없습니다. 체크한 항목은 이 브라우저에만 저장됩니다.
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="row" id="roles"><span class="label">역할</span></div>
+    <div class="row" id="stages"><span class="label">단계</span></div>
+    <div class="row">
+      <input type="search" id="q" placeholder="검색: IMU, PPO, 블루투스, 논문…">
+      <span class="progress" id="progText"></span>
+      <span class="bar"><i id="progBar"></i></span>
+    </div>
+  </div>
+
+  <section class="path">
+    <h2>역할별 추천 경로 <small>1단계 4주 동안 · 칸의 기호는 아래 카드의 번호</small></h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>역할</th><th>1주</th><th>2주</th><th>3주</th><th>4주</th></tr></thead>
+        <tbody id="pathBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <main id="list"></main>
+  <p class="empty" id="empty">조건에 맞는 자료가 없습니다.</p>
+
+  <section class="rules">
+    <h2>공부 규칙</h2>
+    <ul>
+      <li><b>지금 막힌 문제를 설명할 만큼만</b> 공부한다. 수식을 다 이해하는 것보다 실물 값으로 확인하는 게 먼저다.</li>
+      <li>본 자료와 배운 것 3줄을 해당 GitHub 이슈 댓글로 남긴다. 같은 걸 두 번 찾지 않게.</li>
+      <li>링크가 깨졌거나 더 좋은 자료를 찾으면 레포의 <code>docs/07-공부-자료.md</code>를 고친다.</li>
+    </ul>
+  </section>
+
+  <footer>
+    레포: <a href="https://github.com/hex-aragon/otto-duck-lab" target="_blank" rel="noopener">github.com/hex-aragon/otto-duck-lab</a>
+    · 같은 내용의 마크다운: docs/07-공부-자료.md · 인쇄(Ctrl+P)하면 링크 주소가 함께 찍힙니다.
+  </footer>
+</div>
+
+<script>
+const ROLES = {
+  lead: '리더 · 펌웨어', hw: '하드웨어 · 조립', web: '웹 · 데모', ml: 'TinyML · 문서', all: '전원 공통'
+};
+const PATH = {
+  lead: ['B1 · B2', 'B3 · C1', 'D1 · D2', 'E1 (2단계 준비)'],
+  hw:   ['A1 · A2', 'A3 · C2', 'C1', 'F2'],
+  web:  ['B4 · G1', 'B1', 'D1', 'G2'],
+  ml:   ['D1', 'D2 · D3', 'D4 (선택)', 'E1'],
+  all:  ['00-기초-개념', 'F1 영상만', 'E2 1편', '다음 단계 문서 3-2'],
+};
+const GROUPS = {
+  A: { name: '오또봇 · 서보 · 전원', stage: 1 },
+  B: { name: '누코드 NU40 · BLE · Web Bluetooth', stage: 1 },
+  C: { name: '로봇 기초 · IMU', stage: 1 },
+  D: { name: 'TinyML · 머신러닝', stage: 1 },
+  E: { name: '강화학습 · 시뮬레이션', stage: 2 },
+  F: { name: '두 발 로봇 · sim2real 논문', stage: 2 },
+  G: { name: '협업 도구', stage: 0 },
+};
+// roles: 이 자료를 추천 경로에 넣은 역할
+const ITEMS = [
+  { id:'A1', t:'Otto DIY 공식 사이트 · OttoDIYLib', u:'https://www.ottodiy.com/', u2:['OttoDIYLib','https://github.com/OttoDIY/OttoDIYLib'], d:'조립 순서, 3D 파일, 원본 동작 함수(walk, turn, 춤).', time:'1시간', roles:['hw'] },
+  { id:'A2', t:'Instructables: Otto Build You Own Robot in Two Hours', u:'https://www.instructables.com/Otto-Build-You-Own-Robot-in-Two-Hours', d:'사진으로 보는 조립과 서보 영점 맞추기.', time:'30분', roles:['hw'] },
+  { id:'A3', t:'SparkFun: Hobby Servo Tutorial', u:'https://learn.sparkfun.com/tutorials/hobby-servo-tutorial', d:'PWM 서보 원리, 펄스 폭과 각도, 전원 주의.', time:'30분', roles:['hw'] },
+  { id:'B1', t:'Adafruit: Bluefruit nRF52 Feather Learning Guide', u:'https://learn.adafruit.com/bluefruit-nrf52-feather-learning-guide', d:'누코드 BSP가 바탕으로 한 Adafruit nRF52 아두이노 코어. BLEUart, 하드웨어 PWM 사용법.', time:'2시간', roles:['lead','web'] },
+  { id:'B2', t:'Nordic Developer Academy: Bluetooth Low Energy Fundamentals', u:'https://academy.nordicsemi.com/courses/bluetooth-low-energy-fundamentals/', d:'광고 · 연결 · GATT 개념. 실습은 nRF Connect SDK 기준이라 강의 부분만 봐도 충분.', time:'강의 3~4시간', roles:['lead'] },
+  { id:'B3', t:'Shane Colton: The Balance Filter', u:'https://scolton.blogspot.com/p/self-balancing-things.html', d:'상보 필터(가속도 + 자이로 → 기울기). 펌웨어 imu.h의 Tilt가 이 방식.', time:'30분', roles:['lead'] },
+  { id:'B4', t:'Chrome: Communicating with Bluetooth devices over JavaScript', u:'https://developer.chrome.com/docs/capabilities/bluetooth', d:'Web Bluetooth API, HTTPS 조건, 지원 브라우저. 웹 컨트롤러의 원리.', time:'30분', roles:['web'] },
+  { id:'C1', t:'SparkFun: Accelerometer Basics · Gyroscope', u:'https://learn.sparkfun.com/tutorials/accelerometer-basics', u2:['Gyroscope','https://learn.sparkfun.com/tutorials/gyroscope'], d:'가속도계와 자이로가 각각 무엇을 재는지, 왜 둘을 합치는지.', time:'40분', roles:['lead','hw'] },
+  { id:'C2', t:'ROBOTIS e-Manual', u:'https://emanual.robotis.com/', d:'버스 서보 ID · 보드레이트 · 영점 개념. Microduck의 XL330 계열 자료도 여기.', time:'필요할 때', ko:true, roles:['hw'] },
+  { id:'D1', t:'3Blue1Brown: Neural Networks', u:'https://www.3blue1brown.com/topics/neural-networks', d:'신경망 · 경사하강법 · 역전파를 그림으로. 웹 학습기가 하는 일이 바로 이것. 한국어 자막.', time:'1~2시간', roles:['lead','web','ml'] },
+  { id:'D2', t:'Coursera: Introduction to Embedded Machine Learning', u:'https://www.coursera.org/learn/introduction-to-embedded-machine-learning', d:'Edge Impulse 강의. 마이크로컨트롤러용 ML 전체 흐름, 특징 추출, 배포. 하드웨어 없이 수강 가능, 청강 무료.', time:'필요한 주차만', roles:['lead','ml'] },
+  { id:'D3', t:'Edge Impulse 문서', u:'https://docs.edgeimpulse.com/', d:'데이터 포워더, 시계열 분류, Arduino 라이브러리 배포. 직접 만든 학습기와 비교 실험용.', time:'필요할 때', roles:['ml'] },
+  { id:'D4', t:'HarvardX: Tiny Machine Learning', u:'https://www.edx.org/certificates/professional-certificate/harvardx-tiny-machine-learning', d:'Google · TensorFlow와 만든 3과목. 이론부터 TFLite Micro 배포까지. 청강 무료, 수료증 유료.', time:'길다 · 선택', paid:true, roles:['ml'] },
+  { id:'D5', t:'책 『TinyML』 (Pete Warden · Daniel Situnayake)', u:'https://www.oreilly.com/library/view/tinyml/9781492052036/', d:'O\'Reilly 개념 입문서. 한국어판 있음.', time:'선택', paid:true, ko:true, roles:[] },
+  { id:'E1', t:'Hugging Face Deep RL Course — Unit 1, Unit 8 (PPO)', u:'https://huggingface.co/learn/deep-rl-course', u2:['Unit 8: PPO','https://huggingface.co/learn/deep-rl-course/unit8/introduction'], d:'관측 · 행동 · 보상, 정책 경사, PPO를 실습과 함께. Open Duck · Microduck 학습이 PPO.', time:'6~8시간', roles:['lead','ml'] },
+  { id:'E2', t:'OpenAI Spinning Up — Key Concepts', u:'https://spinningup.openai.com/', d:'강화학습 용어를 짧고 정확하게.', time:'1시간', roles:['all'] },
+  { id:'E3', t:'MuJoCo 문서', u:'https://mujoco.readthedocs.io/', d:'물리 시뮬레이터 구조, MJCF 로봇 모델.', time:'필요할 때', roles:[] },
+  { id:'F1', t:'Disney BDX 논문 (arXiv 2501.05204)', u:'https://arxiv.org/abs/2501.05204', d:'Open Duck Mini의 원형. 설계 사고방식과 모방 보상. 영상부터 보고 1 · 3장.', time:'1~2시간', roles:['all'] },
+  { id:'F2', t:'Learning to Walk in Minutes (arXiv 2109.11978) · legged_gym', u:'https://arxiv.org/abs/2109.11978', u2:['legged_gym','https://leggedrobotics.github.io/legged_gym'], d:'GPU 병렬 시뮬레이션으로 몇 분 만에 보행 학습, 지형 커리큘럼.', time:'1시간', roles:['hw'] },
+  { id:'F3', t:'Domain Randomization (arXiv 1703.06907)', u:'https://arxiv.org/abs/1703.06907', d:'가상에서 조건을 무작위로 바꿔 실물로 옮기는 기법의 출발점.', time:'1시간', roles:[] },
+  { id:'F4', t:'Microduck 소개 글 · 웹 시뮬레이터', u:'https://pollen-robotics.com/microduck/blog/introducing-microduck/', u2:['웹 시뮬레이터','https://huggingface.co/spaces/pollen-robotics/microduck-simulator'], d:'3단계 대상 로봇. 시뮬레이터는 브라우저에서 바로 조종해 볼 수 있다(크롬 권장).', time:'30분', roles:[] },
+  { id:'F5', t:'Open Duck Mini v2 저장소', u:'https://github.com/apirrone/Open_Duck_Mini', d:'2단계 대상 로봇. README 영상, CAD, 부품표. 한글 번역은 레포 docs/next/open-duck-mini/번역.', time:'30분', roles:[] },
+  { id:'G1', t:'Pro Git 한국어판 — 2 · 3장', u:'https://git-scm.com/book/ko/v2', d:'커밋 · 브랜치 · 되돌리기.', time:'2시간', ko:true, roles:['web'] },
+  { id:'G2', t:'GitHub Skills', u:'https://skills.github.com/', d:'이슈 · PR · 리뷰를 실습으로. 팀 보드를 쓰는 법.', time:'1시간', roles:['web'] },
+];
+
+// ── 상태 (체크 표시는 이 브라우저에만 저장) ──
+const KEY = 'otto-duck-study-v1';
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+
+let role = 'any', stage = 'any', q = '';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+
+function pill(container, value, label, getter, setter) {
+  const b = document.createElement('button');
+  b.className = 'pill'; b.textContent = label;
+  b.onclick = () => { setter(getter() === value ? 'any' : value); render(); };
+  b.dataset.value = value;
+  container.appendChild(b);
+}
+Object.entries(ROLES).forEach(([k, v]) => pill($('roles'), k, v, () => role, (x) => role = x));
+[['1', '1단계 · 오또봇'], ['2', '2단계 · 오리 로봇 준비'], ['0', '협업 도구']].forEach(([k, v]) => pill($('stages'), k, v, () => stage, (x) => stage = x));
+$('q').oninput = (e) => { q = e.target.value.trim().toLowerCase(); render(); };
+
+$('pathBody').innerHTML = Object.entries(PATH).map(([k, cells]) =>
+  `<tr data-role="${k}"><td><b>${ROLES[k]}</b></td>${cells.map(c => `<td><code>${esc(c)}</code></td>`).join('')}</tr>`).join('');
+
+function render() {
+  document.querySelectorAll('#roles .pill').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === role));
+  document.querySelectorAll('#stages .pill').forEach(b => b.setAttribute('aria-pressed', b.dataset.value === stage));
+  document.querySelectorAll('#pathBody tr').forEach(tr => tr.classList.toggle('hl', tr.dataset.role === role));
+
+  let html = '', shown = 0;
+  for (const [g, info] of Object.entries(GROUPS)) {
+    if (stage !== 'any' && String(info.stage) !== stage) continue;
+    const items = ITEMS.filter(it => it.id[0] === g)
+      .filter(it => role === 'any' || it.roles.includes(role))
+      .filter(it => !q || (it.t + ' ' + it.d + ' ' + it.id).toLowerCase().includes(q));
+    if (!items.length) continue;
+    shown += items.length;
+    const stageLabel = info.stage === 1 ? '1단계' : info.stage === 2 ? '2단계 준비' : '공통';
+    html += `<h2>${g}. ${info.name} <small>${stageLabel}</small></h2><div class="grid">`;
+    for (const it of items) {
+      const extra = it.u2 ? ` · <a href="${it.u2[1]}" target="_blank" rel="noopener">${esc(it.u2[0])}</a>` : '';
+      html += `<article class="card${done[it.id] ? ' done' : ''}">
+        <input type="checkbox" data-id="${it.id}" ${done[it.id] ? 'checked' : ''} aria-label="${esc(it.t)} 다 봄">
+        <div>
+          <h3><a href="${it.u}" target="_blank" rel="noopener">${esc(it.t)}</a>${extra}</h3>
+          <p>${esc(it.d)}</p>
+          <div class="meta"><span class="tag id">${it.id}</span><span class="tag">${esc(it.time)}</span>
+            ${it.paid ? '<span class="tag paid">유료 포함</span>' : '<span class="tag">무료</span>'}
+            ${it.ko ? '<span class="tag ko">🇰🇷 한국어</span>' : ''}
+            ${it.roles.filter(r => r !== 'all').map(r => `<span class="tag">${ROLES[r]}</span>`).join('')}</div>
+        </div></article>`;
+    }
+    html += '</div>';
+  }
+  $('list').innerHTML = html;
+  $('empty').style.display = shown ? 'none' : 'block';
+  document.querySelectorAll('.card input').forEach(cb => cb.onchange = () => {
+    if (cb.checked) done[cb.dataset.id] = 1; else delete done[cb.dataset.id];
+    save(); render();
+  });
+  const n = ITEMS.filter(it => done[it.id]).length;
+  $('progText').textContent = `다 본 자료 ${n} / ${ITEMS.length}`;
+  $('progBar').style.width = (n / ITEMS.length * 100) + '%';
+}
+
+// 밝게 / 어둡게
+$('theme').onclick = () => {
+  const cur = document.documentElement.dataset.theme
+    || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+};
+render();
+</script>
+</body>
+</html>
