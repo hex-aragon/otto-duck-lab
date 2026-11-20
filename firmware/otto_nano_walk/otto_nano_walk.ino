@@ -19,9 +19,10 @@
  *   p <ms>       한 걸음 주기 (기본 1000, 작을수록 빠름. 700 이하는 SG90이 못 따라갈 수 있음)
  *   a <0~100>    진폭 비율 % (기본 100). 처음 걸을 때는 60~70으로 줄여서 시작 추천
  *   x            멈추고 차렷           off  서보 힘 빼기
- *   d            데모 시작 (아래 데모 모드)
+ *   d            데모 바로 시작
+ *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
  *
- * 데모 모드: 전원을 켜고 DEMO_DELAY_MS 동안 명령이 안 오면 혼자 걷기·돌기·춤을 반복한다.
+ * 데모 모드: 'demo on'이면 전원을 켜고 DEMO_DELAY_MS 동안 명령이 안 오면 혼자 걷기·돌기·춤을 반복한다.
  *   USB 없이 건전지만으로 리허설할 때 쓴다. 아무 명령이나 들어오면 데모는 멈춘다.
  *   켜고 기다리는 동안 Nano의 L LED가 빠르게 깜빡인다.
  */
@@ -147,6 +148,9 @@ static const DemoStep DEMO[] = {
 };
 static const uint8_t DEMO_LEN = sizeof(DEMO) / sizeof(DEMO[0]);
 
+// 전원 켤 때 데모 자동 시작 여부 (EEPROM 5번지에 저장). 조립·영점 작업 중엔 꺼 둔다.
+static const uint8_t EE_DEMO_ADDR = 5, EE_DEMO_ON = 0xD1;
+bool     demoAuto = false;
 bool     demoDecided = false;   // 부팅 후 데모 여부를 이미 정했는지
 bool     demoOn = false;
 uint8_t  demoIdx = 0;
@@ -175,6 +179,7 @@ void stopDemo() {
 void tickDemo() {
   uint32_t now = millis();
   if (!demoDecided) {
+    if (!demoAuto) { demoDecided = true; return; }  // 자동 데모 꺼짐: 차렷으로 명령 대기
     digitalWrite(LED_BUILTIN, (now / 125) % 2);     // 기다리는 동안 빠르게 깜빡임
     if (now >= DEMO_DELAY_MS) startDemo();
     return;
@@ -240,6 +245,13 @@ void handle(char* line) {
   int n = a1 ? atoi(a1) : 4;
 
   if (!strcmp(cmd, "d")) { home(); startDemo(); return; }
+  if (!strcmp(cmd, "demo") && a1) {
+    demoAuto = !strcmp(a1, "on");
+    EEPROM.update(EE_DEMO_ADDR, demoAuto ? EE_DEMO_ON : 0);
+    Serial.println(demoAuto ? F("> 켤 때 자동 데모: 켬 (저장됨)") : F("> 켤 때 자동 데모: 끔 (저장됨)"));
+    stopDemo();
+    return;
+  }
   stopDemo();   // 다른 명령이 오면 데모는 멈춘다
 
   if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { home(); Serial.println(F("> 차렷")); }
@@ -284,10 +296,13 @@ void readSerial() {
 void setup() {
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
+  demoAuto = (EEPROM.read(EE_DEMO_ADDR) == EE_DEMO_ON);
   loadTrims();
   attachAll();
   for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, 90);
-  Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기. 5초간 명령 없으면 데모 시작"));
+  Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기"));
+  Serial.println(demoAuto ? F("자동 데모 켬: 5초간 명령 없으면 시작 ('demo off'로 끔)")
+                          : F("자동 데모 끔: 'demo on'으로 켬, 'd'로 바로 시작"));
   show();
 }
 
