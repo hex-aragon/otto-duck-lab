@@ -31,7 +31,8 @@
 
 // ───── 핀 · 방향 (servo_center 또는 'i' 명령으로 확인 후 고칠 것) ─────
 // Otto 표준: 왼다리 D2, 오른다리 D3, 왼발 D4, 오른발 D5. 왼쪽/오른쪽 = 로봇 자신 기준.
-static const uint8_t PINS[SERVO_COUNT]    = { 2, 3, 4, 5 };
+// 이엘사이언스 키트 실측(11/20 영상): D2=오른다리, D3=왼다리, D4=오른발, D5=왼발 → Otto 표준과 좌우가 반대
+static const uint8_t PINS[SERVO_COUNT]    = { 3, 2, 5, 4 };
 // 서보를 거울처럼 반대로 붙였으면 true (표준 조립이면 모두 false)
 static const bool    REVERSE[SERVO_COUNT] = { false, false, false, false };
 static const char* const NAMES[SERVO_COUNT] = { "왼다리(골반)", "오른다리(골반)", "왼발", "오른발" };
