@@ -19,6 +19,11 @@
  *   p <ms>       한 걸음 주기 (기본 1000, 작을수록 빠름. 700 이하는 SG90이 못 따라갈 수 있음)
  *   a <0~100>    진폭 비율 % (기본 100). 처음 걸을 때는 60~70으로 줄여서 시작 추천
  *   x            멈추고 차렷           off  서보 힘 빼기
+ *   d            데모 시작 (아래 데모 모드)
+ *
+ * 데모 모드: 전원을 켜고 DEMO_DELAY_MS 동안 명령이 안 오면 혼자 걷기·돌기·춤을 반복한다.
+ *   USB 없이 건전지만으로 리허설할 때 쓴다. 아무 명령이나 들어오면 데모는 멈춘다.
+ *   켜고 기다리는 동안 Nano의 L LED가 빠르게 깜빡인다.
  */
 #include <Servo.h>
 #include <EEPROM.h>
@@ -114,11 +119,80 @@ void tickAction() {
   if (now - lastTick < 20) return;  // 50Hz
   lastTick = now;
   uint32_t t = now - actStart;
-  if (t >= actDuration) { home(); Serial.println(F("> 끝, 차렷")); return; }
+  if (t >= actDuration) { home(); Serial.println(F("> 끝, 차렷")); demoAfterAction(); return; }
   GaitParams p = scaled(curAct);
   float out[SERVO_COUNT];
   gaitAngles(p, t, periodMs, out);
   for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, out[i]);
+}
+
+// ───── 데모 모드 ─────
+static const uint32_t DEMO_DELAY_MS = 5000;   // 켜고 이만큼 명령이 없으면 데모 시작
+static const uint16_t DEMO_GAP_MS   = 600;    // 동작 사이 쉬는 시간
+struct DemoStep { Action act; uint8_t steps; uint16_t period; };
+// ACT_HOME 은 period 만큼 차렷으로 쉬기
+static const DemoStep DEMO[] = {
+  { ACT_WALK_FWD,       4, 1200 },
+  { ACT_TURN_LEFT,      3, 1200 },
+  { ACT_WALK_FWD,       4, 1200 },
+  { ACT_TURN_RIGHT,     3, 1200 },
+  { ACT_HOME,           0, 1000 },
+  { ACT_UPDOWN,         3, 1000 },
+  { ACT_SWING,          3, 1000 },
+  { ACT_MOONWALK_LEFT,  3, 1000 },
+  { ACT_MOONWALK_RIGHT, 3, 1000 },
+  { ACT_TIPTOE,         3, 1000 },
+  { ACT_HOME,           0, 2000 },
+};
+static const uint8_t DEMO_LEN = sizeof(DEMO) / sizeof(DEMO[0]);
+
+bool     demoDecided = false;   // 부팅 후 데모 여부를 이미 정했는지
+bool     demoOn = false;
+uint8_t  demoIdx = 0;
+uint32_t demoNextAt = 0;
+uint16_t savedPeriod = 1000;
+
+void startDemo() {
+  demoDecided = true;
+  demoOn = true;
+  demoIdx = 0;
+  demoNextAt = millis();
+  savedPeriod = periodMs;
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println(F("> 데모 시작 (아무 명령이나 보내면 멈춤)"));
+}
+
+void stopDemo() {
+  demoDecided = true;
+  if (!demoOn) return;
+  demoOn = false;
+  periodMs = savedPeriod;
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.println(F("> 데모 멈춤"));
+}
+
+void tickDemo() {
+  uint32_t now = millis();
+  if (!demoDecided) {
+    digitalWrite(LED_BUILTIN, (now / 125) % 2);     // 기다리는 동안 빠르게 깜빡임
+    if (now >= DEMO_DELAY_MS) startDemo();
+    return;
+  }
+  if (!demoOn || curAct != ACT_HOME || now < demoNextAt) return;
+  const DemoStep& s = DEMO[demoIdx];
+  demoIdx = (demoIdx + 1) % DEMO_LEN;
+  if (s.act == ACT_HOME) {
+    demoNextAt = now + s.period;
+  } else {
+    periodMs = s.period;
+    startAction(s.act, s.steps);
+    demoNextAt = 0;                                 // 동작이 끝나 차렷이 되면 아래에서 쉬는 시간 설정
+  }
+}
+
+// 동작이 끝나 차렷으로 돌아온 순간 쉬는 시간을 둔다
+void demoAfterAction() {
+  if (demoOn && demoNextAt == 0) demoNextAt = millis() + DEMO_GAP_MS;
 }
 
 // ───── 확인용 ─────
@@ -164,7 +238,10 @@ void handle(char* line) {
   char* a2 = strtok(NULL, " ");
   int n = a1 ? atoi(a1) : 4;
 
-  if      (!strcmp(cmd, "h") || !strcmp(cmd, "x")) { home(); Serial.println(F("> 차렷")); }
+  if (!strcmp(cmd, "d")) { home(); startDemo(); return; }
+  stopDemo();   // 다른 명령이 오면 데모는 멈춘다
+
+  if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { home(); Serial.println(F("> 차렷")); }
   else if (!strcmp(cmd, "off"))  { curAct = ACT_HOME; detachAll(); Serial.println(F("> 서보 힘 뺌")); }
   else if (!strcmp(cmd, "i"))    identify();
   else if (!strcmp(cmd, "show")) show();
@@ -186,7 +263,7 @@ void handle(char* line) {
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a x off"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a x off d"));
 }
 
 void readSerial() {
@@ -205,14 +282,16 @@ void readSerial() {
 
 void setup() {
   Serial.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
   loadTrims();
   attachAll();
   for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, 90);
-  Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기"));
+  Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기. 5초간 명령 없으면 데모 시작"));
   show();
 }
 
 void loop() {
   readSerial();
   tickAction();
+  tickDemo();
 }
