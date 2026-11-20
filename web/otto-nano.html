@@ -40,10 +40,11 @@ input[type=range]{width:100%}
 
   <section class="card">
     <div class="row conn">
-      <button id="bt">블루투스 연결</button>
-      <button id="usb">USB 연결</button>
+      <button id="usb">노트북 연결<br><small>USB · 블루투스 COM</small></button>
+      <button id="bt">BLE 연결<br><small>폰 크롬 · BLE 모듈</small></button>
     </div>
     <div id="status">연결 안 됨</div>
+    <div style="font-size:13px;color:var(--muted)">JDY-31 같은 클래식 모듈: 노트북에서 페어링 후 <b>노트북 연결</b> → "Bluetooth 링크를 통한 표준 직렬(COM)" 중 보내는 쪽 포트 선택</div>
   </section>
 
   <section class="card">
@@ -109,13 +110,13 @@ $('bt').onclick = async () => {
 };
 
 $('usb').onclick = async () => {
-  if(!navigator.serial){ setStatus('이 브라우저는 USB 시리얼을 지원하지 않아요 (PC 크롬·엣지 사용)'); return; }
+  if(!navigator.serial){ setStatus('이 브라우저는 시리얼 연결을 지원하지 않아요 (노트북 크롬·엣지 사용)'); return; }
   try{
     const port = await navigator.serial.requestPort();
     await port.open({ baudRate: 9600 });
     const w = port.writable.getWriter();
     writeFn = d => w.write(d);
-    setStatus('USB 연결됨 (보드가 재시작해요, 2초 뒤 명령)', true);
+    setStatus('연결됨 (USB면 보드가 재시작해요, 2초 뒤 명령)', true);
     (async()=>{ const r=port.readable.getReader(); try{ for(;;){ const {value,done}=await r.read(); if(done)break; log(dec.decode(value)); } }catch(e){} })();
   }catch(e){ setStatus('연결 취소/실패: '+e.message); }
 };
