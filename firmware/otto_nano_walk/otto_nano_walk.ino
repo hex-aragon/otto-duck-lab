@@ -35,7 +35,8 @@
 // 이엘사이언스 키트 실측(11/20 영상): D2=오른다리, D3=왼다리, D4=오른발, D5=왼발 → Otto 표준과 좌우가 반대
 static const uint8_t PINS[SERVO_COUNT]    = { 3, 2, 5, 4 };
 // 서보를 거울처럼 반대로 붙였으면 true (표준 조립이면 모두 false)
-static const bool    REVERSE[SERVO_COUNT] = { false, false, false, false };
+// 키트 실측(11/20): 표준 설정이면 'w'가 뒤로 걸음 → 골반 두 개 방향을 뒤집음
+static const bool    REVERSE[SERVO_COUNT] = { true, true, false, false };
 static const char* const NAMES[SERVO_COUNT] = { "왼다리(골반)", "오른다리(골반)", "왼발", "오른발" };
 
 static const int     MAX_TRIM   = 30;
