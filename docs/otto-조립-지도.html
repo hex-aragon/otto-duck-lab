@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오또 조립 지도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 위: 지금 상태 → 회로 전체 → 몸 안 배치(앞·옆) → 조립 순서 → 핀 표. 키트 설명서(이엘사이언스) 회로도 + 11/22 시험 결과 기준 */
+:root{
+  --bg:#f3f6f9; --panel:#ffffff; --fg:#1b2430; --muted:#5b6675; --line:#d6dde6;
+  --ok:#14a35a; --no:#e0352b; --warn:#b7791f; --step:#2463c9;
+  --mdf:#e2c79c; --mdf2:#b8955f; --pcb:#c8362e; --nano:#1d3f8a;
+  --sig:#e8892b; --v:#d23c3c; --g:#3b3b3b; --tx:#7a52c7; --rx:#2f74c0; --chip:#eef2f6;
+  --display:"Jua","IBM Plex Sans KR",system-ui,sans-serif; --sans:"IBM Plex Sans KR",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14181e; --panel:#1d232b; --fg:#e8edf3; --muted:#a0abb8; --line:#333c47; --step:#6ea2ff;
+  --mdf:#a88c62; --mdf2:#d1b384; --g:#c9c9c9; --tx:#a98be8; --rx:#6aa6e8; --ok:#4cc483; --no:#ff6b61; --warn:#e0b050; --chip:#262e38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14181e; --panel:#1d232b; --fg:#e8edf3; --muted:#a0abb8; --line:#333c47; --step:#6ea2ff;
+  --mdf:#a88c62; --mdf2:#d1b384; --g:#c9c9c9; --tx:#a98be8; --rx:#6aa6e8; --ok:#4cc483; --no:#ff6b61; --warn:#e0b050; --chip:#262e38; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+main{max-width:960px;margin:0 auto;display:grid;gap:22px}
+h1{font-family:var(--display);font-weight:400;font-size:34px;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:25px;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+p{margin:0;max-width:68ch}
+.lead{color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.two>*{min-width:0}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--sans);fill:var(--fg)}
+svg .mono{font-family:var(--mono)}
+svg .mu{fill:var(--muted)}
+svg .w{fill:#fff}
+.wide{overflow-x:auto}.wide svg{min-width:640px}
+.state{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.state div{background:var(--chip);border-radius:10px;padding:12px;min-width:0}
+.state b{display:block;font-family:var(--display);font-weight:400;font-size:19px}
+.ok{color:var(--ok)}.no{color:var(--no)}.warn{color:var(--warn)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;counter-reset:s}
+.steps>div{background:var(--chip);border-radius:10px;padding:12px;min-width:0}
+.steps h3{display:flex;gap:10px;align-items:center}
+.steps h3::before{counter-increment:s;content:counter(s);font-size:17px;width:30px;height:30px;flex:none;border-radius:50%;background:var(--step);color:#fff;display:grid;place-items:center}
+.steps p{margin-top:6px;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto}
+code,.pin{font-family:var(--mono);font-size:.88em;background:var(--chip);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:0 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.note{border-left:4px solid var(--warn);background:var(--chip);border-radius:0 8px 8px 0;padding:10px 12px}
+ul{margin:0;padding-left:1.2em}
+</style>
+
+<main>
+<header style="display:grid;gap:8px">
+  <h1>오또 조립 지도</h1>
+  <p class="lead">이엘사이언스 오또봇2 키트 설명서의 회로도와 11/22 시험 결과를 합쳐, 무엇을 어디에 꽂고 몸 안 어디에 붙일지 정리했습니다. 왼쪽·오른쪽은 <b>로봇 자신</b> 기준입니다.</p>
+</header>
+
+<section class="card">
+  <h2>지금 상태 (11/22)</h2>
+  <div class="state">
+    <div><b class="ok">서보 4개 · 걷기</b>USB + 건전지면 앞·뒤·왼쪽·오른쪽 모두 재시작 없이 끝까지 동작</div>
+    <div><b class="no">건전지만</b>서보가 움직이면 5V가 떨어져 보드와 블루투스가 꺼졌다 켜짐. 알카라인으로 바꿔도 같음</div>
+    <div><b class="warn">블루투스 JDY-31</b>모듈은 정상. USB를 꽂았을 땐 불이 켜지고 노트북 COM15로 연결·명령 성공. 건전지만일 땐 불이 꺼짐 → 전원 문제</div>
+    <div><b class="warn">초음파 · 도트 · 부저</b>아직 안 꽂음. 이 지도대로 꽂으면 다음에 코드를 붙임</div>
+  </div>
+  <p><b>블루투스는 고장이 아닙니다.</b> 보조배터리를 Nano USB에 같이 꽂으면 5V가 버텨서 무선으로 쓸 수 있습니다. 보조배터리가 오기 전까지는 USB 선을 꽂고 조립·시험합니다.</p>
+</section>
+
+<section class="card">
+  <h2>회로 전체</h2>
+  <p>쉴드 위쪽 디지털 줄의 각 핀은 <b>S(신호) · V(5V) · G(접지)</b> 세 개가 한 세트입니다. 서보 선은 <b>주황=S, 빨강=V, 갈색=G</b>로 맞춥니다.</p>
+  <div class="wide">
+  <svg viewBox="0 0 900 560" role="img" aria-label="쉴드에 서보, 초음파, 도트, 부저, 블루투스, 건전지, 보조배터리를 연결한 회로도">
+    <!-- shield -->
+    <rect x="250" y="150" width="400" height="260" rx="14" fill="var(--pcb)"/>
+    <text x="450" y="178" text-anchor="middle" class="w" font-weight="700">확장 쉴드</text>
+    <rect x="320" y="250" width="260" height="70" rx="6" fill="var(--nano)"/>
+    <text x="450" y="291" text-anchor="middle" class="w" font-weight="700">Arduino Nano</text>
+    <rect x="300" y="270" width="24" height="30" rx="3" fill="#c3c9ce"/>
+    <rect x="250" y="340" width="44" height="44" rx="4" fill="#2b2b2b"/>
+    <text x="272" y="400" text-anchor="middle" class="w" font-size="12">DC 잭</text>
+    <!-- top header pins -->
+    <g class="mono" font-size="12" text-anchor="middle">
+      <rect x="270" y="192" width="40" height="36" rx="4" fill="#1f8f8f"/><text x="290" y="215" class="w">D12</text>
+      <rect x="314" y="192" width="40" height="36" rx="4" fill="#1f8f8f"/><text x="334" y="215" class="w">D11</text>
+      <rect x="358" y="192" width="40" height="36" rx="4" fill="#1f8f8f"/><text x="378" y="215" class="w">D10</text>
+      <rect x="410" y="192" width="40" height="36" rx="4" fill="#6b5bb8"/><text x="430" y="215" class="w">D9</text>
+      <rect x="454" y="192" width="40" height="36" rx="4" fill="#6b5bb8"/><text x="474" y="215" class="w">D8</text>
+      <rect x="506" y="192" width="30" height="36" rx="4" fill="var(--sig)"/><text x="521" y="215" class="w">D5</text>
+      <rect x="540" y="192" width="30" height="36" rx="4" fill="var(--sig)"/><text x="555" y="215" class="w">D4</text>
+      <rect x="574" y="192" width="30" height="36" rx="4" fill="var(--sig)"/><text x="589" y="215" class="w">D3</text>
+      <rect x="608" y="192" width="30" height="36" rx="4" fill="var(--sig)"/><text x="623" y="215" class="w">D2</text>
+    </g>
+    <!-- BT header right -->
+    <rect x="600" y="300" width="40" height="80" rx="4" fill="#f1f1f1"/>
+    <text x="620" y="318" text-anchor="middle" class="mono" font-size="10" fill="#333" style="fill:#333">RX</text>
+    <text x="620" y="336" text-anchor="middle" class="mono" font-size="10" style="fill:#333">TX</text>
+    <text x="620" y="354" text-anchor="middle" class="mono" font-size="10" style="fill:#333">5V</text>
+    <text x="620" y="372" text-anchor="middle" class="mono" font-size="10" style="fill:#333">GND</text>
+    <!-- A row -->
+    <rect x="330" y="350" width="200" height="30" rx="5" fill="#8e211b"/>
+    <text x="430" y="370" text-anchor="middle" class="mono w" font-size="12">A0 ~ A7 (S · V · G)</text>
+
+    <!-- servos top right -->
+    <g font-size="13">
+      <rect x="690" y="20" width="200" height="120" rx="10" fill="var(--chip)"/>
+      <text x="790" y="44" text-anchor="middle" font-weight="700">서보 4개 (확인됨)</text>
+      <text x="705" y="68">D2 · 오른다리(골반)</text>
+      <text x="705" y="88">D3 · 왼다리(골반)</text>
+      <text x="705" y="108">D4 · 오른발(발목)</text>
+      <text x="705" y="128">D5 · 왼발(발목)</text>
+      <path d="M570 192 C600 120 650 90 690 80" fill="none" stroke="var(--sig)" stroke-width="3"/>
+    </g>
+    <!-- ultrasonic top middle -->
+    <g font-size="13">
+      <rect x="370" y="20" width="200" height="96" rx="10" fill="var(--chip)"/>
+      <circle cx="410" cy="56" r="20" fill="#9aa3a8"/><circle cx="460" cy="56" r="20" fill="#9aa3a8"/>
+      <text x="530" y="46" text-anchor="middle" font-weight="700">초음파</text>
+      <text x="530" y="66" text-anchor="middle" class="mono" font-size="11">Trig→D8</text>
+      <text x="530" y="82" text-anchor="middle" class="mono" font-size="11">Echo→D9</text>
+      <text x="470" y="106" text-anchor="middle" class="mono" font-size="11">VCC→V · GND→G</text>
+      <path d="M452 192 L452 116" stroke="#6b5bb8" stroke-width="3"/>
+    </g>
+    <!-- dot matrix top left -->
+    <g font-size="13">
+      <rect x="20" y="20" width="230" height="120" rx="10" fill="var(--chip)"/>
+      <g fill="var(--no)" opacity=".75">
+        <rect x="34" y="34" width="70" height="70" rx="3"/>
+      </g>
+      <text x="175" y="46" text-anchor="middle" font-weight="700">8x8 도트</text>
+      <text x="175" y="68" text-anchor="middle" class="mono" font-size="11">DIN→D12</text>
+      <text x="175" y="84" text-anchor="middle" class="mono" font-size="11">CLK→D11</text>
+      <text x="175" y="100" text-anchor="middle" class="mono" font-size="11">CS→D10</text>
+      <text x="135" y="128" text-anchor="middle" class="mono" font-size="11">VCC→V · GND→G</text>
+      <path d="M334 192 C330 150 280 110 250 90" fill="none" stroke="#1f8f8f" stroke-width="3"/>
+    </g>
+    <!-- buzzer -->
+    <g font-size="13">
+      <rect x="20" y="430" width="200" height="90" rx="10" fill="var(--chip)"/>
+      <circle cx="60" cy="475" r="24" fill="#2b2b2b"/><circle cx="60" cy="475" r="6" fill="#888"/>
+      <text x="150" y="465" text-anchor="middle" font-weight="700">부저</text>
+      <text x="150" y="485" text-anchor="middle" class="mono" font-size="11">SIG→A0 S</text>
+      <text x="150" y="501" text-anchor="middle" class="mono" font-size="11">GND→A0 G</text>
+      <path d="M220 470 C290 470 330 420 350 380" fill="none" stroke="var(--g)" stroke-width="3"/>
+    </g>
+    <!-- battery -->
+    <g font-size="13">
+      <rect x="20" y="210" width="190" height="110" rx="10" fill="var(--chip)"/>
+      <g fill="var(--ok)"><rect x="34" y="232" width="34" height="56" rx="4"/><rect x="74" y="232" width="34" height="56" rx="4"/></g>
+      <text x="160" y="250" text-anchor="middle" font-weight="700">AA 4개</text>
+      <text x="160" y="270" text-anchor="middle" font-size="12">알카라인</text>
+      <text x="160" y="290" text-anchor="middle" font-size="12">스위치 거쳐</text>
+      <text x="115" y="310" text-anchor="middle" font-size="12">DC 잭으로</text>
+      <path d="M210 300 C230 330 240 360 250 362" fill="none" stroke="var(--v)" stroke-width="3"/>
+    </g>
+    <!-- power bank -->
+    <g font-size="13">
+      <rect x="270" y="440" width="190" height="80" rx="12" fill="var(--chip)"/>
+      <text x="365" y="472" text-anchor="middle" font-weight="700">보조배터리</text>
+      <text x="365" y="494" text-anchor="middle" font-size="12">Nano 미니 USB · 저전류 모드</text>
+      <path d="M312 300 C300 380 330 410 340 440" fill="none" stroke="var(--rx)" stroke-width="3" stroke-dasharray="7 4"/>
+    </g>
+    <!-- BT module -->
+    <g font-size="13">
+      <rect x="690" y="270" width="200" height="140" rx="10" fill="var(--chip)"/>
+      <rect x="706" y="290" width="40" height="100" rx="4" fill="#24407a"/>
+      <text x="820" y="296" text-anchor="middle" font-weight="700">블루투스 JDY-31</text>
+      <text x="820" y="320" text-anchor="middle" class="mono" font-size="11">TXD→RX</text>
+      <text x="820" y="338" text-anchor="middle" class="mono" font-size="11">RXD→TX</text>
+      <text x="820" y="356" text-anchor="middle" class="mono" font-size="11">VCC→5V</text>
+      <text x="820" y="374" text-anchor="middle" class="mono" font-size="11">GND→GND</text>
+      <text x="820" y="396" text-anchor="middle" font-size="11" class="mu">흰 소켓이 헐거우면 테이프</text>
+      <path d="M640 340 L690 340" stroke="var(--tx)" stroke-width="3"/>
+    </g>
+  </svg>
+  </div>
+  <div class="note">TXD·RXD는 <b>엇갈려</b> 꽂습니다(모듈 TXD → 쉴드 RX). 11/21에 이 방향으로 통신이 됐습니다. 업로드할 때는 이 두 선만 빼세요. USB와 같은 선(D0·D1)을 씁니다.</div>
+</section>
+
+<section class="card">
+  <h2>몸 안 배치</h2>
+  <p>키트 설명서는 <b>보드를 머리 뒷벽 안쪽에 양면테이프로</b>, 초음파는 머리 눈 구멍에, 도트와 부저는 몸통 앞쪽에 둡니다. 보내 주신 사진에서 도트는 이미 몸통 앞면에, 골반 서보(2, 3)는 몸통 안 양쪽에 들어가 있습니다.</p>
+  <div class="two">
+    <figure class="card" style="margin:0;padding:12px">
+      <h3>앞에서 본 모습</h3>
+      <svg viewBox="0 0 360 400" role="img" aria-label="앞에서 본 오또: 머리에 초음파 눈, 몸통에 도트">
+        <rect x="60" y="20" width="240" height="140" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <circle cx="130" cy="90" r="30" fill="#9aa3a8" stroke="#ddd" stroke-width="5"/>
+        <circle cx="230" cy="90" r="30" fill="#9aa3a8" stroke="#ddd" stroke-width="5"/>
+        <text x="180" y="145" text-anchor="middle" font-size="13">머리 · 초음파 눈</text>
+        <rect x="70" y="160" width="220" height="150" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <g fill="var(--no)" opacity=".8"><rect x="140" y="185" width="80" height="80" rx="3"/></g>
+        <text x="180" y="290" text-anchor="middle" font-size="13">몸통 · 8x8 도트</text>
+        <rect x="80" y="310" width="70" height="40" fill="#555"/><rect x="210" y="310" width="70" height="40" fill="#555"/>
+        <rect x="60" y="350" width="110" height="18" fill="var(--mdf)" stroke="var(--mdf2)"/>
+        <rect x="190" y="350" width="110" height="18" fill="var(--mdf)" stroke="var(--mdf2)"/>
+        <text x="115" y="392" text-anchor="middle" font-size="12" class="mu">오른발 (D4)</text>
+        <text x="245" y="392" text-anchor="middle" font-size="12" class="mu">왼발 (D5)</text>
+      </svg>
+    </figure>
+    <figure class="card" style="margin:0;padding:12px">
+      <h3>옆에서 자른 모습 (왼쪽이 앞)</h3>
+      <svg viewBox="0 0 360 400" role="img" aria-label="옆 단면: 머리 앞 초음파, 바닥 건전지, 뒷벽 보드와 블루투스, 몸통 안 서보와 부저, 등에 보조배터리">
+        <rect x="50" y="20" width="230" height="140" fill="none" stroke="var(--mdf2)" stroke-width="4"/>
+        <rect x="40" y="60" width="18" height="60" rx="3" fill="#9aa3a8"/>
+        <text x="66" y="44" font-size="12">초음파</text>
+        <!-- battery on head floor -->
+        <rect x="80" y="126" width="120" height="30" rx="4" fill="var(--g)"/>
+        <g fill="var(--ok)"><rect x="88" y="131" width="50" height="20" rx="3"/><rect x="142" y="131" width="50" height="20" rx="3"/></g>
+        <text x="140" y="118" text-anchor="middle" font-size="12">건전지 홀더 (바닥)</text>
+        <!-- board on back wall -->
+        <rect x="252" y="30" width="22" height="110" rx="3" fill="var(--pcb)"/>
+        <rect x="244" y="50" width="10" height="70" rx="2" fill="var(--nano)"/>
+        <text x="232" y="84" text-anchor="end" font-size="12">쉴드+Nano</text>
+        <text x="232" y="100" text-anchor="end" font-size="12">(뒷벽 안쪽)</text>
+        <!-- BT -->
+        <rect x="200" y="30" width="40" height="14" rx="2" fill="#24407a"/>
+        <text x="220" y="62" text-anchor="middle" font-size="11" style="fill:var(--tx)">BT 모듈</text>
+        <!-- body -->
+        <rect x="60" y="160" width="210" height="150" fill="none" stroke="var(--mdf2)" stroke-width="4"/>
+        <rect x="52" y="190" width="14" height="70" fill="var(--no)" opacity=".8"/>
+        <text x="80" y="200" font-size="12">도트 (앞면)</text>
+        <rect x="120" y="230" width="90" height="60" rx="4" fill="#3d58c4" opacity=".85"/>
+        <text x="165" y="265" text-anchor="middle" font-size="12" class="w">골반 서보</text>
+        <circle cx="245" cy="200" r="14" fill="#2b2b2b"/>
+        <text x="246" y="232" text-anchor="middle" font-size="11">부저</text>
+        <!-- power bank on back -->
+        <rect x="282" y="170" width="26" height="110" rx="7" fill="#6d7a84"/>
+        <text x="318" y="300" text-anchor="end" font-size="11">보조배터리</text>
+        <text x="318" y="314" text-anchor="end" font-size="11">(등 바깥)</text>
+        <path d="M295 170 C295 130 285 120 274 118" fill="none" stroke="var(--rx)" stroke-width="3"/>
+        <rect x="70" y="310" width="70" height="44" fill="#555"/><rect x="190" y="310" width="70" height="44" fill="#555"/>
+        <rect x="50" y="354" width="230" height="16" fill="var(--mdf)" stroke="var(--mdf2)"/>
+      </svg>
+    </figure>
+  </div>
+  <div class="note">건전지 홀더 자리는 설명서에 정확히 나와 있지 않아서, 무게를 가운데 아래로 두려고 <b>머리 바닥</b>을 제안했습니다. 머리 안에 안 들어가면 몸통 등 바깥에 붙여도 됩니다. 서보 선은 목 구멍으로 지나가게 하고, 다리 혼에 닿지 않게 묶어 주세요.</div>
+</section>
+
+<section class="card">
+  <h2>조립 순서</h2>
+  <div class="steps">
+    <div><h3>초음파 끼우기</h3><p>HC-SR04를 머리 앞 눈 구멍에 끼웁니다. 핀 4개가 위나 뒤를 보게 합니다. 점퍼선 4개를 미리 꽂아 둡니다.</p></div>
+    <div><h3>도트 · 부저 배선</h3><p>도트는 무지개 점퍼 5줄로 <code>DIN D12</code> <code>CLK D11</code> <code>CS D10</code> <code>V</code> <code>G</code>. 부저는 <code>A0</code>의 S·G.</p></div>
+    <div><h3>초음파 배선</h3><p><code>Trig D8</code> <code>Echo D9</code> <code>VCC V</code> <code>GND G</code>. D8·D9 줄의 V·G를 그대로 쓰면 됩니다.</p></div>
+    <div><h3>블루투스 붙이기</h3><p>모듈을 머리 안 위쪽에 양면테이프로 붙이고, 선 4개를 꽂은 뒤 테이프로 한 번 감아 빠지지 않게 합니다.</p></div>
+    <div><h3>보드 붙이기</h3><p>배선이 끝난 쉴드를 머리 뒷벽 안쪽에 양면테이프로 붙입니다. <b>USB 단자가 뒤쪽 구멍으로</b> 손이 닿게 둡니다.</p></div>
+    <div><h3>건전지 · 스위치</h3><p>건전지 홀더를 머리 바닥에 붙이고, 스위치는 등 쪽에서 손이 닿게 둡니다. DC 플러그를 잭에 끝까지 꽂습니다.</p></div>
+    <div><h3>USB로 시험</h3><p>USB를 꽂고 저에게 알려 주시면 서보 · 초음파 · 도트 · 부저를 하나씩 확인합니다.</p></div>
+    <div><h3>보조배터리가 오면</h3><p>등에 붙이고 짧은 선으로 Nano USB에 연결 → 블루투스로 무선 걷기.</p></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>핀 표</h2>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>부품</th><th>부품 핀</th><th>쉴드</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>오른다리(골반) 서보</td><td>주황 · 빨강 · 갈색</td><td><span class="pin">D2</span> S · V · G</td><td><span class="pill ok">확인됨</span></td></tr>
+      <tr><td>왼다리(골반) 서보</td><td>주황 · 빨강 · 갈색</td><td><span class="pin">D3</span> S · V · G</td><td><span class="pill ok">확인됨</span></td></tr>
+      <tr><td>오른발 서보</td><td>주황 · 빨강 · 갈색</td><td><span class="pin">D4</span> S · V · G</td><td><span class="pill ok">확인됨</span></td></tr>
+      <tr><td>왼발 서보</td><td>주황 · 빨강 · 갈색</td><td><span class="pin">D5</span> S · V · G</td><td><span class="pill ok">확인됨</span></td></tr>
+      <tr><td>초음파 HC-SR04</td><td>Trig · Echo · VCC · GND</td><td><span class="pin">D8</span> <span class="pin">D9</span> <span class="pin">V</span> <span class="pin">G</span></td><td><span class="pill warn">코드 추가 예정</span></td></tr>
+      <tr><td>8x8 도트 (MAX7219)</td><td>DIN · CLK · CS · VCC · GND</td><td><span class="pin">D12</span> <span class="pin">D11</span> <span class="pin">D10</span> <span class="pin">V</span> <span class="pin">G</span></td><td><span class="pill warn">코드 추가 예정</span></td></tr>
+      <tr><td>부저</td><td>SIG · GND</td><td><span class="pin">A0</span> S · G</td><td><span class="pill warn">코드 추가 예정</span></td></tr>
+      <tr><td>블루투스 JDY-31</td><td>TXD · RXD · VCC · GND</td><td><span class="pin">RX</span> <span class="pin">TX</span> <span class="pin">5V</span> <span class="pin">GND</span></td><td><span class="pill ok">통신 확인됨</span></td></tr>
+      <tr><td>건전지 AA 4개</td><td>DC 플러그</td><td>DC 잭</td><td><span class="pill ok">연결됨</span></td></tr>
+      <tr><td>보조배터리</td><td>USB</td><td>Nano 미니 USB</td><td><span class="pill warn">구매 예정</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="lead">초음파 · 도트 · 부저 핀은 설명서 회로도의 배치(서보 왼쪽 줄에 센서, 그 왼쪽에 도트, 아래 줄에 부저)를 따랐습니다. 설명서 원본 코드의 핀 번호는 확인하지 못했으므로, 위 표대로 꽂으면 코드를 거기에 맞춰 씁니다.</p>
+</section>
+
+<section class="card">
+  <h2>살 것</h2>
+  <ul>
+    <li><b>보조배터리</b> 5000mAh 안팎, 저전류 모드 있는 것 · <b>USB-A to 미니 5핀 20~30cm</b> (쿠팡: <code>보조배터리 저전류 모드</code>, <code>USB 미니 5핀 케이블 20cm</code>)</li>
+    <li>AA 알카라인 여분 4개 · 양면테이프 · 케이블 타이</li>
+    <li>리허설 뒤: 5V 3A 강압 모듈(UBEC). 누코드 NU40은 팀 보유 보드이고, 국내 판매처는 찾지 못했습니다.</li>
+  </ul>
+</section>
+</main>
+
+</html>
