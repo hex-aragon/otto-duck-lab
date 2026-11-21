@@ -72,7 +72,7 @@ section{scroll-margin-top:12px}
   <p class="lead">이엘사이언스 오또봇2 키트 설명서 회로도, 보내 주신 쉴드 사진, 11/22 시험 결과를 한 장에 모았습니다. 왼쪽·오른쪽은 <b>로봇 자신</b> 기준입니다.</p>
 </header>
 <nav class="toc" aria-label="목차">
-  <a href="#status">지금 상태</a><a href="#power">전원</a><a href="#pins">핀 지도</a><a href="#circuit">회로 전체</a><a href="#place">몸 안 배치</a><a href="#dcjack">DC 잭 맞추기</a><a href="#mess">지금 선 정리</a><a href="#cables">선 정리 원칙</a><a href="#steps">조립 순서</a><a href="#trouble">문제 해결</a><a href="#buy">살 것</a>
+  <a href="#status">지금 상태</a><a href="#power">전원</a><a href="#pins">핀 지도</a><a href="#circuit">회로 전체</a><a href="#place">몸 안 배치</a><a href="#outside">밖 배선</a><a href="#mount">부품 고정</a><a href="#dcjack">DC 잭 맞추기</a><a href="#mess">지금 선 정리</a><a href="#cables">선 정리 원칙</a><a href="#steps">조립 순서</a><a href="#trouble">문제 해결</a><a href="#buy">살 것</a>
 </nav>
 <section class="card" id="status">
   <h2>지금 상태 (11/22 새벽)</h2>
@@ -448,6 +448,120 @@ section{scroll-margin-top:12px}
     </figure>
   </div>
   <div class="note">건전지 홀더 자리는 설명서에 정확히 나와 있지 않아서, 무게를 가운데 아래로 두려고 <b>머리 바닥</b>을 제안했습니다. 머리 안에 안 들어가면 몸통 등 바깥에 붙여도 됩니다. 서보 선은 목 구멍으로 지나가게 하고, 다리 혼에 닿지 않게 묶어 주세요.</div>
+</section>
+<section class="card" id="outside">
+  <h2>선을 밖으로 둘 때 (리허설용으로 괜찮음)</h2>
+  <p>11/22 사진처럼 보드를 머리 위에 얹고 선을 밖으로 빼도 됩니다. 몸 안에 넣는 것보다 빠르고, 꽂힌 걸 눈으로 확인하기 쉽습니다. 다만 <b>선을 등 뒤 한 묶음</b>으로 모으고, <b>보드를 꼭 고정</b>해야 걸을 때 넘어지거나 빠지지 않습니다.</p>
+  <div class="two">
+    <figure class="card" style="margin:0;padding:12px">
+      <h3 class="warn">지금 (사진)</h3>
+      <svg viewBox="0 0 360 340" role="img" aria-label="지금: 보드가 머리 위에 얹혀 있고 선 고리가 옆으로 크게 나와 있음">
+        <rect x="100" y="80" width="160" height="100" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <circle cx="145" cy="135" r="18" fill="#9aa3a8"/><circle cx="215" cy="135" r="18" fill="#9aa3a8"/>
+        <rect x="104" y="180" width="152" height="100" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <rect x="150" y="200" width="60" height="60" rx="3" fill="#555"/>
+        <rect x="90" y="62" width="150" height="16" rx="3" fill="var(--pcb)" transform="rotate(-6 165 70)"/>
+        <g fill="none" stroke-width="4" stroke-linecap="round">
+          <path d="M220 66 C330 40 340 160 262 220" stroke="#f08a24"/>
+          <path d="M230 64 C350 70 330 200 262 240" stroke="#2fa84f"/>
+          <path d="M160 64 C130 10 80 40 60 120" stroke="#2f5fd0"/>
+          <path d="M120 66 C70 60 30 110 20 200" stroke="#2b2b2b"/>
+        </g>
+        <path d="M160 64 C150 100 140 120 130 140" fill="none" stroke="#2f5fd0" stroke-width="3" stroke-dasharray="4 4"/>
+        <text x="180" y="315" text-anchor="middle" font-size="12">옆으로 큰 고리 · 보드가 비스듬 · 빠진 선 1개</text>
+      </svg>
+    </figure>
+    <figure class="card" style="margin:0;padding:12px">
+      <h3 class="ok">이렇게 (옆에서 본 모습)</h3>
+      <svg viewBox="0 0 360 340" role="img" aria-label="정리: 보드는 머리 위에 평평하게 고정, 선은 등 뒤로 한 묶음, 다리와 떨어지게 묶음">
+        <rect x="80" y="90" width="170" height="100" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <rect x="70" y="118" width="12" height="40" rx="3" fill="#9aa3a8"/>
+        <text x="64" y="112" text-anchor="end" font-size="11">앞</text>
+        <rect x="84" y="190" width="162" height="100" fill="var(--mdf)" stroke="var(--mdf2)" stroke-width="3"/>
+        <rect x="76" y="210" width="10" height="56" fill="var(--no)" opacity=".8"/>
+        <rect x="90" y="72" width="150" height="16" rx="3" fill="var(--pcb)"/>
+        <rect x="120" y="66" width="60" height="8" rx="2" fill="var(--nano)"/>
+        <path d="M88 84 L242 84" stroke="#ffffff" stroke-width="3" stroke-dasharray="10 6" opacity=".8"/>
+        <text x="165" y="58" text-anchor="middle" font-size="11">평평하게 · 양면테이프 + 고무줄</text>
+        <path d="M238 80 C275 90 270 140 262 160 C258 200 258 240 254 280" fill="none" stroke="#f08a24" stroke-width="10" stroke-linecap="round"/>
+        <g fill="var(--fg)"><rect x="252" y="140" width="22" height="6" rx="2"/><rect x="248" y="210" width="22" height="6" rx="2"/><rect x="246" y="262" width="22" height="6" rx="2"/></g>
+        <text x="282" y="150" font-size="11">타이</text>
+        <text x="282" y="220" font-size="11">등에 테이프</text>
+        <rect x="250" y="110" width="16" height="44" rx="2" fill="#24407a"/>
+        <text x="300" y="108" text-anchor="middle" font-size="11">BT 모듈</text>
+        <rect x="100" y="290" width="50" height="30" fill="#555"/><rect x="180" y="290" width="50" height="30" fill="#555"/>
+        <text x="165" y="335" text-anchor="middle" font-size="11" class="mu">선은 다리까지 내려오지 않게</text>
+      </svg>
+    </figure>
+  </div>
+  <div class="steps">
+    <div><h3>보드 평평하게 고정</h3><p>머리 위 판에 양면테이프로 붙이고, 고무줄로 머리 상자와 한 번 더 감습니다. 비스듬하면 걸을 때 미끄러집니다.</p></div>
+    <div><h3>선은 등 뒤로</h3><p>옆으로 나온 고리를 전부 <b>뒤쪽</b>으로 돌려 한 묶음으로. 옆으로 나오면 팔처럼 흔들려 걸음이 휩니다.</p></div>
+    <div><h3>묶어서 등에 붙이기</h3><p>케이블 타이로 2~3곳 묶고, 묶음을 몸통 등판에 테이프로 붙입니다. 다리 혼 높이까지 내려오지 않게 합니다.</p></div>
+    <div><h3>BT 모듈은 머리 뒤</h3><p>머리 뒷면 바깥에 양면테이프로 붙입니다. 금색 안테나 끝은 위로, 선은 짧게 접어 묶습니다.</p></div>
+    <div><h3>빠진 선 확인</h3><p>사진에서 파란 점퍼선 하나가 눈 앞에 떠 있습니다. 어디서 빠진 건지 확인해 다시 꽂습니다.</p></div>
+    <div><h3>무게는 위가 가볍게</h3><p>위가 무거우면 잘 넘어집니다. 건전지 홀더는 몸통 안 바닥이나 등 아래쪽에 붙입니다.</p></div>
+  </div>
+</section>
+<section class="card" id="mount">
+  <h2>도트 · 부저 · 초음파 고정하기</h2>
+  <p>셋 다 <b>양면테이프(스펀지형)</b>면 충분합니다. 글루건이 있으면 더 단단하지만, 나중에 떼기 어렵습니다. 리허설 전에는 테이프를 추천합니다.</p>
+  <div class="wide">
+  <svg viewBox="0 0 900 300" role="img" aria-label="도트는 앞판 안쪽에서 창에 맞춰 붙이고, 부저는 바닥이나 옆벽에, 초음파는 눈 구멍에 끼우고 뒤를 테이프로">
+    <!-- dot -->
+    <g>
+      <rect x="20" y="40" width="260" height="200" rx="8" fill="var(--chip)"/>
+      <text x="150" y="30" text-anchor="middle" font-weight="700">도트 (몸통 앞판 안쪽)</text>
+      <rect x="60" y="70" width="20" height="150" fill="var(--mdf)" stroke="var(--mdf2)"/>
+      <rect x="80" y="95" width="30" height="100" fill="var(--no)" opacity=".85"/>
+      <rect x="110" y="90" width="10" height="110" fill="#2b4fa8"/>
+      <rect x="120" y="100" width="12" height="90" fill="var(--warn)" opacity=".9"/>
+      <rect x="132" y="120" width="10" height="10" fill="#bbb"/><rect x="132" y="140" width="10" height="10" fill="#bbb"/><rect x="132" y="160" width="10" height="10" fill="#bbb"/>
+      <text x="150" y="80" font-size="12">① 도트 얼굴을 앞판 창에 끼움</text>
+      <text x="150" y="112" font-size="12" style="fill:var(--warn)">② 기판 뒤에 스펀지</text>
+      <text x="150" y="128" font-size="12" style="fill:var(--warn)">  테이프 → 상자 벽에</text>
+      <text x="150" y="160" font-size="12">③ 핀(5개)은 위로,</text>
+      <text x="150" y="176" font-size="12">  테이프로 덮지 않기</text>
+      <text x="40" y="232" font-size="11" class="mu">앞판</text>
+    </g>
+    <!-- buzzer -->
+    <g>
+      <rect x="320" y="40" width="260" height="200" rx="8" fill="var(--chip)"/>
+      <text x="450" y="30" text-anchor="middle" font-weight="700">부저 (몸통 안 옆벽·바닥)</text>
+      <rect x="350" y="200" width="200" height="14" fill="var(--mdf)" stroke="var(--mdf2)"/>
+      <rect x="390" y="190" width="50" height="10" fill="var(--warn)" opacity=".9"/>
+      <rect x="385" y="140" width="60" height="50" rx="25" fill="#2b2b2b"/>
+      <circle cx="415" cy="152" r="5" fill="#777"/>
+      <text x="460" y="100" font-size="12">① 소리 구멍은 위로 (막지 않기)</text>
+      <text x="460" y="130" font-size="12" style="fill:var(--warn)">② 밑면에 스펀지 테이프</text>
+      <text x="460" y="160" font-size="12">③ 다리 서보 선과</text>
+      <text x="460" y="176" font-size="12">  떨어진 자리</text>
+    </g>
+    <!-- ultrasonic -->
+    <g>
+      <rect x="620" y="40" width="260" height="200" rx="8" fill="var(--chip)"/>
+      <text x="750" y="30" text-anchor="middle" font-weight="700">초음파 (머리 눈 구멍)</text>
+      <rect x="650" y="70" width="16" height="150" fill="var(--mdf)" stroke="var(--mdf2)"/>
+      <rect x="640" y="95" width="26" height="30" rx="6" fill="#9aa3a8"/><rect x="640" y="160" width="26" height="30" rx="6" fill="#9aa3a8"/>
+      <rect x="666" y="85" width="10" height="115" fill="#2b4fa8"/>
+      <rect x="676" y="100" width="10" height="80" fill="var(--warn)" opacity=".9"/>
+      <text x="700" y="100" font-size="12">① 원통 두 개를 눈 구멍에</text>
+      <text x="700" y="116" font-size="12">  안쪽에서 끼움</text>
+      <text x="700" y="150" font-size="12" style="fill:var(--warn)">② 기판 뒤를 테이프로</text>
+      <text x="700" y="166" font-size="12" style="fill:var(--warn)">  벽에 눌러 붙임</text>
+      <text x="700" y="200" font-size="12">③ 핀 4개는 위로</text>
+    </g>
+  </svg>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>부품</th><th>붙이는 곳</th><th>방법</th><th>주의</th></tr></thead>
+    <tbody>
+      <tr><td>8x8 도트</td><td>몸통 앞판 안쪽, 네모 창</td><td>얼굴을 창에 맞추고 기판 뒤 네 귀퉁이에 스펀지 테이프</td><td>핀 5개는 위로, 테이프가 핀이나 칩을 덮지 않게</td></tr>
+      <tr><td>부저</td><td>몸통 안 옆벽이나 바닥 (설명서 "부저 위치")</td><td>밑면 전체에 스펀지 테이프</td><td>소리 구멍을 막지 않기, 다리 서보 선과 떨어지게</td></tr>
+      <tr><td>초음파</td><td>머리 앞 눈 구멍</td><td>안쪽에서 끼우고 기판 뒤를 테이프로 눌러 붙임</td><td>원통 앞이 구멍 밖으로 살짝 나오게, 핀은 위로</td></tr>
+      <tr><td>블루투스</td><td>머리 뒤 바깥 (밖 배선일 때)</td><td>양면테이프, 커넥터는 테이프로 감기</td><td>금속 부품(쉴드 핀)에 닿지 않게</td></tr>
+    </tbody>
+  </table></div>
 </section>
 <section class="card" id="dcjack">
   <h2>DC 잭 맞추기 (전원 선이 안 들어갈 때)</h2>
