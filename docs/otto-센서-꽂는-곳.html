@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오또 센서 꽂는 곳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@600&display=swap">
+<style>
+/* 사진과 같은 방향으로 그린 쉴드 핀 지도. 위: 디지털 줄(도트·초음파), 아래: A줄(부저), 끝: 번호표 */
+:root{--bg:#f3f6f9;--panel:#fff;--fg:#1b2430;--muted:#5b6675;--line:#d6dde6;--pcb:#c8362e;--chip:#eef2f6;
+--dot:#e0352b;--us:#7a52c7;--bz:#14a37a;
+--display:"Jua","IBM Plex Sans KR",system-ui,sans-serif;--sans:"IBM Plex Sans KR",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181e;--panel:#1d232b;--fg:#e8edf3;--muted:#a0abb8;--line:#333c47;--pcb:#a92e27;--chip:#262e38;--us:#a98be8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181e;--panel:#1d232b;--fg:#e8edf3;--muted:#a0abb8;--line:#333c47;--pcb:#a92e27;--chip:#262e38;--us:#a98be8;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.6;
+padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+main{max-width:1000px;margin:0 auto;display:grid;gap:20px}
+h1{font-family:var(--display);font-weight:400;font-size:32px;margin:0}
+h2{font-family:var(--display);font-weight:400;font-size:23px;margin:0}
+p{margin:0;max-width:70ch} .lead{color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.wide{overflow-x:auto} .wide svg{min-width:760px}
+svg{display:block;width:100%;height:auto} svg text{font-family:var(--sans)} svg .mono{font-family:var(--mono)} svg .w{fill:#fff}
+.rows{display:flex;flex-wrap:wrap;gap:10px}
+.rows span{display:flex;align-items:center;gap:8px;background:var(--chip);border-radius:8px;padding:6px 10px}
+.sq{width:18px;height:18px;border-radius:3px;display:inline-block}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)} th{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto}
+.n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:7px;color:#fff;font-weight:700}
+.d{background:var(--dot)} .u{background:var(--us)} .b{background:var(--bz)}
+</style>
+<main>
+<header style="display:grid;gap:6px">
+<h1>오또 센서 꽂는 곳</h1>
+<p class="lead">보내 주신 쉴드 사진과 같은 방향으로 그렸습니다. 번호가 있는 칸에 그 번호의 선을 꽂으면 됩니다.</p>
+</header>
+<section class="card">
+<h2>먼저: 한 줄에 핀 3개</h2>
+<div class="rows">
+<span><i class="sq" style="background:#2b2b2b"></i><b>위 · 검정 = G</b> (접지, GND)</span>
+<span><i class="sq" style="background:#d23c3c"></i><b>가운데 · 빨강 = V</b> (5V, VCC)</span>
+<span><i class="sq" style="background:#2f5fd0"></i><b>아래 · 파랑 = S</b> (신호)</span>
+</div>
+<p>숫자(13, 12, 11 …)는 핀 <b>아래에</b> 인쇄돼 있고, 그 숫자 바로 위의 세로 세 칸이 한 세트입니다.</p>
+</section>
+<section class="card">
+<h2>위쪽 줄: 도트 · 초음파</h2>
+<div class="wide"><svg viewBox="0 0 1064 434" role="img" aria-label="쉴드 위쪽 핀 줄: 도트, 초음파, 서보 꽂는 자리">
+<rect x="20" y="20" width="1024" height="394" rx="16" fill="var(--pcb)"/>
+<text x="42" y="96" text-anchor="middle" class="w" font-weight="700" font-size="20">G</text>
+<text x="42" y="154" text-anchor="middle" class="w" font-weight="700" font-size="20">V</text>
+<text x="42" y="212" text-anchor="middle" class="w" font-weight="700" font-size="20">S</text>
+<rect x="47.0" y="60" width="208" height="174" rx="8" fill="#00000022"/>
+<rect x="293.0" y="60" width="208" height="174" rx="8" fill="#00000022"/>
+<rect x="539.0" y="60" width="208" height="174" rx="8" fill="#00000022"/>
+<rect x="785.0" y="60" width="208" height="174" rx="8" fill="#00000022"/>
+<rect x="58" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="58" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="58" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="70" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">AREF</text>
+<rect x="112" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="112" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="112" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="124" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">G</text>
+<rect x="166" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="166" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="166" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="178" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">13</text>
+<rect x="211" y="69" width="42" height="42" rx="8" fill="#e0352b" stroke="#fff" stroke-width="3"/>
+<text x="232" y="97" text-anchor="middle" class="w" font-weight="700" font-size="20">1</text>
+<rect x="211" y="127" width="42" height="42" rx="8" fill="#e0352b" stroke="#fff" stroke-width="3"/>
+<text x="232" y="155" text-anchor="middle" class="w" font-weight="700" font-size="20">2</text>
+<rect x="211" y="185" width="42" height="42" rx="8" fill="#e0352b" stroke="#fff" stroke-width="3"/>
+<text x="232" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">3</text>
+<text x="232" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">12</text>
+<rect x="304" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="304" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="295" y="185" width="42" height="42" rx="8" fill="#e0352b" stroke="#fff" stroke-width="3"/>
+<text x="316" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">4</text>
+<text x="316" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">11</text>
+<rect x="358" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="358" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="349" y="185" width="42" height="42" rx="8" fill="#e0352b" stroke="#fff" stroke-width="3"/>
+<text x="370" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">5</text>
+<text x="370" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">10</text>
+<rect x="403" y="69" width="42" height="42" rx="8" fill="#7a52c7" stroke="#fff" stroke-width="3"/>
+<text x="424" y="97" text-anchor="middle" class="w" font-weight="700" font-size="20">9</text>
+<rect x="412" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="403" y="185" width="42" height="42" rx="8" fill="#7a52c7" stroke="#fff" stroke-width="3"/>
+<text x="424" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">8</text>
+<text x="424" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">9</text>
+<rect x="466" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="457" y="127" width="42" height="42" rx="8" fill="#7a52c7" stroke="#fff" stroke-width="3"/>
+<text x="478" y="155" text-anchor="middle" class="w" font-weight="700" font-size="20">6</text>
+<rect x="457" y="185" width="42" height="42" rx="8" fill="#7a52c7" stroke="#fff" stroke-width="3"/>
+<text x="478" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">7</text>
+<text x="478" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">8</text>
+<rect x="550" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="550" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="550" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="562" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">7</text>
+<rect x="604" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="604" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="604" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="616" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">6</text>
+<text x="670" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">5</text>
+<text x="724" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">4</text>
+<text x="808" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">3</text>
+<text x="862" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">2</text>
+<rect x="904" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="904" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="904" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="916" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">1</text>
+<rect x="958" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="958" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="958" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="970" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="19">0</text>
+<rect x="650" y="66" width="40" height="164" rx="6" fill="#1c1c1c"/>
+<rect x="664" y="78" width="12" height="24" rx="3" fill="#6b4226"/>
+<rect x="664" y="136" width="12" height="24" rx="3" fill="#d23c3c"/>
+<rect x="664" y="194" width="12" height="24" rx="3" fill="#f08a24"/>
+<text x="670" y="282" text-anchor="middle" class="w" font-size="13">왼발</text>
+<rect x="704" y="66" width="40" height="164" rx="6" fill="#1c1c1c"/>
+<rect x="718" y="78" width="12" height="24" rx="3" fill="#6b4226"/>
+<rect x="718" y="136" width="12" height="24" rx="3" fill="#d23c3c"/>
+<rect x="718" y="194" width="12" height="24" rx="3" fill="#f08a24"/>
+<text x="724" y="282" text-anchor="middle" class="w" font-size="13">오른발</text>
+<rect x="788" y="66" width="40" height="164" rx="6" fill="#1c1c1c"/>
+<rect x="802" y="78" width="12" height="24" rx="3" fill="#6b4226"/>
+<rect x="802" y="136" width="12" height="24" rx="3" fill="#d23c3c"/>
+<rect x="802" y="194" width="12" height="24" rx="3" fill="#f08a24"/>
+<text x="808" y="282" text-anchor="middle" class="w" font-size="13">왼다리</text>
+<rect x="842" y="66" width="40" height="164" rx="6" fill="#1c1c1c"/>
+<rect x="856" y="78" width="12" height="24" rx="3" fill="#6b4226"/>
+<rect x="856" y="136" width="12" height="24" rx="3" fill="#d23c3c"/>
+<rect x="856" y="194" width="12" height="24" rx="3" fill="#f08a24"/>
+<text x="862" y="282" text-anchor="middle" class="w" font-size="13">오른다리</text>
+<text x="943.0" y="282" text-anchor="middle" class="w" font-size="13">TX · RX</text>
+<text x="532.0" y="398" text-anchor="middle" class="w" font-size="14">↓ 이 아래에 Nano 보드 (USB 단자는 왼쪽)</text>
+</svg></div>
+</section>
+<section class="card">
+<h2>아래쪽 줄: 부저</h2>
+<p>Nano 아래, <code>A0 A1 … A7</code>이 적힌 줄입니다. 맨 왼쪽 A0만 씁니다.</p>
+<div class="wide" style="max-width:640px"><svg viewBox="0 0 542 344" role="img" aria-label="쉴드 아래쪽 A0~A7 줄: 부저 꽂는 자리">
+<rect x="20" y="20" width="502" height="304" rx="16" fill="var(--pcb)"/>
+<text x="42" y="96" text-anchor="middle" class="w" font-weight="700" font-size="20">G</text>
+<text x="42" y="154" text-anchor="middle" class="w" font-weight="700" font-size="20">V</text>
+<text x="42" y="212" text-anchor="middle" class="w" font-weight="700" font-size="20">S</text>
+<rect x="49" y="69" width="42" height="42" rx="8" fill="#14a37a" stroke="#fff" stroke-width="3"/>
+<text x="70" y="97" text-anchor="middle" class="w" font-weight="700" font-size="20">10</text>
+<rect x="58" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="49" y="185" width="42" height="42" rx="8" fill="#14a37a" stroke="#fff" stroke-width="3"/>
+<text x="70" y="213" text-anchor="middle" class="w" font-weight="700" font-size="20">11</text>
+<text x="70" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A0</text>
+<rect x="112" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="112" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="112" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="124" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A1</text>
+<rect x="166" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="166" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="166" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="178" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A2</text>
+<rect x="220" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="220" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="220" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="232" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A3</text>
+<rect x="274" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="274" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="274" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="286" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A4</text>
+<rect x="328" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="328" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="328" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="340" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A5</text>
+<rect x="382" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="382" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="382" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="394" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A6</text>
+<rect x="436" y="78" width="24" height="24" rx="3" fill="#2b2b2b" opacity=".9"/>
+<rect x="436" y="136" width="24" height="24" rx="3" fill="#d23c3c" opacity=".9"/>
+<rect x="436" y="194" width="24" height="24" rx="3" fill="#2f5fd0" opacity=".9"/>
+<text x="448" y="254" text-anchor="middle" class="w mono" font-weight="700" font-size="17">A7</text>
+</svg></div>
+</section>
+<section class="card">
+<h2>번호표</h2>
+<div class="tbl"><table>
+<thead><tr><th>번호</th><th>부품 핀</th><th>꽂는 곳</th></tr></thead>
+<tbody>
+<tr><td><span class="n d">1</span></td><td>도트 <b>GND</b></td><td>12번 줄 · 위(G)</td></tr>
+<tr><td><span class="n d">2</span></td><td>도트 <b>VCC</b></td><td>12번 줄 · 가운데(V)</td></tr>
+<tr><td><span class="n d">3</span></td><td>도트 <b>DIN</b></td><td>12번 줄 · 아래(S)</td></tr>
+<tr><td><span class="n d">4</span></td><td>도트 <b>CLK</b></td><td>11번 줄 · 아래(S)</td></tr>
+<tr><td><span class="n d">5</span></td><td>도트 <b>CS</b></td><td>10번 줄 · 아래(S)</td></tr>
+<tr><td><span class="n u">6</span></td><td>초음파 <b>VCC</b></td><td>8번 줄 · 가운데(V)</td></tr>
+<tr><td><span class="n u">7</span></td><td>초음파 <b>Trig</b></td><td>8번 줄 · 아래(S)</td></tr>
+<tr><td><span class="n u">8</span></td><td>초음파 <b>Echo</b></td><td>9번 줄 · 아래(S)</td></tr>
+<tr><td><span class="n u">9</span></td><td>초음파 <b>GND</b></td><td>9번 줄 · 위(G)</td></tr>
+<tr><td><span class="n b">10</span></td><td>부저 <b>−</b> (GND)</td><td>A0 줄 · 위(G)</td></tr>
+<tr><td><span class="n b">11</span></td><td>부저 <b>+</b> (신호)</td><td>A0 줄 · 아래(S)</td></tr>
+</tbody></table></div>
+<p class="lead">서보 4개(5·4·3·2)와 블루투스(오른쪽 흰 소켓)는 지금 꽂힌 그대로 둡니다. 부저에 +/− 표시가 없으면 다리가 긴 쪽이 +입니다.</p>
+</section>
+</main>
+</html>
