@@ -36,6 +36,45 @@ th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)} th{fo
 <p class="lead">보내 주신 쉴드 사진과 같은 방향으로 그렸습니다. 번호가 있는 칸에 그 번호의 선을 꽂으면 됩니다.</p>
 </header>
 <section class="card">
+<h2>헷갈리는 두 가지</h2>
+<p><b>① 기존 핀 그대로인가?</b> 서보 4개(2·3·4·5번 줄)와 블루투스(오른쪽 흰 소켓)는 <b>지금 꽂힌 그대로</b>입니다. 새로 꽂는 건 도트 · 초음파 · 부저뿐이고, 그 자리는 <b>우리 코드가 정한 자리</b>입니다. 키트 원본 코드의 핀 번호는 확인하지 못했으니, 이 그림대로 꽂으면 코드가 그 핀을 씁니다.</p>
+<p><b>② 부저는 어디에?</b> 보드 <b>아래쪽</b>, Nano 밑에 <code>A0 A1 … A7</code>이 적힌 줄의 <b>맨 왼쪽 A0</b>입니다. 위쪽 숫자 줄이 아닙니다.</p>
+<div class="wide" style="max-width:760px">
+<svg viewBox="0 0 760 300" role="img" aria-label="부저 연결: 쉴드 아래쪽 A0 줄, 위 칸 G에 부저 마이너스, 아래 칸 S에 부저 플러스">
+  <rect x="20" y="20" width="460" height="260" rx="14" fill="var(--pcb)"/>
+  <rect x="60" y="40" width="300" height="70" rx="6" fill="#1d3f8a"/>
+  <text x="210" y="82" text-anchor="middle" class="w" font-weight="700">Nano</text>
+  <text x="44" y="150" text-anchor="middle" class="w" font-weight="700">G</text>
+  <text x="44" y="190" text-anchor="middle" class="w" font-weight="700">V</text>
+  <text x="44" y="230" text-anchor="middle" class="w" font-weight="700">S</text>
+  <g>
+    <rect x="66" y="128" width="44" height="44" rx="8" fill="var(--bz)" stroke="#fff" stroke-width="3"/><text x="88" y="157" text-anchor="middle" class="w" font-weight="700">−</text>
+    <rect x="76" y="178" width="24" height="24" rx="3" fill="#d23c3c"/>
+    <rect x="66" y="208" width="44" height="44" rx="8" fill="var(--bz)" stroke="#fff" stroke-width="3"/><text x="88" y="237" text-anchor="middle" class="w" font-weight="700">+</text>
+    <text x="88" y="272" text-anchor="middle" class="w mono" font-weight="700">A0</text>
+  </g>
+  <g fill="#ffffff" opacity=".55">
+    <rect x="130" y="138" width="24" height="24" rx="3"/><rect x="130" y="178" width="24" height="24" rx="3"/><rect x="130" y="218" width="24" height="24" rx="3"/>
+    <rect x="180" y="138" width="24" height="24" rx="3"/><rect x="180" y="178" width="24" height="24" rx="3"/><rect x="180" y="218" width="24" height="24" rx="3"/>
+    <rect x="230" y="138" width="24" height="24" rx="3"/><rect x="230" y="178" width="24" height="24" rx="3"/><rect x="230" y="218" width="24" height="24" rx="3"/>
+  </g>
+  <text x="192" y="272" text-anchor="middle" class="w mono">A1  A2  A3 …</text>
+  <text x="380" y="190" text-anchor="middle" class="w" font-size="13">← 아래쪽 줄</text>
+  <!-- buzzer -->
+  <ellipse cx="620" cy="90" rx="44" ry="12" fill="#444"/>
+  <rect x="576" y="90" width="88" height="56" fill="#2b2b2b"/>
+  <ellipse cx="620" cy="146" rx="44" ry="12" fill="#2b2b2b"/>
+  <circle cx="620" cy="90" r="5" fill="#888"/>
+  <text x="620" y="60" text-anchor="middle" font-weight="700">부저 (검은 원통)</text>
+  <path d="M600 156 C560 210 200 150 112 150" fill="none" stroke="#3b3b3b" stroke-width="4"/>
+  <path d="M640 156 C640 250 300 240 112 230" fill="none" stroke="#d23c3c" stroke-width="4"/>
+  <text x="560" y="200" font-size="13">− (짧은 다리 · 검정 선)</text>
+  <text x="560" y="262" font-size="13">+ (긴 다리 · 빨강 선)</text>
+</svg>
+</div>
+<p class="lead">부저를 찾지 못했으면 건너뛰어도 됩니다. 키트 남은 부품 사진을 보내 주시면 어느 것인지 찾아 드립니다.</p>
+</section>
+<section class="card">
 <h2>먼저: 한 줄에 핀 3개</h2>
 <div class="rows">
 <span><i class="sq" style="background:#2b2b2b"></i><b>위 · 검정 = G</b> (접지, GND)</span>
