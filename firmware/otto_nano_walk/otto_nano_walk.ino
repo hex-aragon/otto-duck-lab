@@ -18,6 +18,7 @@
  *   u  위아래    s  좌우 흔들기    m  문워크    k  까치발
  *   p <ms>       한 걸음 주기 (기본 1000, 작을수록 빠름. 700 이하는 SG90이 못 따라갈 수 있음)
  *   a <0~100>    진폭 비율 % (기본 100). 처음 걸을 때는 60~70으로 줄여서 시작 추천
+ *   v <도/초>    서보 최고 속도 제한 (기본 150, 0이면 제한 없음). 건전지만 쓸 때 보드가 재시작하면 낮출 것
  *   x            멈추고 차렷           off  서보 힘 빼기
  *   d            데모 바로 시작
  *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
@@ -49,6 +50,9 @@ bool   attached = false;
 
 uint16_t periodMs = 1000;
 uint8_t  ampPct   = 100;
+// 서보 최고 속도(도/초). 서보가 한꺼번에 빨리 움직이면 순간 전류가 커서 쉴드 5V가 떨어지고
+// 보드·블루투스가 재시작한다 (11/22 건전지만으로 걷기 시험에서 확인). 속도를 묶어 순간 전류를 줄인다.
+uint16_t maxSpeed = 150;
 
 // 동작 상태
 Action   curAct = ACT_HOME;
@@ -63,9 +67,14 @@ void writeServo(int i, float deg) {
   lastAngle[i] = deg;
 }
 
+// 서보를 하나씩 차례로 켠다. 4개가 동시에 힘을 쓰면 켜는 순간 전압이 크게 떨어진다.
 void attachAll() {
   if (attached) return;
-  for (int i = 0; i < SERVO_COUNT; i++) servo[i].attach(PINS[i]);
+  for (int i = 0; i < SERVO_COUNT; i++) {
+    writeServo(i, lastAngle[i]);   // attach 전에 써 두면 첫 펄스가 그 각도로 나간다
+    servo[i].attach(PINS[i]);
+    delay(150);
+  }
   attached = true;
 }
 
@@ -104,6 +113,7 @@ GaitParams scaled(Action a) {
 void startAction(Action a, int steps) {
   if (steps < 1) steps = 1;
   GaitParams p = scaled(a);
+  for (int i = 0; i < SERVO_COUNT; i++) p.A[i] = 0;   // tickAction이 진폭 0에서 시작하므로 시작 자세도 진폭 0
   float first[SERVO_COUNT];
   gaitAngles(p, 0, periodMs, first);
   moveTo(first, 300);              // 시작 자세로 부드럽게 들어간 뒤 사인파 시작
@@ -124,9 +134,15 @@ void tickAction() {
   uint32_t t = now - actStart;
   if (t >= actDuration) { home(); Serial.println(F("> 끝, 차렷")); demoAfterAction(); return; }
   GaitParams p = scaled(curAct);
+  // 첫 한 걸음 동안 진폭을 0 → 100%로 키운다 (처음부터 크게 움직이면 전압이 떨어짐)
+  if (t < periodMs) { float r = (float)t / periodMs; for (int i = 0; i < SERVO_COUNT; i++) p.A[i] *= r; }
   float out[SERVO_COUNT];
   gaitAngles(p, t, periodMs, out);
-  for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, out[i]);
+  float maxStep = maxSpeed ? maxSpeed * 0.02f : 999;   // 20ms 한 번에 움직일 수 있는 최대 각도
+  for (int i = 0; i < SERVO_COUNT; i++) {
+    float d = constrain(out[i] - lastAngle[i], -maxStep, maxStep);
+    writeServo(i, lastAngle[i] + d);
+  }
 }
 
 // ───── 데모 모드 ─────
@@ -230,7 +246,8 @@ void show() {
   Serial.print(F("트림: "));
   for (int i = 0; i < SERVO_COUNT; i++) { Serial.print(NAMES[i]); Serial.print('='); Serial.print(trim[i]); Serial.print(' '); }
   Serial.println();
-  Serial.print(F("주기 ")); Serial.print(periodMs); Serial.print(F("ms, 진폭 ")); Serial.print(ampPct); Serial.println('%');
+  Serial.print(F("주기 ")); Serial.print(periodMs); Serial.print(F("ms, 진폭 ")); Serial.print(ampPct);
+  Serial.print(F("%, 최고 속도 ")); Serial.print(maxSpeed); Serial.println(F("도/초"));
 }
 
 // ───── 명령 처리 ─────
@@ -269,6 +286,7 @@ void handle(char* line) {
   }
   else if (!strcmp(cmd, "p") && a1) { periodMs = constrain(atoi(a1), 400, 3000); show(); }
   else if (!strcmp(cmd, "a") && a1) { ampPct = constrain(atoi(a1), 0, 100); show(); }
+  else if (!strcmp(cmd, "v") && a1) { maxSpeed = constrain(atoi(a1), 0, 1000); show(); }
   else if (!strcmp(cmd, "w")) startAction(ACT_WALK_FWD, n);
   else if (!strcmp(cmd, "b")) startAction(ACT_WALK_BACK, n);
   else if (!strcmp(cmd, "l")) startAction(ACT_TURN_LEFT, n);
@@ -277,7 +295,7 @@ void handle(char* line) {
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a x off d"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d"));
 }
 
 void readSerial() {
@@ -299,8 +317,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   demoAuto = (EEPROM.read(EE_DEMO_ADDR) == EE_DEMO_ON);
   loadTrims();
-  attachAll();
-  for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, 90);
+  Serial.println(F("서보 하나씩 켜는 중..."));
+  attachAll();   // lastAngle 초기값 90° → 차렷으로 하나씩 켜짐
   Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기"));
   Serial.println(demoAuto ? F("자동 데모 켬: 5초간 명령 없으면 시작 ('demo off'로 끔)")
                           : F("자동 데모 끔: 'demo on'으로 켬, 'd'로 바로 시작"));
