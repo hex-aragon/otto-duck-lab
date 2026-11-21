@@ -23,6 +23,15 @@
  *   d            데모 바로 시작
  *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
  *
+ *   ── 도트 · 부저 · 초음파 (extras.h, 핀은 docs/otto-조립-지도.html) ──
+ *   e <표정>     도트 표정: eyes blink smile happy sad surprise heart up down left right x all off
+ *   e rot <0~3>  도트를 90°씩 돌림 (거꾸로 붙였을 때)     e flip  좌우 거울     e bright <0~15>
+ *   z <소리>     부저: beep hello happy sad alarm ok song      z <Hz> <ms>  직접 음 내기
+ *   mute / unmute 소리 끄기 / 켜기
+ *   dist         초음파 거리(cm) 한 번 출력            watch on|off  0.5초마다 거리 출력
+ *   mode <이름>  센서 행동: off(기본) guard(걷다가 앞에 막히면 멈추고 돌아섬)
+ *                follow(손을 따라 앞뒤로) react(손을 가까이 대면 놀라고 춤)
+ *
  * 데모 모드: 'demo on'이면 전원을 켜고 DEMO_DELAY_MS 동안 명령이 안 오면 혼자 걷기·돌기·춤을 반복한다.
  *   USB 없이 건전지만으로 리허설할 때 쓴다. 아무 명령이나 들어오면 데모는 멈춘다.
  *   켜고 기다리는 동안 Nano의 L LED가 빠르게 깜빡인다.
@@ -30,6 +39,7 @@
 #include <Servo.h>
 #include <EEPROM.h>
 #include "gait.h"
+#include "extras.h"
 
 // ───── 핀 · 방향 (servo_center 또는 'i' 명령으로 확인 후 고칠 것) ─────
 // Otto 표준: 왼다리 D2, 오른다리 D3, 왼발 D4, 오른발 D5. 왼쪽/오른쪽 = 로봇 자신 기준.
@@ -110,8 +120,21 @@ GaitParams scaled(Action a) {
   return p;
 }
 
+// 동작에 맞는 표정
+Face faceFor(Action a) {
+  switch (a) {
+    case ACT_WALK_FWD:   return F_SMILE;
+    case ACT_WALK_BACK:  return F_DOWN;
+    case ACT_TURN_LEFT:  return F_LEFT;
+    case ACT_TURN_RIGHT: return F_RIGHT;
+    case ACT_HOME:       return F_EYES;
+    default:             return F_HAPPY;   // 춤
+  }
+}
+
 void startAction(Action a, int steps) {
   if (steps < 1) steps = 1;
+  setFace(faceFor(a));
   GaitParams p = scaled(a);
   for (int i = 0; i < SERVO_COUNT; i++) p.A[i] = 0;   // tickAction이 진폭 0에서 시작하므로 시작 자세도 진폭 0
   float first[SERVO_COUNT];
@@ -132,7 +155,7 @@ void tickAction() {
   if (now - lastTick < 20) return;  // 50Hz
   lastTick = now;
   uint32_t t = now - actStart;
-  if (t >= actDuration) { home(); Serial.println(F("> 끝, 차렷")); demoAfterAction(); return; }
+  if (t >= actDuration) { home(); setFace(F_EYES); Serial.println(F("> 끝, 차렷")); demoAfterAction(); return; }
   GaitParams p = scaled(curAct);
   // 첫 한 걸음 동안 진폭을 0 → 100%로 키운다 (처음부터 크게 움직이면 전압이 떨어짐)
   if (t < periodMs) { float r = (float)t / periodMs; for (int i = 0; i < SERVO_COUNT; i++) p.A[i] *= r; }
@@ -167,6 +190,7 @@ static const uint8_t DEMO_LEN = sizeof(DEMO) / sizeof(DEMO[0]);
 
 // 전원 켤 때 데모 자동 시작 여부 (EEPROM 5번지에 저장). 조립·영점 작업 중엔 꺼 둔다.
 static const uint8_t EE_DEMO_ADDR = 5, EE_DEMO_ON = 0xD1;
+static const uint8_t EE_DOT_ADDR = 6;   // 0xD0 | 회전(0~3) | 거울<<2
 bool     demoAuto = false;
 bool     demoDecided = false;   // 부팅 후 데모 여부를 이미 정했는지
 bool     demoOn = false;
@@ -216,6 +240,62 @@ void tickDemo() {
 // 동작이 끝나 차렷으로 돌아온 순간 쉬는 시간을 둔다
 void demoAfterAction() {
   if (demoOn && demoNextAt == 0) demoNextAt = millis() + DEMO_GAP_MS;
+}
+
+// ───── 센서 행동 (초음파) ─────
+enum SenseMode : uint8_t { M_OFF, M_GUARD, M_FOLLOW, M_REACT };
+static const char* const MODE_NAMES[] = { "off", "guard", "follow", "react" };
+SenseMode senseMode = M_OFF;
+bool      watchDist = false;
+uint32_t  nextSense = 0, nextWatch = 0, reactReady = 0;
+
+// 동작 예약 (센서가 "뒤로 2걸음 → 왼쪽 돌기"처럼 이어서 시킬 때)
+struct Queued { Action a; uint8_t n; };
+Queued   queue[4];
+uint8_t  qLen = 0;
+void enqueue(Action a, uint8_t n) { if (qLen < 4) queue[qLen++] = { a, n }; }
+void clearQueue() { qLen = 0; }
+void tickQueue() {
+  if (curAct != ACT_HOME || !qLen) return;
+  Queued q = queue[0];
+  for (uint8_t i = 1; i < qLen; i++) queue[i - 1] = queue[i];
+  qLen--;
+  startAction(q.a, q.n);
+}
+
+void tickSense() {
+  uint32_t now = millis();
+  if (watchDist && now >= nextWatch) {
+    nextWatch = now + 500;
+    Serial.print(F("거리 ")); Serial.print(readCm()); Serial.println(F("cm"));
+  }
+  if (senseMode == M_OFF || now < nextSense) return;
+  nextSense = now + 120;
+  uint16_t d = readCm();
+  if (!d) return;                                    // 반사 없음 (멀거나 선 빠짐)
+  switch (senseMode) {
+    case M_GUARD:   // 앞으로 걷다가 15cm 안에 뭔가 있으면 멈추고 비켜 감
+      if (curAct == ACT_WALK_FWD && d < 15) {
+        home(300); clearQueue();
+        setFace(F_SURPRISE); playSound(4);           // alarm
+        Serial.print(F("> 앞에 장애물 ")); Serial.print(d); Serial.println(F("cm: 뒤로 → 왼쪽"));
+        enqueue(ACT_WALK_BACK, 2); enqueue(ACT_TURN_LEFT, 2);
+      }
+      break;
+    case M_FOLLOW:  // 손이 가까우면 뒤로, 조금 멀면 앞으로
+      if (curAct != ACT_HOME || qLen) break;
+      if (d < 8)                 { Serial.println(F("> 가까움: 뒤로")); startAction(ACT_WALK_BACK, 1); }
+      else if (d > 14 && d < 40) { Serial.println(F("> 따라가기: 앞으로")); startAction(ACT_WALK_FWD, 1); }
+      break;
+    case M_REACT:   // 손을 10cm 안에 대면 놀라고 춤
+      if (curAct != ACT_HOME || qLen || now < reactReady || d >= 10) break;
+      reactReady = now + 5000;
+      setFace(F_SURPRISE); playSound(1);             // hello
+      Serial.println(F("> 반가워!"));
+      enqueue(ACT_UPDOWN, 2); enqueue(ACT_SWING, 2);
+      break;
+    default: break;
+  }
 }
 
 // ───── 확인용 ─────
@@ -272,7 +352,37 @@ void handle(char* line) {
   }
   stopDemo();   // 다른 명령이 오면 데모는 멈춘다
 
-  if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { home(); Serial.println(F("> 차렷")); }
+  // 도트 · 부저 · 초음파
+  if (!strcmp(cmd, "e") && a1) {
+    if (!strcmp(a1, "rot") && a2) dotRot = atoi(a2) & 3;
+    else if (!strcmp(a1, "flip")) dotFlip = !dotFlip;
+    else if (!strcmp(a1, "bright") && a2) { dotWrite(0x0A, constrain(atoi(a2), 0, 15)); return; }
+    else { int f = faceByName(a1); if (f < 0) { Serial.println(F("? 표정: eyes blink smile happy sad surprise heart up down left right x all off")); return; }
+           idleBlink = (f == F_EYES); setFace((Face)f); Serial.print(F("> 표정 ")); Serial.println(a1); return; }
+    EEPROM.update(EE_DOT_ADDR, 0xD0 | dotRot | (dotFlip << 2));
+    setFace(curFace == F_OFF ? F_UP : curFace);
+    Serial.print(F("> 도트 회전 ")); Serial.print(dotRot); Serial.print(F(", 거울 ")); Serial.println(dotFlip ? F("켬") : F("끔"));
+    return;
+  }
+  if (!strcmp(cmd, "z") && a1) {
+    if (a2) { tone(BUZZER, constrain(atoi(a1), 31, 8000), constrain(atoi(a2), 10, 3000)); Serial.println(F("> 삐")); return; }
+    int i = soundByName(a1);
+    if (i < 0) { Serial.println(F("? 소리: beep hello happy sad alarm ok song")); return; }
+    playSound(i); Serial.print(F("> 소리 ")); Serial.println(a1); return;
+  }
+  if (!strcmp(cmd, "mute"))   { soundOn = false; noTone(BUZZER); Serial.println(F("> 소리 끔")); return; }
+  if (!strcmp(cmd, "unmute")) { soundOn = true; playSound(0); Serial.println(F("> 소리 켬")); return; }
+  if (!strcmp(cmd, "dist"))   { uint16_t d = readCm(); Serial.print(F("거리 ")); Serial.print(d); Serial.println(d ? F("cm") : F("cm (반사 없음: 너무 멀거나 선 확인)")); return; }
+  if (!strcmp(cmd, "watch") && a1) { watchDist = !strcmp(a1, "on"); return; }
+  if (!strcmp(cmd, "mode") && a1) {
+    for (uint8_t i = 0; i < 4; i++) if (!strcmp(a1, MODE_NAMES[i])) {
+      senseMode = (SenseMode)i; clearQueue(); playSound(5);
+      Serial.print(F("> 센서 모드 ")); Serial.println(a1); return;
+    }
+    Serial.println(F("? mode off | guard | follow | react")); return;
+  }
+
+  if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { clearQueue(); home(); setFace(F_EYES); idleBlink = true; Serial.println(F("> 차렷")); }
   else if (!strcmp(cmd, "off"))  { curAct = ACT_HOME; detachAll(); Serial.println(F("> 서보 힘 뺌")); }
   else if (!strcmp(cmd, "i"))    identify();
   else if (!strcmp(cmd, "show")) show();
@@ -295,7 +405,7 @@ void handle(char* line) {
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode"));
 }
 
 void readSerial() {
@@ -317,16 +427,25 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   demoAuto = (EEPROM.read(EE_DEMO_ADDR) == EE_DEMO_ON);
   loadTrims();
+  uint8_t dv = EEPROM.read(EE_DOT_ADDR);
+  if ((dv & 0xF0) == 0xD0) { dotRot = dv & 3; dotFlip = dv & 4; }
+  extrasInit();
+  setFace(F_EYES);
   Serial.println(F("서보 하나씩 켜는 중..."));
   attachAll();   // lastAngle 초기값 90° → 차렷으로 하나씩 켜짐
   Serial.println(F("otto_nano_walk 준비. 'show'로 설정 확인, 'w'로 걷기"));
   Serial.println(demoAuto ? F("자동 데모 켬: 5초간 명령 없으면 시작 ('demo off'로 끔)")
                           : F("자동 데모 끔: 'demo on'으로 켬, 'd'로 바로 시작"));
   show();
+  playSound(1);   // hello
 }
 
 void loop() {
   readSerial();
   tickAction();
+  tickQueue();
   tickDemo();
+  tickSense();
+  tickSound();
+  tickBlink(curAct == ACT_HOME);
 }

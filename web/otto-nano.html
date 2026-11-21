@@ -34,6 +34,14 @@ input[type=range]{width:100%}
 #log{font:12px/1.4 ui-monospace,monospace;background:var(--bg);border-radius:8px;padding:8px;height:110px;overflow:auto;white-space:pre-wrap;margin:0}
 .send{display:flex;gap:8px}.send input{flex:1;min-width:0;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .send button{min-height:44px;padding:8px 14px}
+.faces{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.faces button{font-size:15px;min-height:48px;padding:8px 4px}
+.sounds button{background:#1f8a7a;color:#fff}
+.modes button{background:#8a5a1f;color:#fff}
+.modes button.on{outline:3px solid var(--ok)}
+h2{margin:0;font-size:16px;color:var(--muted)}
+#dist{font-size:28px;font-weight:800}
+#voice.on{background:var(--stop);color:#fff}
 </style>
 <main>
   <h1>오또 리모컨</h1>
@@ -64,6 +72,36 @@ input[type=range]{width:100%}
   </section>
 
   <section class="card">
+    <h2>표정 (도트)</h2>
+    <div class="faces">
+      <button data-c="e eyes">👀 눈</button><button data-c="e smile">🙂 웃음</button><button data-c="e happy">😆 신남</button><button data-c="e sad">😢 슬픔</button>
+      <button data-c="e surprise">😮 놀람</button><button data-c="e heart">❤ 하트</button><button data-c="e x">✖ 엑스</button><button data-c="e off">끄기</button>
+    </div>
+    <h2>소리 (부저)</h2>
+    <div class="faces sounds">
+      <button data-c="z beep">삐</button><button data-c="z hello">안녕</button><button data-c="z happy">신남</button><button data-c="z sad">슬픔</button>
+      <button data-c="z alarm">경고</button><button data-c="z ok">확인</button><button data-c="z song">노래</button><button data-c="mute">음소거</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>초음파 센서</h2>
+    <div class="row"><div>앞까지 거리 <span id="dist">-</span></div></div>
+    <div class="faces modes">
+      <button data-c="dist">한 번 재기</button><button id="watch">계속 재기</button>
+      <button data-mode="guard">장애물 피하기</button><button data-mode="follow">손 따라오기</button>
+      <button data-mode="react">손 대면 반응</button><button data-mode="off">센서 끔</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>말로 시키기 (크롬)</h2>
+    <button id="voice">🎤 말하기 시작</button>
+    <div style="font-size:13px;color:var(--muted)">예: "앞으로", "뒤로", "왼쪽", "오른쪽", "멈춰", "춤춰", "웃어", "하트", "인사해", "노래해", "따라와", "장애물 조심"</div>
+    <div id="heard" style="font-size:14px"></div>
+  </section>
+
+  <section class="card">
     <div class="set">
       <label>속도 (한 걸음 <b id="pv">1000</b>ms)<input id="p" type="range" min="600" max="2000" step="100" value="1000"></label>
       <label>보폭 <b id="av">100</b>%<input id="a" type="range" min="30" max="100" step="10" value="100"></label>
@@ -83,6 +121,8 @@ const $ = id => document.getElementById(id);
 let writeFn = null;
 const enc = new TextEncoder(), dec = new TextDecoder();
 
+let rxBuf='';
+function onText(t){ rxBuf+=t; let i; while((i=rxBuf.indexOf('\n'))>=0){ const line=rxBuf.slice(0,i).replace('\r',''); rxBuf=rxBuf.slice(i+1); log(line); const m=line.match(/거리 (\d+)cm/); if(m) $('dist').textContent=m[1]+' cm'; } }
 function log(s){ const l=$('log'); l.textContent += s; if(!s.endsWith('\n')) l.textContent+='\n'; l.scrollTop=l.scrollHeight; }
 function setStatus(t,on){ $('status').textContent=t; $('status').classList.toggle('on',!!on); }
 
@@ -102,7 +142,7 @@ $('bt').onclick = async () => {
       try{ const s=await gatt.getPrimaryService(b.svc); rxC=await s.getCharacteristic(b.rx); txC=await s.getCharacteristic(b.tx); break; }catch(e){}
     }
     if(!rxC){ setStatus('이 모듈에서 UART 서비스를 못 찾았어요. 클래식 블루투스(HC-05/06)일 수 있어요'); gatt.disconnect(); return; }
-    try{ await txC.startNotifications(); txC.addEventListener('characteristicvaluechanged', e=>log(dec.decode(e.target.value))); }catch(e){}
+    try{ await txC.startNotifications(); txC.addEventListener('characteristicvaluechanged', e=>onText(dec.decode(e.target.value,{stream:true}))); }catch(e){}
     writeFn = async data => { for(let i=0;i<data.length;i+=20){ const part=data.slice(i,i+20); rxC.writeValueWithoutResponse ? await rxC.writeValueWithoutResponse(part) : await rxC.writeValue(part); } };
     dev.addEventListener('gattserverdisconnected', ()=>{ writeFn=null; setStatus('연결 끊김'); });
     setStatus('블루투스 연결됨: '+(dev.name||'모듈'), true);
@@ -117,7 +157,7 @@ $('usb').onclick = async () => {
     const w = port.writable.getWriter();
     writeFn = d => w.write(d);
     setStatus('연결됨 (USB면 보드가 재시작해요, 2초 뒤 명령)', true);
-    (async()=>{ const r=port.readable.getReader(); try{ for(;;){ const {value,done}=await r.read(); if(done)break; log(dec.decode(value)); } }catch(e){} })();
+    (async()=>{ const r=port.readable.getReader(); try{ for(;;){ const {value,done}=await r.read(); if(done)break; onText(dec.decode(value,{stream:true})); } }catch(e){} })();
   }catch(e){ setStatus('연결 취소/실패: '+e.message); }
 };
 
@@ -126,5 +166,35 @@ $('p').oninput=e=>$('pv').textContent=e.target.value; $('p').onchange=e=>send('p
 $('a').oninput=e=>$('av').textContent=e.target.value; $('a').onchange=e=>send('a '+e.target.value);
 $('sendb').onclick=()=>{ const v=$('cmd').value.trim(); if(v){ send(v); $('cmd').value=''; } };
 $('cmd').onkeydown=e=>{ if(e.key==='Enter') $('sendb').click(); };
+
+// 센서 모드 버튼
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ send('mode '+b.dataset.mode); document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on', x===b && b.dataset.mode!=='off')); });
+let watching=false;
+$('watch').onclick=()=>{ watching=!watching; send('watch '+(watching?'on':'off')); $('watch').textContent=watching?'재기 멈춤':'계속 재기'; };
+
+// 음성 명령: 들은 문장에서 낱말을 찾아 명령으로 바꾼다 (크롬 음성 인식, 인터넷 필요)
+const VOICE = [
+  [/멈|정지|그만|스톱/, ['x']],
+  [/앞/, ['w 4']], [/뒤/, ['b 4']], [/왼/, ['l 3']], [/오른/, ['r 3']],
+  [/춤/, ['e happy','u 3','s 3']], [/문워크/, ['m 3']], [/까치발/, ['k 3']],
+  [/웃/, ['e smile']], [/하트|사랑/, ['e heart','z happy']], [/놀라/, ['e surprise','z alarm']], [/슬퍼|울어/, ['e sad','z sad']],
+  [/인사|안녕/, ['e happy','z hello']], [/노래/, ['z song']], [/거리/, ['dist']],
+  [/따라/, ['mode follow']], [/조심|장애물/, ['mode guard','w 6']], [/차렷/, ['h']],
+];
+async function runVoice(text){
+  for(const [re,cmds] of VOICE){ if(re.test(text)){ for(const c of cmds){ await send(c); await new Promise(r=>setTimeout(r,300)); } return true; } }
+  return false;
+}
+let rec=null;
+$('voice').onclick=()=>{
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ $('heard').textContent='이 브라우저는 음성 인식을 지원하지 않아요 (크롬 사용)'; return; }
+  if(rec){ rec.stop(); return; }
+  rec=new SR(); rec.lang='ko-KR'; rec.continuous=true; rec.interimResults=false;
+  rec.onresult=async e=>{ const t=e.results[e.results.length-1][0].transcript.trim(); const ok=await runVoice(t); $('heard').textContent='들은 말: "'+t+'"'+(ok?'':' → 아는 명령이 없어요'); };
+  rec.onend=()=>{ rec=null; $('voice').classList.remove('on'); $('voice').textContent='🎤 말하기 시작'; };
+  rec.onerror=e=>{ $('heard').textContent='음성 인식 오류: '+e.error; };
+  rec.start(); $('voice').classList.add('on'); $('voice').textContent='■ 듣는 중 (누르면 멈춤)';
+};
 </script>
 </html>

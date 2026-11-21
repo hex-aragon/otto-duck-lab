@@ -72,7 +72,7 @@ section{scroll-margin-top:12px}
   <p class="lead">이엘사이언스 오또봇2 키트 설명서 회로도, 보내 주신 쉴드 사진, 11/22 시험 결과를 한 장에 모았습니다. 왼쪽·오른쪽은 <b>로봇 자신</b> 기준입니다.</p>
 </header>
 <nav class="toc" aria-label="목차">
-  <a href="#status">지금 상태</a><a href="#power">전원</a><a href="#pins">핀 지도</a><a href="#circuit">회로 전체</a><a href="#place">몸 안 배치</a><a href="#outside">밖 배선</a><a href="#mount">부품 고정</a><a href="#dcjack">DC 잭 맞추기</a><a href="#mess">지금 선 정리</a><a href="#cables">선 정리 원칙</a><a href="#steps">조립 순서</a><a href="#trouble">문제 해결</a><a href="#buy">살 것</a>
+  <a href="#status">지금 상태</a><a href="#cando">할 수 있는 것</a><a href="#wireless">웹 블루투스</a><a href="#ai">AI 활용</a><a href="#nu40ready">누코드 준비</a><a href="#power">전원</a><a href="#pins">핀 지도</a><a href="#circuit">회로 전체</a><a href="#place">몸 안 배치</a><a href="#outside">밖 배선</a><a href="#mount">부품 고정</a><a href="#dcjack">DC 잭 맞추기</a><a href="#mess">지금 선 정리</a><a href="#cables">선 정리 원칙</a><a href="#steps">조립 순서</a><a href="#trouble">문제 해결</a><a href="#buy">살 것</a>
 </nav>
 <section class="card" id="status">
   <h2>지금 상태 (11/22 새벽)</h2>
@@ -80,8 +80,85 @@ section{scroll-margin-top:12px}
     <div><b class="ok">서보 4개 · 걷기</b>USB + 건전지면 앞·뒤·왼쪽·오른쪽 모두 재시작 없이 끝까지 동작 (로그 확인)</div>
     <div><b class="no">건전지만 걷기</b>서보가 움직이면 5V가 떨어져 보드와 블루투스가 꺼졌다 켜짐. 보조배터리로 해결 예정</div>
     <div><b class="warn">블루투스 JDY-31</b>모듈은 정상. 건전지만으로 서 있을 때 노트북 COM15 연결까지는 됨(00:5x). 명령 응답은 TX·RX 선을 확인해야 함</div>
-    <div><b class="warn">초음파 · 도트 · 부저</b>아래 핀 지도대로 꽂으면 코드를 붙임</div>
+    <div><b class="warn">초음파 · 도트 · 부저</b>코드 완성(컴파일 확인). 핀 지도대로 꽂고 USB로 올려 시험할 차례</div>
   </div>
+</section>
+<section class="card" id="cando">
+  <h2>오또로 할 수 있는 것 (누코드 붙이기 전, 지금 Nano 키트로)</h2>
+  <p>부품마다 맡은 일이 다릅니다. 서보는 <b>몸</b>, 도트는 <b>얼굴</b>, 부저는 <b>목소리</b>, 초음파는 <b>눈</b>, 블루투스는 <b>귀</b>입니다. 이 다섯 가지를 섞으면 "보고, 반응하고, 표현하는" 로봇이 됩니다.</p>
+  <div class="wide">
+  <svg viewBox="0 0 900 300" role="img" aria-label="오또 부품 역할: 초음파는 눈, 블루투스는 귀, 도트는 얼굴, 부저는 목소리, 서보는 몸. 가운데 Nano가 판단">
+    <rect x="360" y="110" width="180" height="80" rx="12" fill="var(--nano)"/>
+    <text x="450" y="145" text-anchor="middle" class="w" font-weight="700">Nano (뇌)</text>
+    <text x="450" y="168" text-anchor="middle" class="w" font-size="12">규칙대로 판단</text>
+    <g font-size="14">
+      <rect x="30" y="30" width="230" height="70" rx="10" fill="var(--chip)"/><text x="145" y="58" text-anchor="middle" font-weight="700" style="fill:#7a52c7">초음파 = 눈</text><text x="145" y="80" text-anchor="middle" font-size="12">앞까지 거리 (2~400cm)</text>
+      <rect x="30" y="200" width="230" height="70" rx="10" fill="var(--chip)"/><text x="145" y="228" text-anchor="middle" font-weight="700" style="fill:#24407a">블루투스 · USB = 귀</text><text x="145" y="250" text-anchor="middle" font-size="12">리모컨 · 음성 · AI 명령</text>
+      <rect x="640" y="20" width="230" height="70" rx="10" fill="var(--chip)"/><text x="755" y="48" text-anchor="middle" font-weight="700" style="fill:var(--no)">도트 = 얼굴</text><text x="755" y="70" text-anchor="middle" font-size="12">표정 · 화살표 · 하트</text>
+      <rect x="640" y="115" width="230" height="70" rx="10" fill="var(--chip)"/><text x="755" y="143" text-anchor="middle" font-weight="700" style="fill:#14a37a">부저 = 목소리</text><text x="755" y="165" text-anchor="middle" font-size="12">삐 · 인사 · 경고 · 노래</text>
+      <rect x="640" y="210" width="230" height="70" rx="10" fill="var(--chip)"/><text x="755" y="238" text-anchor="middle" font-weight="700" style="fill:#e8892b">서보 4개 = 몸</text><text x="755" y="260" text-anchor="middle" font-size="12">걷기 · 돌기 · 춤</text>
+    </g>
+    <g stroke="var(--muted)" stroke-width="2" fill="none">
+      <path d="M260 65 C320 70 340 110 360 130"/><path d="M260 235 C320 230 340 190 360 170"/>
+      <path d="M540 130 C580 100 600 60 640 55"/><path d="M540 150 L640 150"/><path d="M540 170 C580 200 600 240 640 245"/>
+    </g>
+  </svg>
+  </div>
+  <h3>부저는 무엇을 하나</h3>
+  <p>전기 신호를 받아 <b>소리를 내는 작은 스피커</b>입니다. 오또에서는 로봇의 "목소리"입니다. 켜질 때 "삐빅" 인사, 장애물을 보면 경고음, 춤출 때 짧은 노래를 냅니다. 사람이 화면을 안 봐도 로봇 상태를 알 수 있게 해 주고, 데모에서 반응이 바로 느껴집니다. 부저가 없어도 다른 기능은 다 됩니다.</p>
+  <h3>단계별로 해 볼 것</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>단계</th><th>해 볼 것</th><th>쓰는 부품</th><th>명령 / 방법</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>걷기 · 돌기 · 춤 5가지</td><td>서보</td><td><code>w b l r</code> · <code>u s m k</code></td><td><span class="pill ok">됨</span></td></tr>
+      <tr><td>2</td><td>표정 바꾸기, 가만히 있으면 눈 깜빡임</td><td>도트</td><td><code>e smile</code> <code>e heart</code> … · 걸으면 웃음, 돌면 화살표 자동</td><td><span class="pill warn">코드 완성, 시험 전</span></td></tr>
+      <tr><td>3</td><td>소리 · 노래</td><td>부저</td><td><code>z hello</code> <code>z song</code> <code>z 880 300</code> · <code>mute</code></td><td><span class="pill warn">코드 완성, 시험 전</span></td></tr>
+      <tr><td>4</td><td>거리 재기</td><td>초음파</td><td><code>dist</code> · <code>watch on</code></td><td><span class="pill warn">코드 완성, 시험 전</span></td></tr>
+      <tr><td>5</td><td>장애물 피하기: 걷다가 15cm 안에 막히면 놀라고 뒤로 → 왼쪽</td><td>초음파 + 서보 + 도트 + 부저</td><td><code>mode guard</code> 후 <code>w 8</code></td><td><span class="pill warn">시험 전</span></td></tr>
+      <tr><td>6</td><td>손 따라오기: 손이 가까우면 뒤로, 조금 멀면 앞으로</td><td>초음파 + 서보</td><td><code>mode follow</code></td><td><span class="pill warn">시험 전</span></td></tr>
+      <tr><td>7</td><td>손 대면 반응: 10cm 안에 손 → 놀란 얼굴 + 인사 + 춤</td><td>전부</td><td><code>mode react</code></td><td><span class="pill warn">시험 전</span></td></tr>
+      <tr><td>8</td><td>웹 리모컨: 방향 · 춤 · 표정 · 소리 · 센서 모드 버튼</td><td>블루투스 / USB</td><td><code>web/otto-nano.html</code></td><td><span class="pill warn">버튼 추가, 시험 전</span></td></tr>
+      <tr><td>9</td><td>말로 시키기: "앞으로", "춤춰", "웃어", "따라와"</td><td>노트북·폰 크롬 음성 인식</td><td>웹 리모컨 🎤 버튼</td><td><span class="pill warn">추가, 시험 전</span></td></tr>
+      <tr><td>10</td><td>자동 데모: 켜면 혼자 걷고 돌고 춤 (표정 · 소리 포함)</td><td>전부</td><td><code>demo on</code></td><td><span class="pill ok">됨 (전원 조건)</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section class="card" id="wireless">
+  <h2>웹 블루투스로 조종하려면</h2>
+  <p>지금 모듈 JDY-31은 <b>예전 방식(클래식) 블루투스</b>라서 폰 크롬의 "웹 블루투스"로는 연결되지 않습니다. 노트북에서 페어링한 뒤 COM 포트로는 됩니다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>방법</th><th>폰 크롬</th><th>노트북 크롬</th><th>필요한 것</th></tr></thead>
+    <tbody>
+      <tr><td>JDY-31 (지금)</td><td>안 됨</td><td>됨 (COM15, "노트북 연결")</td><td>없음</td></tr>
+      <tr><td><b>BLE 모듈 HM-10 / BT05로 교체</b></td><td><b>됨</b> ("BLE 연결")</td><td>됨</td><td>모듈 몇천 원, 같은 4핀 자리에 그대로</td></tr>
+      <tr><td>누코드 NU40</td><td>됨 (보드에 BLE 내장)</td><td>됨</td><td>보드 이전 작업 (아래 체크리스트)</td></tr>
+    </tbody>
+  </table></div>
+  <p>웹 리모컨은 세 가지를 이미 다 지원합니다(HM-10 계열 FFE0, NU40의 Nordic UART). 명령 글자도 Nano와 NU40이 같게 맞춰 두었으니, 보드를 바꿔도 리모컨은 그대로 씁니다.</p>
+</section>
+<section class="card" id="ai">
+  <h2>AI 활용: 쉬운 것부터</h2>
+  <div class="steps">
+    <div><h3>음성 명령 (지금 가능)</h3><p>크롬 음성 인식이 말을 글자로 바꾸고, 리모컨이 낱말을 찾아 명령으로 바꿉니다. 키나 돈이 들지 않습니다. 웹 리모컨 🎤 버튼.</p></div>
+    <div><h3>자연어 명령 (다음)</h3><p>"앞으로 세 걸음 가서 웃으면서 인사해" 같은 문장을 Claude 같은 언어 모델이 <code>w 3 → e smile → z hello</code> 순서로 바꿔 보냅니다. API 키가 필요하고, 키는 각자 브라우저에만 넣습니다.</p></div>
+    <div><h3>손동작 · 카메라 (다음)</h3><p>노트북 카메라로 손 모양을 알아보는 모델(브라우저에서 도는 TensorFlow.js, Teachable Machine)을 학습시켜 ✋=멈춤, 👉=오른쪽처럼 조종합니다.</p></div>
+    <div><h3>TinyML (NU40 이후)</h3><p>NU40의 IMU로 기울기를 재서 "서 있음 · 걷기 · 넘어짐"을 보드 안에서 분류하고, 넘어지면 바로 멈춥니다. 코드 틀은 <code>firmware/otto_nu40</code>에 있습니다.</p></div>
+  </div>
+</section>
+<section class="card" id="nu40ready">
+  <h2>누코드 꽂기만 하면 되게: 준비 상태</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>항목</th><th>지금</th><th>NU40에서 할 일</th></tr></thead>
+    <tbody>
+      <tr><td>걸음 계산</td><td><code>gait.h</code> 하나를 두 펌웨어가 같이 씀</td><td>그대로</td></tr>
+      <tr><td>명령 글자</td><td><code>w b l r u s m k x h</code> 같음</td><td>도트 · 부저 · 센서 명령(<code>e z dist mode</code>)을 NU40에도 추가</td></tr>
+      <tr><td>도트 · 부저 · 초음파</td><td><code>extras.h</code>에 모음, 핀 번호만 위에 있음</td><td>핀 번호만 바꿔 복사. <b>초음파 Echo는 5V라 저항 분압 필요</b> (NU40은 3.3V)</td></tr>
+      <tr><td>무선</td><td>JDY-31 (노트북만)</td><td>BLE 내장 → 폰 크롬 바로 연결</td></tr>
+      <tr><td>서보 전원</td><td>쉴드 5V (모자람)</td><td>5V 3A 강압 모듈(UBEC)로 따로. 보드 3.3V로 서보를 돌리지 않기</td></tr>
+      <tr><td>핀 위치</td><td>Nano 쉴드 기준</td><td>NU40 DK 헤더에서 P0.02~ 실제 위치 확인 (코드에 "확인 필요"로 표시)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">솔직히 "꽂기만 하면" 되려면 위의 전원(UBEC)과 Echo 분압 두 가지 배선은 꼭 필요합니다. 나머지는 코드에서 핀 번호만 바꾸면 되도록 정리해 두었습니다.</p>
 </section>
 <section class="card" id="power">
   <h2>전원: 건전지 + 보조배터리</h2>
