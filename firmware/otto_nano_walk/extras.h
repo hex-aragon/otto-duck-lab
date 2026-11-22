@@ -149,6 +149,16 @@ static uint16_t readCm() {
   return us ? (uint16_t)(us / 58) : 0;
 }
 
+// 진단용: 아무 핀 두 개로 한 번 재기 (Trig/Echo가 바뀌었는지 확인)
+static uint16_t readCmPins(uint8_t trig, uint8_t echo) {
+  pinMode(trig, OUTPUT); pinMode(echo, INPUT);
+  digitalWrite(trig, LOW); delayMicroseconds(2);
+  digitalWrite(trig, HIGH); delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  unsigned long us = pulseIn(echo, HIGH, 30000UL);
+  return us ? (uint16_t)(us / 58) : 0;
+}
+
 static void extrasInit() {
   pinMode(US_TRIG, OUTPUT); pinMode(US_ECHO, INPUT);
   pinMode(BUZZER, OUTPUT);

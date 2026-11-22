@@ -28,6 +28,7 @@
  *   e rot <0~3>  도트를 90°씩 돌림 (거꾸로 붙였을 때)     e flip  좌우 거울     e bright <0~15>
  *   z <소리>     부저: beep hello happy sad alarm ok song      z <Hz> <ms>  직접 음 내기
  *   mute / unmute 소리 끄기 / 켜기
+ *   test         도트·부저·초음파 자동 점검 (초음파 선이 바뀌었는지도 알려 줌)
  *   dist         초음파 거리(cm) 한 번 출력            watch on|off  0.5초마다 거리 출력
  *   mode <이름>  센서 행동: off(기본) guard(걷다가 앞에 막히면 멈추고 돌아섬)
  *                follow(손을 따라 앞뒤로) react(손을 가까이 대면 놀라고 춤)
@@ -369,6 +370,30 @@ void handle(char* line) {
     int i = soundByName(a1);
     if (i < 0) { Serial.println(F("? 소리: beep hello happy sad alarm ok song")); return; }
     playSound(i); Serial.print(F("> 소리 ")); Serial.println(a1); return;
+  }
+  if (!strcmp(cmd, "test")) {   // 도트 · 부저 · 초음파 자동 점검
+    Serial.println(F("[점검 1] 도트: 전부 켜기 2초 → 웃음 → 하트"));
+    setFace(F_ALL); delay(2000); setFace(F_SMILE); delay(1500); setFace(F_HEART); delay(1500);
+    Serial.println(F("[점검 2] 부저: 낮은 삐 → 높은 삐 → 1초 길게"));
+    tone(BUZZER, 500, 300); delay(500); tone(BUZZER, 2000, 300); delay(500); tone(BUZZER, 1000, 1000); delay(1200);
+    Serial.println(F("[점검 3] 초음파: 센서 앞 20cm쯤에 손을 대고 있으세요"));
+    delay(1500);
+    uint8_t ok = 0, swapped = 0; uint16_t last = 0, lastSw = 0;
+    for (uint8_t k = 0; k < 5; k++) {
+      uint16_t d = readCmPins(US_TRIG, US_ECHO); if (d) { ok++; last = d; } delay(60);
+      uint16_t e = readCmPins(US_ECHO, US_TRIG); if (e) { swapped++; lastSw = e; } delay(60);
+    }
+    pinMode(US_TRIG, OUTPUT); pinMode(US_ECHO, INPUT);
+    pinMode(US_ECHO, INPUT_PULLUP); delay(2); bool echoIdle = digitalRead(US_ECHO); pinMode(US_ECHO, INPUT);
+    Serial.print(F("  정상 배선으로 잰 횟수 ")); Serial.print(ok); Serial.print(F("/5, 마지막 ")); Serial.print(last); Serial.println(F("cm"));
+    Serial.print(F("  Trig·Echo 바꿔서 잰 횟수 ")); Serial.print(swapped); Serial.print(F("/5, 마지막 ")); Serial.print(lastSw); Serial.println(F("cm"));
+    if (ok) Serial.println(F("  → 초음파 정상"));
+    else if (swapped) Serial.println(F("  → Trig와 Echo 선이 서로 바뀜: 8번 줄 S와 9번 줄 S의 선을 맞바꾸세요"));
+    else Serial.println(echoIdle ? F("  → 반응 없음: 초음파 VCC(8번 줄 V)·GND(9번 줄 G) 선, 핀 4개 순서를 확인하세요")
+                                 : F("  → 반응 없음: 센서 전원·선 확인"));
+    setFace(F_EYES);
+    Serial.println(F("[점검 끝]"));
+    return;
   }
   if (!strcmp(cmd, "mute"))   { soundOn = false; noTone(BUZZER); Serial.println(F("> 소리 끔")); return; }
   if (!strcmp(cmd, "unmute")) { soundOn = true; playSound(0); Serial.println(F("> 소리 켬")); return; }
