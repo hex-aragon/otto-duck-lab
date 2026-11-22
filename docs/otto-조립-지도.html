@@ -129,11 +129,26 @@ section{scroll-margin-top:12px}
   <div class="tbl"><table>
     <thead><tr><th>방법</th><th>폰 크롬</th><th>노트북 크롬</th><th>필요한 것</th></tr></thead>
     <tbody>
-      <tr><td>JDY-31 (지금)</td><td>안 됨</td><td>됨 (COM15, "노트북 연결")</td><td>없음</td></tr>
+      <tr><td>JDY-31 (지금) + 노트북 크롬</td><td>-</td><td>됨 (COM15, "노트북 연결")</td><td>없음</td></tr>
+      <tr><td><b>JDY-31 (지금) + 안드로이드 앱</b></td><td><b>됨</b> (웹 아닌 앱: Serial Bluetooth Terminal, 버튼에 명령 등록)</td><td>-</td><td>앱 설치만 (무료)</td></tr>
       <tr><td><b>BLE 모듈 HM-10 / BT05로 교체</b></td><td><b>됨</b> ("BLE 연결")</td><td>됨</td><td>모듈 몇천 원, 같은 4핀 자리에 그대로</td></tr>
       <tr><td>누코드 NU40</td><td>됨 (보드에 BLE 내장)</td><td>됨</td><td>보드 이전 작업 (아래 체크리스트)</td></tr>
     </tbody>
   </table></div>
+  <h3>안드로이드 앱 버튼 등록 (Serial Bluetooth Terminal → 아래 M1~M14 버튼을 길게 눌러 값 입력)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>버튼</th><th>이름</th><th>값</th><th>버튼</th><th>이름</th><th>값</th></tr></thead>
+    <tbody>
+      <tr><td>M1</td><td>앞</td><td><code>w 4</code></td><td>M8</td><td>문워크</td><td><code>m 3</code></td></tr>
+      <tr><td>M2</td><td>뒤</td><td><code>b 4</code></td><td>M9</td><td>웃음</td><td><code>e smile</code></td></tr>
+      <tr><td>M3</td><td>왼쪽</td><td><code>l 3</code></td><td>M10</td><td>하트</td><td><code>e heart</code></td></tr>
+      <tr><td>M4</td><td>오른쪽</td><td><code>r 3</code></td><td>M11</td><td>인사</td><td><code>z hello</code></td></tr>
+      <tr><td>M5</td><td>멈춤</td><td><code>x</code></td><td>M12</td><td>노래</td><td><code>z song</code></td></tr>
+      <tr><td>M6</td><td>위아래</td><td><code>u 3</code></td><td>M13</td><td>반응 모드</td><td><code>mode react</code></td></tr>
+      <tr><td>M7</td><td>흔들기</td><td><code>s 3</code></td><td>M14</td><td>데모</td><td><code>d</code></td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead">앱 설정: Settings → Send → Newline을 <b>LF</b>로. 폰 블루투스에서 JDY-31-SPP를 먼저 페어링(PIN 1234)하고, 노트북 웹 리모컨 연결은 끊어 둡니다(모듈은 한 곳하고만 연결).</p>
   <p>웹 리모컨은 세 가지를 이미 다 지원합니다(HM-10 계열 FFE0, NU40의 Nordic UART). 명령 글자도 Nano와 NU40이 같게 맞춰 두었으니, 보드를 바꿔도 리모컨은 그대로 씁니다.</p>
 </section>
 <section class="card" id="ai">
