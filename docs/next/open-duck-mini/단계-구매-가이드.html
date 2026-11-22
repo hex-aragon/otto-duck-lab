@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>오픈미니덕 v2 구매 순서</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 레이아웃: 작업대 위 "빌드 시트" — 위에서 아래로 단계가 이어지는 한 줄 흐름, 각 단계는 관문(게이트)으로 끊김 */
+:root{
+  --bg:#f5f6f3; --paper:#ffffff; --ink:#1d2324; --muted:#5d6869; --line:#d9ddd8;
+  --duck:#e3a008; --duck-soft:#fff4d6; --duck-ink:#7a5400;
+  --ok:#2f7d4f; --ok-soft:#e3f2e8; --warn:#b5541b; --warn-soft:#fbe9dd; --stop:#b3261e; --stop-soft:#fbe4e2;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --ok:#6cc58f; --ok-soft:#173226; --warn:#f0965c; --warn-soft:#3a2416; --stop:#f2857d; --stop-soft:#3b1b19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --ok:#6cc58f; --ok-soft:#173226; --warn:#f0965c; --warn-soft:#3a2416; --stop:#f2857d; --stop-soft:#3b1b19; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:1.9rem;font-weight:700}
+h2{font-size:1.3rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+section{display:flex;flex-direction:column;gap:16px}
+a{color:var(--duck-ink)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--duck);outline-offset:2px}
+
+/* 헤더 */
+header{display:flex;flex-direction:column;gap:10px}
+header .lede{color:var(--muted);max-width:62ch}
+
+/* 정답 박스 */
+.answer{background:var(--duck-soft);border:1px solid var(--duck);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.answer h2{color:var(--duck-ink)}
+.cart{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0;padding:0;list-style:none}
+.cart li{display:contents}
+.cart .n{min-width:0}
+.cart .p{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.cart .total{border-top:1px solid var(--duck);padding-top:8px;font-weight:700}
+.small{font-size:.86rem;color:var(--muted)}
+
+/* 발견 */
+.finds{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.find{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.find .k{font-family:var(--f-mono);font-size:.8rem;color:var(--duck-ink)}
+
+/* 단계 흐름 */
+.flow{display:flex;flex-direction:column;gap:0}
+.stage{display:grid;grid-template-columns:56px 1fr;gap:0 16px}
+.rail{display:flex;flex-direction:column;align-items:center}
+.dot{width:44px;height:44px;border-radius:50%;background:var(--paper);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:1.05rem}
+.stage.now .dot{background:var(--duck);border-color:var(--duck);color:#1d2324}
+.rail .bar{flex:1;width:2px;background:var(--line);min-height:24px}
+.body{padding-bottom:22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.body .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.cost{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.9rem;color:var(--muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.box h4{margin:0 0 6px;font-size:.8rem;font-family:var(--f-mono);letter-spacing:.06em;color:var(--muted);font-weight:600}
+.box ul,.box ol{margin:0;padding-left:1.15em}
+.box li+li{margin-top:3px}
+.gate{display:flex;flex-direction:column;gap:6px;border-left:3px solid var(--ink);padding:8px 12px;background:var(--paper);border-radius:0 8px 8px 0}
+.gate .t{font-family:var(--f-mono);font-size:.8rem;letter-spacing:.06em}
+.pill{display:inline-block;font-size:.78rem;font-weight:700;padding:1px 8px;border-radius:99px;margin-right:6px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.stop{background:var(--stop-soft);color:var(--stop)}
+
+/* 표 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* 체크리스트 */
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-weight:600;width:26px;height:26px;border-radius:6px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:.85rem;margin-top:1px}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
+.warnbox{background:var(--warn-soft);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.warnbox ul{margin:0;padding-left:1.15em}
+.src{font-size:.85rem;color:var(--muted)}
+.src ul{margin:6px 0 0;padding-left:1.15em}
+.src li{overflow-wrap:anywhere}
+@media (max-width:620px){
+  .cols{grid-template-columns:1fr}
+  .stage{grid-template-columns:40px 1fr;gap:0 12px}
+  .dot{width:34px;height:34px;font-size:.9rem}
+  h1{font-size:1.55rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Open Duck Mini v2 · 2026-11-22 조사</span>
+  <h1>오픈미니덕 v2, 뭐부터 사서 시험할까</h1>
+  <p class="lede">모터 14개를 한꺼번에 사지 않습니다. <b>모터 2개로 속도를 먼저 재고</b>, 통과하면 나머지를 삽니다. 실패하면 손해는 1단계 비용에서 끝납니다.</p>
+</header>
+
+<div class="answer">
+  <h2>이번 주에 살 것 (1단계 장바구니)</h2>
+  <ul class="cart">
+    <li><span class="n">Feetech STS3215 <b>C001</b> (7.4V · 1:345) × 2 — 국내 판매처</span><span class="p">약 86,000원</span></li>
+    <li><span class="n">Waveshare Bus Servo Adapter (A) — USB 데이터 케이블 포함 확인</span><span class="p">약 10,000원</span></li>
+    <li><span class="n">밀폐형 가변 벤치 전원 (전압 조절 · <b>전류 제한</b> · 5A급)</span><span class="p">가격 확인 필요</span></li>
+    <li><span class="n">5264-3P 서보 케이블 여분 · XH/WAGO 단자 (듀폰선 쓰지 않기)</span><span class="p">소액</span></li>
+    <li class="total"><span class="n total">합계 (전원 제외)</span><span class="p total">약 10만 원</span></li>
+  </ul>
+  <p class="small">국내에서 사는 이유는 <b>빨리 시험하기 위해서</b>입니다. 알리 Feetech 공식 스토어가 절반 가격이지만 배송이 1~3주 걸립니다. 국내 가격은 11/4~6에 판매 페이지에 표시된 값이고, 이번 검색에서는 엘레파츠 상품 페이지를 다시 찾지 못했습니다. 주문 전에 재고를 확인하세요. 라즈베리파이, IMU, 게임패드, 배터리는 <b>아직 사지 않습니다.</b> 모터 설정은 PC에서 하면 됩니다.</p>
+</div>
+
+<section>
+  <h2>이번 조사에서 새로 알게 된 것</h2>
+  <div class="finds">
+    <div class="find">
+      <span class="k">모터가 느린 이유 (가장 중요)</span>
+      <p>공장 설정에서 <b>레지스터 85(최대 가속도)가 50</b>으로 되어 있어 서보가 시뮬레이션보다 약 3배 느렸다는 제작 기록이 있습니다. 14개를 모두 <b>0</b>으로 바꾸자 지연이 200ms에서 80ms로 줄었다고 합니다. 이슈 #48의 "2.7 rad/s" 문제와 맞닿아 있습니다.</p>
+      <p class="small">공식 확인은 아직 없습니다. 바꾸기 전에 반드시 백업하세요.</p>
+    </div>
+    <div class="find">
+      <span class="k">국내 제작자의 실제 구매가</span>
+      <p>서울에서 같은 오리를 만드는 사람이 C001 15개를 알리에서 <b>개당 19,094원</b>(합계 289,098원)에 샀습니다. 주문 3번의 총액은 <b>약 46만 원</b>이었습니다. 11/6에 잡은 예산(160만 원)의 1/3 수준입니다.</p>
+    </div>
+    <div class="find">
+      <span class="k">8.4V 전압 문제</span>
+      <p>새 서보는 <b>최대 입력 전압 설정이 80(8.0V)</b>으로 되어 있어, 완충된 2S 배터리(8.4V)에서 보호 기능이 걸릴 수 있습니다. 한 제작자는 이 값을 90으로 바꿔 썼습니다.</p>
+    </div>
+    <div class="find">
+      <span class="k">IMU · 보드 함정</span>
+      <p>파이의 하드웨어 I2C로 BNO055를 읽으면 약 25%가 깨져서 들어왔고, 소프트웨어 I2C(<code>i2c-gpio</code>)로 바꾸자 0%가 됐다는 기록이 있습니다. 서보 보드는 <b>전원이 켜진 채 선을 꽂다가</b> 망가진 사례가 있습니다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>단계와 관문</h2>
+  <p class="small">각 관문을 통과해야 다음 돈을 씁니다. 금액은 추정이며 해외 직구 기준(알리 Feetech 공식 스토어)입니다.</p>
+
+  <div class="flow">
+
+    <div class="stage">
+      <div class="rail"><div class="dot">0</div><div class="bar"></div></div>
+      <div class="body">
+        <div class="head"><h3>돈 안 쓰고 할 일 (오늘)</h3><span class="cost">0원</span></div>
+        <div class="box"><ul>
+          <li><b>가천메이커스 3D 출력 지원 문의:</b> 11/30 마감 공지가 있었습니다. 개인 목적도 되는지, 수량, TPU 출력 여부를 물어보세요</li>
+          <li>PC에서 공개 정책(<code>BEST_WALK_ONNX_2.onnx</code>) MuJoCo 시뮬레이션 실행. 추론만 하므로 엔비디아 그래픽카드가 없어도 됩니다</li>
+          <li>Windows에 Feetech <b>FD 디버깅 프로그램</b> 설치. 레지스터를 화면에서 읽고 쓸 수 있습니다</li>
+          <li>디스코드 가입, 이슈 #48 흐름 지켜보기</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="stage now">
+      <div class="rail"><div class="dot">1</div><div class="bar"></div></div>
+      <div class="body">
+        <div class="head"><h3>모터 2개 속도 시험 (PC로)</h3><span class="cost">약 10만 원 + 전원</span></div>
+        <div class="cols">
+          <div class="box"><h4>살 것</h4><ul><li>C001 × 2 (국내, 빨리)</li><li>Waveshare 어댑터 (A)</li><li>벤치 전원</li></ul></div>
+          <div class="box"><h4>할 것</h4><ul><li>ID 설정, 레지스터 전체 백업</li><li>공장 설정으로 속도 측정</li><li>레지스터 85 = 0으로 바꾸고 다시 측정</li><li>전류 기록</li></ul></div>
+        </div>
+        <div class="gate">
+          <span class="t">관문 1 · 무부하 속도 (사양 52rpm ≈ 5.4 rad/s, 학습 값 5.24)</span>
+          <span><span class="pill ok">통과</span>5 rad/s 근처 → 바로 2단계 주문</span>
+          <span><span class="pill warn">보류</span>3~4 rad/s → 전압 · 레지스터 41 · 46 확인, 디스코드에 값 공유</span>
+          <span><span class="pill stop">멈춤</span>설정을 바꿔도 2.7 근처 → 나머지 주문 보류, 다른 기어비 검토 (재학습이 필요할 수 있음)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="rail"><div class="dot">2</div><div class="bar"></div></div>
+      <div class="body">
+        <div class="head"><h3>다리 하나 받침대 시험 (모터 5개)</h3><span class="cost">모터 13개 약 25만 원 · 파이 약 3~7만 원 · 출력물</span></div>
+        <div class="cols">
+          <div class="box"><h4>살 것</h4><ul>
+            <li><b>C001 × 13 (나머지 12 + 예비 1), 알리 Feetech 공식</b>. 관문 1을 통과하면 남은 위험은 모터 수량과 상관없으므로 한 번에 주문해 기다리는 시간을 줄입니다</li>
+            <li>Raspberry Pi Zero 2 W. 갖고 있는 Pi 4·5로 시험을 먼저 해도 됩니다</li>
+            <li>다리 하나 분량 출력물, 발 스위치, 나사</li>
+          </ul></div>
+          <div class="box"><h4>할 것</h4><ul>
+            <li>조립 <b>전에</b> 모터마다 ID 설정, 영점 위치에서 혼 끼우기</li>
+            <li>기본 자세로 천천히 이동, 5분 동안 굽혔다 펴기</li>
+            <li>파이에서 ONNX 추론 1회 시간 측정</li>
+          </ul></div>
+        </div>
+        <div class="gate">
+          <span class="t">관문 2</span>
+          <span><span class="pill ok">통과</span>걸림 · 과열 · 출력물 깨짐 없음, 추론 20ms 이내, 다리 하나 전류 기록</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="rail"><div class="dot">3</div><div class="bar"></div></div>
+      <div class="body">
+        <div class="head"><h3>전신 조립 (14관절)</h3><span class="cost">IMU 약 1.3만 원 · 전원 부품 약 3~5만 원 · 나머지 출력물</span></div>
+        <div class="cols">
+          <div class="box"><h4>살 것</h4><ul>
+            <li>BNO055. 호환품은 약 1.3만 원이고 칩 ID 0xA0을 확인하면 됩니다. Adafruit 정품은 약 7만 원</li>
+            <li>2S LiPo 배터리, BMS, XT30 커넥터, KCD1 스위치(비상 정지), 5V 3A UBEC(파이 전원)</li>
+            <li>밸런스 충전기 (가격 확인 필요)</li>
+          </ul></div>
+          <div class="box"><h4>할 것</h4><ul>
+            <li><code>check_motors.py</code>에서 14개 응답 확인</li>
+            <li>모터 전원과 파이 전원 분리</li>
+            <li>BNO055는 <code>i2c-gpio</code>로 연결</li>
+          </ul></div>
+        </div>
+        <div class="gate">
+          <span class="t">관문 3</span>
+          <span><span class="pill ok">통과</span>14개 모두 응답, 받침대에서 전 관절 기본 자세, 전압 처짐 기록</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="rail"><div class="dot">4</div></div>
+      <div class="body" style="padding-bottom:0">
+        <div class="head"><h3>걷기</h3><span class="cost">게임패드는 선택</span></div>
+        <div class="box"><ul>
+          <li><code>find_soft_offsets.py</code>로 영점 → IMU 축 확인 → 들고 실행 → 받쳐서 제자리 → 전진</li>
+          <li>제작 기록 참고값: 다리 P 게인 30 → 20 (바닥에서 5Hz로 떨림), 전진 0.05로는 발을 안 떼서 0.1, 40° 넘게 기울면 힘 끄기</li>
+          <li>목표: 받쳐 주지 않고 푹신한 바닥에서 1m</li>
+        </ul></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>국내에서 살까, 알리에서 살까</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>품목</th><th>국내</th><th>알리 · 해외</th><th>추천</th></tr></thead>
+    <tbody>
+      <tr><td>STS3215 C001</td><td class="num">43,120원 (엘레파츠, 11/4 표시)</td><td class="num">19,094원 (국내 제작자 구매가) · $16.76 (Feetech 공식 표시가)</td><td>1단계 2개만 국내, 나머지는 알리</td></tr>
+      <tr><td>ST3215 (DFRobot)</td><td class="num">28,380원 (아이씨뱅큐)</td><td>—</td><td>C001과 같은 제품인지 미확인. 섞어 쓰지 않기</td></tr>
+      <tr><td>Waveshare 어댑터 (A)</td><td class="num">10,032원</td><td class="num">8,500원</td><td>국내 (1단계부터 필요)</td></tr>
+      <tr><td>BNO055</td><td class="num">71,400원 (Adafruit)</td><td class="num">약 12,500원 (호환품, 배송 포함)</td><td>호환품 (칩 ID 확인)</td></tr>
+      <tr><td>Pi Zero 2 W</td><td class="num">27,720원 (입고 예정 표시)</td><td class="num">약 70,000원</td><td>국내 재고가 있을 때</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">해외 직구는 한 번에 150달러가 넘으면 관세 · 부가세가 붙고, 같은 날 들어오는 물건은 합쳐서 계산된다고 국내 제작자가 적어 두었습니다. 모터 13개는 이 기준을 넘으므로 세금까지 넣어 비교하세요.</p>
+</section>
+
+<section>
+  <h2>1단계 시험 순서</h2>
+  <ol class="steps">
+    <li><span><b>서보 전원을 끈 상태에서만</b> 선을 꽂고 뺍니다. 전원이 켜진 채 꽂다가 보드가 망가진 사례가 있습니다.</span></li>
+    <li><span>벤치 전원을 <b>7.4V</b>, 전류 제한 2A 정도로 맞춥니다. 모터 2개, 무부하 기준입니다.</span></li>
+    <li><span>PC에 Runtime(<code>v2</code> 브랜치)을 설치하고 <code>configure_motor.py --id 22</code>, <code>--id 23</code>으로 ID를 하나씩 설정합니다.</span></li>
+    <li><span>FD 프로그램이나 스크립트로 <b>레지스터 전체를 파일로 백업</b>합니다. 펌웨어 버전도 기록합니다.</span></li>
+    <li><span>공장 설정 그대로 −90°에서 +90°로 명령하고, 위치를 빠르게 읽어 rad/s를 계산합니다. 3번 반복합니다.</span></li>
+    <li><span>레지스터 85를 <b>1바이트로</b> 0으로 씁니다. 2바이트로 쓰면 86번까지 덮어쓴다는 버그가 rustypot에서 고쳐졌습니다. 레지스터 41도 같이 써야 적용된다는 보고가 있습니다. 다시 측정합니다.</span></li>
+    <li><span>손으로 살짝 부하를 주며 전류를 기록합니다. 14개를 다 쓸 때 필요한 전원 용량을 어림하는 데 씁니다.</span></li>
+    <li><span>결과를 관문 1과 비교합니다. 측정값을 이슈 #48에 공유하면 다른 제작자에게도 도움이 됩니다.</span></li>
+  </ol>
+</section>
+
+<section>
+  <div class="warnbox">
+    <h3>아직 확인 못 한 것</h3>
+    <ul>
+      <li>레지스터 85 해결법은 제작자 한 명과 측정 자료 한 곳의 보고입니다. 공식 문서에는 없습니다.</li>
+      <li>EEPROM 잠금을 푸는 정확한 순서와, 바꾼 값이 전원을 껐다 켠 뒤에도 남는지는 펌웨어 버전별로 확인해야 합니다.</li>
+      <li>Waveshare 어댑터 (A) 사양표의 입력 전압이 9~12.6V로 적혀 있다는 지적이 있습니다. 다만 7.4V 서보와 이 보드로 실제로 걷는 사례가 있습니다.</li>
+      <li>벤치 전원, 밸런스 충전기의 국내 가격. Tnkr 키트 페이지는 이 작업 환경에서 열리지 않았습니다.</li>
+      <li>국내 가격은 11/4~6 표시값, 알리 가격은 조회 시점 값입니다. 견적이 아닙니다.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="src">
+  <h3>출처</h3>
+  <ul>
+    <li><a href="https://github.com/apirrone/Open_Duck_Mini/issues/48">Open_Duck_Mini 이슈 #48 (모터 속도)</a> · <a href="https://github.com/apirrone/Open_Duck_Mini/issues/51">#51 (전압)</a></li>
+    <li><a href="https://github.com/jyxddd/open-duck-mini-notes">jyxddd/open-duck-mini-notes</a> (레지스터 85, 최대 전압, I2C, 보행 설정)</li>
+    <li><a href="https://github.com/VatoLabs/STS3215_profile">VatoLabs/STS3215_profile</a> (레지스터 85 · 41 측정)</li>
+    <li><a href="https://github.com/pollen-robotics/rustypot/pull/129">rustypot PR #129</a> (레지스터 85는 1바이트)</li>
+    <li><a href="https://github.com/soyeon24/open-duck-mini-v2-build">soyeon24/open-duck-mini-v2-build</a> (국내 구매 내역)</li>
+    <li><a href="https://www.aliexpress.us/item/3256809795555647.html">AliExpress Feetech 공식 스토어 STS3215</a> · <a href="https://www.icbanq.com/P016771688">아이씨뱅큐 ST3215</a> · <a href="https://www.dfrobot.com/product-2961.html">DFRobot 사양 (52rpm@7.4V)</a></li>
+    <li><a href="https://github.com/apirrone/Open_Duck_Mini_Runtime/tree/v2">Open_Duck_Mini_Runtime v2</a></li>
+  </ul>
+</section>
+
+</div>
+
+</body></html>
