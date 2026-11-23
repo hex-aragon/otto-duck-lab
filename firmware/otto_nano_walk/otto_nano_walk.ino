@@ -22,7 +22,7 @@
  *   x            멈추고 차렷           off  서보 힘 빼기
  *   d            데모 바로 시작
  *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
- *   eco on|off   절전: 걸을 때만 도트 끄고 소리 멈춤 (EEPROM 저장, 기본 끔)
+ *   eco on|off   절전: 걸을 때 도트 끄고 소리 멈춤 + 차렷 2초 뒤 서보 힘 빼기 (EEPROM 저장, 기본 끔)
  *   dbg on|off   디버그 기록(#B #S #C #D 줄) 켜기/끄기 (EEPROM 저장, 기본 켬)   dbg reset  켠 횟수 0으로
  *                → 노트북 크롬에서 web/otto-debug.html로 열면 전압 그래프 · 재시작 표시 · 로그 저장
  *
@@ -125,6 +125,15 @@ void ecoSleep() {
   sndNotes = nullptr; noTone(BUZZER);
   ecoSleeping = true;
 }
+// 절전일 때 차렷으로 2초 가만히 있으면 서보 힘을 뺀다. 서 있는 자세는 기어가 버텨 준다.
+// 11/23 측정: 차렷으로 버티기만 해도 5V 최저가 4.77V → 4.15V(가끔 3.6V)로 떨어짐. 힘을 빼면 4.77V 유지.
+uint32_t homeSince = 0;
+void tickEcoRelax() {
+  if (!ecoOn || !attached || curAct != ACT_HOME || !homeSince) return;
+  if (millis() - homeSince < 2000) return;
+  detachAll(); homeSince = 0;
+  Serial.println(F("> 쉬는 중: 서보 힘 뺌 (eco, 다음 동작 때 다시 켬)"));
+}
 void ecoWake() {
   if (!ecoSleeping) return;
   dotWrite(0x0C, 1);
@@ -136,6 +145,7 @@ void home(uint16_t ms = 500) {
   float t[SERVO_COUNT] = { 90, 90, 90, 90 };
   moveTo(t, ms);
   curAct = ACT_HOME;
+  homeSince = millis();
 }
 
 // 진폭 비율 적용한 파라미터
@@ -382,7 +392,7 @@ void handle(char* line) {
 
   if (!strcmp(cmd, "eco")) {   // 걸을 때 도트·소리 끄기
     if (a1) { ecoOn = !strcmp(a1, "on"); EEPROM.update(EE_ECO_ADDR, ecoOn ? EE_ECO_ON : 0); if (!ecoOn) ecoWake(); }
-    Serial.println(ecoOn ? F("> 절전: 걸을 때 도트·소리 끔 (저장됨)") : F("> 절전 끔: 걸을 때도 도트·소리 켬 (저장됨)"));
+    Serial.println(ecoOn ? F("> 절전: 걸을 때 도트·소리 끔, 쉴 때 서보 힘 뺌 (저장됨)") : F("> 절전 끔: 걸을 때도 도트·소리 켬 (저장됨)"));
     return;
   }
   if (!strcmp(cmd, "dbg")) {   // 디버그 기록 켜기/끄기 (EEPROM 저장)
@@ -517,5 +527,6 @@ void loop() {
   tickSense();
   tickSound();
   tickBlink(curAct == ACT_HOME);
+  tickEcoRelax();
   tickDebug(curAct);
 }
