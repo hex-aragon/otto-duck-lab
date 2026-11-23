@@ -8,7 +8,9 @@
 //
 // 전압은 보드 5V(AVcc)를 내부 1.1V 기준으로 거꾸로 잰 값이다. 추가 배선이 필요 없다.
 // 최저 mV가 4300 아래로 떨어진 뒤 #B가 다시 나오면 → 전원 부족으로 재시작한 것.
-// rst 비트: 1=전원 켬, 2=리셋 버튼/외부, 4=저전압(BOD), 8=워치독. 0이면 부트로더가 지워서 알 수 없음.
+// rst 비트: 1=전원 켬, 4=저전압(BOD), 8=리셋 핀(버튼·USB 연결·업로드). 0이면 알 수 없음.
+//   optiboot는 리셋 핀으로 켜지면 부트로더를 돌고 워치독으로 앱을 시작하므로 8(WDRF)로 보인다.
+//   걷다가 재시작했는데 rst=4면 전원 부족, rst=8이면 리셋 핀에 잡음(선 흔들림·DTR)이 들어간 것.
 #pragma once
 #include <Arduino.h>
 #include <EEPROM.h>
@@ -57,8 +59,7 @@ void debugBoot() {
   Serial.print(F(" vcc=")); Serial.println(vccNow);
   Serial.print(F("켠 횟수 ")); Serial.print(boots); Serial.print(F(", 리셋 원인 "));
   if (rst & 0x04)      Serial.println(F("저전압(BOD)"));
-  else if (rst & 0x08) Serial.println(F("워치독"));
-  else if (rst & 0x02) Serial.println(F("리셋 버튼·USB 연결"));
+  else if (rst & 0x0A) Serial.println(F("리셋 핀(버튼·USB 연결·업로드)"));
   else if (rst & 0x01) Serial.println(F("전원 켬"));
   else                 Serial.println(F("모름(부트로더가 지움)"));
 }

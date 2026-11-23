@@ -168,6 +168,8 @@ function diagnoseBoot(m){
   if(gap!==null && gap>0.5) parts.push(`마지막 전압 기록 뒤 ${gap.toFixed(2)}초 동안 소식 없음`);
   let why;
   if(rst&4) why='보드가 "저전압(BOD)"으로 재시작했다고 알려 줌 → 전원 부족 확실';
+  else if(rst&8) why='리셋 핀으로 재시작(rst=8) → 전압 부족이 아니라 리셋 선에 잡음이 들어감: USB를 다시 꽂았거나, 쉴드·선이 흔들려 RST가 순간 눌림';
+  else if(rst&1) why='전원이 완전히 꺼졌다 켜짐(rst=1) → 건전지 접촉 불량·스위치·전원 선이 순간 끊김';
   else if(isFinite(winMin) && winMin<4300) why='전압이 4.3V 아래로 떨어진 뒤 재시작 → 서보 전류 때문에 전원이 버티지 못함(가장 유력)';
   else if(isFinite(winMin)) why='기록된 최저 전압은 괜찮았음 → 0.2초 사이 순간적으로 떨어졌거나(기록 간격보다 짧음), 선 접촉 불량·리셋 핀 문제 가능. v 값을 낮춰 다시 시험';
   else why='전압 기록이 없음 → 펌웨어에 debug.h가 들어갔는지, "dbg on" 했는지 확인';
