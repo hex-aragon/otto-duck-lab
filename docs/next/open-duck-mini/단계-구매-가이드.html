@@ -125,6 +125,17 @@ code{font-family:var(--f-mono);font-size:.88em;background:var(--bg);border:1px s
 </div>
 
 <section>
+  <h2>지금 바로 할 일</h2>
+  <ol class="steps">
+    <li><span><b>엘레파츠에 전화합니다</b> (1600-8749, 오래된 정보라 확인 필요). "STS3215 C001(7.4V · 1:345) 2개와 Waveshare Bus Servo Adapter (A) 재고가 있는지, 방문 수령은 언제 되는지" 물어봅니다.</span></li>
+    <li><span>재고가 있으면 <b>온라인으로 결제하고 가산에서 받아 옵니다.</b> 재고가 없으면 택배로 주문하거나 알리 Feetech 공식 스토어에 2개만 주문합니다(1~3주).</span></li>
+    <li><span><b>가천메이커스에 3D 출력 지원을 문의합니다</b> (11/30 마감 공지). 개인 목적도 되는지, 수량, TPU 출력이 되는지 묻습니다.</span></li>
+    <li><span>벤치 전원을 고릅니다. 밀폐형이고 전압을 조절하며 <b>전류 제한</b>이 되는 5A급이면 됩니다. 세운상가나 용산 계측기 매장에 가기 전에 전화로 확인하거나, 온라인으로 삽니다.</span></li>
+    <li><span>부품을 기다리는 동안 PC에 <b>Feetech FD 프로그램</b>과 Runtime(<code>v2</code> 브랜치)을 설치하고, 공개 정책 시뮬레이션을 돌려 봅니다.</span></li>
+  </ol>
+</section>
+
+<section>
   <h2>이번 조사에서 새로 알게 된 것</h2>
   <div class="finds">
     <div class="find">
@@ -260,6 +271,22 @@ code{font-family:var(--f-mono);font-size:.88em;background:var(--bg);border:1px s
 </section>
 
 <section>
+  <h2>오프라인으로 받을 수 있는 곳</h2>
+  <p class="small">Feetech 서보를 매장 진열대에 두고 파는 곳은 찾지 못했습니다. 가장 빠른 방법은 <b>온라인으로 주문한 뒤 매장에서 받아 오는 것</b>입니다.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>곳</th><th>주소</th><th>받는 방법</th><th>살 것</th></tr></thead>
+    <tbody>
+      <tr><td><b>엘레파츠</b></td><td>서울 금천구 서부샛길 606 대성디폴리스 지식산업센터 (가산디지털단지)</td><td>인터넷으로 미리 주문하고 방문. 평일 09~18시, 토 09~13시 (오래된 정보)</td><td>C001 서보, Waveshare 어댑터 (11/4 판매 페이지 기준, 재고 확인 필요)</td></tr>
+      <tr><td><b>디바이스마트 구로매장</b></td><td>서울 구로구 중앙유통단지 바동 3128호 (구로역 2번 출구)</td><td>현장 결제 중지. <b>미리 결제한 뒤에만 방문 수령</b>, 당일 수령 불가 (공식 FAQ)</td><td>파이, 공구, 전선류 (서보는 검색에서 안 보임)</td></tr>
+      <tr><td>디바이스마트 본사</td><td>인천 미추홀구 염전로 324, 1층</td><td>구로매장과 같음</td><td>구로매장과 같음</td></tr>
+      <tr><td>세운상가</td><td>선우전자, 태상전자(3층) 등. 서진전자(1층)는 도매 위주</td><td>매장에서 바로 구매</td><td>전선, XH · 5264 커넥터, 단자, 퓨즈, 스위치</td></tr>
+      <tr><td>용산 전자랜드</td><td>샘플전자, 동신전자 등</td><td>매장에서 바로 구매</td><td>세운상가와 같음</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">세운상가와 용산 매장 정보는 2018~2020년 무렵 자료입니다. 용산은 2024년 기준으로 공실이 많다는 기사도 있습니다. <b>가기 전에 전화로 영업 여부와 재고를 확인하세요.</b> 벤치 전원을 매장에서 파는지는 확인하지 못했습니다.</p>
+</section>
+
+<section>
   <h2>1단계 시험 순서</h2>
   <ol class="steps">
     <li><span><b>서보 전원을 끈 상태에서만</b> 선을 꽂고 뺍니다. 전원이 켜진 채 꽂다가 보드가 망가진 사례가 있습니다.</span></li>
@@ -296,6 +323,8 @@ code{font-family:var(--f-mono);font-size:.88em;background:var(--bg);border:1px s
     <li><a href="https://github.com/soyeon24/open-duck-mini-v2-build">soyeon24/open-duck-mini-v2-build</a> (국내 구매 내역)</li>
     <li><a href="https://www.aliexpress.us/item/3256809795555647.html">AliExpress Feetech 공식 스토어 STS3215</a> · <a href="https://www.icbanq.com/P016771688">아이씨뱅큐 ST3215</a> · <a href="https://www.dfrobot.com/product-2961.html">DFRobot 사양 (52rpm@7.4V)</a></li>
     <li><a href="https://github.com/apirrone/Open_Duck_Mini_Runtime/tree/v2">Open_Duck_Mini_Runtime v2</a></li>
+    <li><a href="https://www.devicemart.co.kr/service/cs">디바이스마트 고객센터</a> · <a href="https://www.devicemart.co.kr/goods/brand?code=0944">디바이스마트 구로매장</a> · <a href="https://pf.kakao.com/_ExikeK">엘레파츠 카카오채널</a> · <a href="https://www.localview.co.kr/store/detail.asp?seq=102069037">엘레파츠 지역 정보</a></li>
+    <li><a href="http://sewoon.com/Shop/Company.php">세운전자플라자 업체정보</a> · <a href="https://artfablabworkshop.wordpress.com/2018/06/16/%EC%95%84%EB%91%90%EC%9D%B4%EB%85%B8-%EA%B4%80%EB%A0%A8-%EB%B6%80%ED%92%88-%EB%A7%A4%EC%9E%A5/">아두이노 부품 매장 정리 (2018)</a> · <a href="https://mbiz.heraldcorp.com/article/10002953">용산전자상가 현황 기사</a></li>
   </ul>
 </section>
 
