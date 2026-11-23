@@ -22,6 +22,8 @@
  *   x            멈추고 차렷           off  서보 힘 빼기
  *   d            데모 바로 시작
  *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
+ *   dbg on|off   디버그 기록(#B #S #C #D 줄) 켜기/끄기 (EEPROM 저장, 기본 켬)   dbg reset  켠 횟수 0으로
+ *                → 노트북 크롬에서 web/otto-debug.html로 열면 전압 그래프 · 재시작 표시 · 로그 저장
  *
  *   ── 도트 · 부저 · 초음파 (extras.h, 핀은 docs/otto-조립-지도.html) ──
  *   e <표정>     도트 표정: eyes blink smile happy sad surprise heart up down left right x all off
@@ -41,6 +43,7 @@
 #include <EEPROM.h>
 #include "gait.h"
 #include "extras.h"
+#include "debug.h"
 
 // ───── 핀 · 방향 (servo_center 또는 'i' 명령으로 확인 후 고칠 것) ─────
 // Otto 표준: 왼다리 D2, 오른다리 D3, 왼발 D4, 오른발 D5. 왼쪽/오른쪽 = 로봇 자신 기준.
@@ -84,7 +87,8 @@ void attachAll() {
   for (int i = 0; i < SERVO_COUNT; i++) {
     writeServo(i, lastAngle[i]);   // attach 전에 써 두면 첫 펄스가 그 각도로 나간다
     servo[i].attach(PINS[i]);
-    delay(150);
+    debugServo(i);
+    delay(120);
   }
   attached = true;
 }
@@ -103,6 +107,7 @@ void moveTo(const float target[SERVO_COUNT], uint16_t ms) {
   for (uint16_t t = step; t <= ms; t += step) {
     float r = (float)t / ms;
     for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, from[i] + (target[i] - from[i]) * r);
+    sampleVcc();
     delay(step);
   }
   for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, target[i]);
@@ -148,6 +153,7 @@ void startAction(Action a, int steps) {
   Serial.print(F(" x")); Serial.print(steps);
   Serial.print(F(", 주기 ")); Serial.print(periodMs);
   Serial.print(F("ms, 진폭 ")); Serial.print(ampPct); Serial.println('%');
+  Serial.flush();   // 걷기 시작 직후 재시작해도 이 줄은 나가도록
 }
 
 void tickAction() {
@@ -337,6 +343,7 @@ uint8_t len = 0;
 uint32_t lastChar = 0;
 
 void handle(char* line) {
+  debugCmd(line);
   char* cmd = strtok(line, " ");
   if (!cmd) return;
   char* a1 = strtok(NULL, " ");
@@ -352,6 +359,15 @@ void handle(char* line) {
     return;
   }
   stopDemo();   // 다른 명령이 오면 데모는 멈춘다
+
+  if (!strcmp(cmd, "dbg")) {   // 디버그 기록 켜기/끄기 (EEPROM 저장)
+    if (a1 && !strcmp(a1, "reset")) { EEPROM.update(EE_BOOT_ADDR, 0); EEPROM.update(EE_BOOT_ADDR + 1, 0); Serial.println(F("> 켠 횟수 0으로")); return; }
+    if (a1) { dbgOn = strcmp(a1, "off") != 0; EEPROM.update(EE_DBG_ADDR, dbgOn ? 0 : 0xDB); }
+    sampleVcc();
+    Serial.print(F("> 디버그 기록 ")); Serial.print(dbgOn ? F("켬") : F("끔"));
+    Serial.print(F(", 지금 전압 ")); Serial.print(vccNow); Serial.println(F("mV"));
+    return;
+  }
 
   // 도트 · 부저 · 초음파
   if (!strcmp(cmd, "e") && a1) {
@@ -430,7 +446,7 @@ void handle(char* line) {
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode dbg"));
 }
 
 void readSerial() {
@@ -450,11 +466,13 @@ void readSerial() {
 void setup() {
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
+  debugBoot();
   demoAuto = (EEPROM.read(EE_DEMO_ADDR) == EE_DEMO_ON);
   loadTrims();
   uint8_t dv = EEPROM.read(EE_DOT_ADDR);
   if ((dv & 0xF0) == 0xD0) { dotRot = dv & 3; dotFlip = dv & 4; }
   extrasInit();
+  readVccRaw(); delay(2);   // extrasInit의 analogRead가 ADC 기준을 바꿔 놓으므로 다시 맞춤
   setFace(F_EYES);
   Serial.println(F("서보 하나씩 켜는 중..."));
   attachAll();   // lastAngle 초기값 90° → 차렷으로 하나씩 켜짐
@@ -473,4 +491,5 @@ void loop() {
   tickSense();
   tickSound();
   tickBlink(curAct == ACT_HOME);
+  tickDebug(curAct);
 }

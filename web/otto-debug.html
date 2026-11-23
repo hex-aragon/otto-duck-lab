@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오또 디버그</title>
+<style>
+:root{
+  --bg:#f2f4f7; --panel:#fff; --fg:#18202b; --muted:#5e6875; --line:#d7dde5;
+  --go:#2463c9; --bad:#d23b2f; --ok:#1f8a52; --warn:#b26b00; --dim:#8a94a1;
+  font-family:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--panel:#1c222b;--fg:#e9eef4;--muted:#9ea9b6;--line:#323b46;--go:#5e95ff;--bad:#ff6b5e;--ok:#4cc985;--warn:#f0a83a;--dim:#6b7684;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);padding:16px}
+main{max-width:1100px;margin:0 auto;display:grid;gap:12px}
+h1{margin:0;font-size:22px} h2{margin:0;font-size:15px;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select,input{font:inherit}
+button{font-size:15px;font-weight:600;border:0;border-radius:10px;padding:10px 12px;background:var(--line);color:var(--fg);cursor:pointer;min-height:42px}
+button:active{transform:scale(.97)} button:disabled{opacity:.4}
+button.p{background:var(--go);color:#fff} button.x{background:var(--bad);color:#fff}
+select,input[type=text]{padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-size:22px} .stat span{font-size:12px;color:var(--muted)}
+.bad{color:var(--bad)!important} .ok{color:var(--ok)!important} .warn{color:var(--warn)!important}
+canvas{width:100%;height:220px;background:var(--bg);border-radius:10px;display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:800px){.grid2{grid-template-columns:1fr}}
+#log{font:12px/1.45 ui-monospace,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px;height:380px;overflow:auto;white-space:pre-wrap;margin:0}
+#log .t{color:var(--dim)} #log .tx{color:var(--go);font-weight:700} #log .boot{color:var(--bad);font-weight:700}
+#log .ack{color:var(--ok)} #log .tel{color:var(--dim)} #log .sys{color:var(--warn);font-weight:700} #log .diag{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);display:block}
+#log.hideTel .tel{display:none}
+table{border-collapse:collapse;width:100%;font-size:14px} td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left}
+#diag{font-size:14px;line-height:1.5}
+small{color:var(--muted)}
+</style>
+<main>
+  <h1>오또 디버그 <small>— 걷다가 재시작하는 원인 찾기</small></h1>
+
+  <section class="card">
+    <div class="row">
+      <button class="p" id="conn">연결 (블루투스 COM15 / USB COM12)</button>
+      <button id="disc" disabled>연결 끊기</button>
+      <label>전원 상태 <select id="power">
+        <option>건전지만</option><option>건전지 + 보조배터리(USB)</option><option>건전지 + 노트북 USB</option><option>보조배터리만</option><option>노트북 USB만</option>
+      </select></label>
+      <span id="status">연결 안 됨</span>
+    </div>
+    <small>노트북 크롬·엣지에서 열기. 블루투스면 "Bluetooth 링크를 통한 표준 직렬" 중 <b>COM15</b>. 아두이노 IDE 시리얼 모니터·다른 리모컨 탭은 꼭 닫기(포트는 한 곳만 열림). 펌웨어에 <code>debug.h</code>가 들어가야 전압·하트비트가 보여요.</small>
+  </section>
+
+  <section class="card">
+    <div class="stats">
+      <div class="stat"><span>마지막 응답</span><b id="sAge">-</b></div>
+      <div class="stat"><span>지금 전압 (보드 5V)</span><b id="sVcc">-</b></div>
+      <div class="stat"><span>최저 전압 (이번 측정)</span><b id="sMin">-</b></div>
+      <div class="stat"><span>재시작 (이 페이지에서)</span><b id="sBoots">0</b></div>
+      <div class="stat"><span>켠 횟수 (보드 누적)</span><b id="sBootN">-</b></div>
+      <div class="stat"><span>지금 동작</span><b id="sAct">-</b></div>
+      <div class="stat"><span>루프 최대 지연</span><b id="sLoop">-</b></div>
+    </div>
+    <canvas id="chart" width="1000" height="220"></canvas>
+    <small>파랑 = 0.2~1초 평균 전압, 빨강 = 그 사이 최저 전압, 주황 점선 = 4.3V(이 아래면 위험), 세로 빨간 선 = 재시작, 세로 파란 선 = 명령 보냄. 최근 60초.</small>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>명령</h2>
+      <div class="row">
+        <button class="p" data-c="w 2">앞 2</button><button class="p" data-c="w 4">앞 4</button><button class="p" data-c="b 2">뒤 2</button>
+        <button class="p" data-c="l 2">왼 2</button><button class="p" data-c="r 2">오른 2</button><button class="x" data-c="x">멈춤</button>
+      </div>
+      <div class="row">
+        <button data-c="h">차렷</button><button data-c="off">서보 힘 빼기</button><button data-c="show">설정 보기</button><button data-c="dbg on">기록 켬</button><button data-c="u 2">위아래</button>
+      </div>
+      <div class="row">
+        <small>속도 제한</small><button data-c="v 150">v 150</button><button data-c="v 100">v 100</button><button data-c="v 60">v 60</button>
+        <small>보폭</small><button data-c="a 100">a 100</button><button data-c="a 60">a 60</button>
+        <small>주기</small><button data-c="p 1000">p 1000</button><button data-c="p 1500">p 1500</button>
+      </div>
+      <div class="row"><input type="text" id="cmd" placeholder="직접 명령 (예: w 3, v 80)" style="flex:1;min-width:0"><button id="sendb">보내기</button></div>
+    </section>
+
+    <section class="card">
+      <h2>자동 시험 <small>— 조건을 바꿔 가며 2걸음씩, 재시작하는지 표로 정리</small></h2>
+      <div class="row"><button class="p" id="auto">자동 시험 시작</button><button id="autoStop" disabled>중단</button></div>
+      <table><thead><tr><th>조건</th><th>결과</th><th>최저 전압</th><th>걸린 시간</th></tr></thead><tbody id="results"></tbody></table>
+      <div id="diag"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="row">
+      <h2 style="flex:1">로그</h2>
+      <label><input type="checkbox" id="showTel" checked> 전압 줄(#D) 보기</label>
+      <button id="clear">지우기</button><button id="save">로그 저장 (.txt)</button><button id="saveCsv">전압 저장 (.csv)</button>
+    </div>
+    <pre id="log"></pre>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ACTS = ['차렷','앞으로','뒤로','왼쪽','오른쪽','위아래','흔들기','문워크L','문워크R','까치발'];
+const enc = new TextEncoder();
+let port=null, writer=null, reader=null;
+let rx='', lastRx=0, lastBootSeen=null, connIsUsb=false;
+let bootsHere=0, sessionMin=Infinity;
+const tel=[];            // {t, vcc, vmin, act, loop}
+const marks=[];          // {t, kind:'boot'|'cmd', text}
+let lastCmd=null;        // {t, text}
+let winMin=Infinity;     // 마지막 #B 이후 본 최저 전압
+let lastTelT=0;
+const logLines=[];       // 저장용 원문
+
+function ts(d=new Date()){ return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0'); }
+function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function addLog(text, cls=''){
+  const t=ts(); logLines.push(t+'  '+text);
+  const l=$('log'); const atBottom = l.scrollTop+l.clientHeight >= l.scrollHeight-30;
+  const span=document.createElement('span'); if(cls) span.className=cls;
+  span.innerHTML='<span class="t">'+t+'</span>  '+esc(text)+'\n';
+  l.appendChild(span);
+  if(l.childNodes.length>4000) l.removeChild(l.firstChild);
+  if(atBottom) l.scrollTop=l.scrollHeight;
+}
+function setStatus(t,cls=''){ $('status').textContent=t; $('status').className=cls; }
+const v = mv => (mv/1000).toFixed(2)+'V';
+
+// ── 받은 줄 해석 ──
+function onLine(line){
+  lastRx=performance.now();
+  if(line.startsWith('#D ')){
+    const [ms,vcc,vmin,act,loop]=line.slice(3).trim().split(/\s+/).map(Number);
+    const vm = vmin===65535 ? vcc : vmin;
+    tel.push({t:Date.now(), ms, vcc, vmin:vm, act, loop}); if(tel.length>20000) tel.shift();
+    lastTelT=Date.now();
+    winMin=Math.min(winMin,vm); sessionMin=Math.min(sessionMin,vm); autoMin=Math.min(autoMin,vm);
+    $('sVcc').textContent=v(vcc); $('sVcc').className = vcc<4300?'bad':vcc<4600?'warn':'ok';
+    $('sMin').textContent=v(sessionMin); $('sMin').className = sessionMin<4300?'bad':sessionMin<4600?'warn':'ok';
+    $('sAct').textContent=ACTS[act]??act; $('sLoop').textContent=loop+'ms'; $('sLoop').className = loop>40?'warn':'';
+    addLog(line,'tel'); return;
+  }
+  if(line.startsWith('#B ')){
+    const m=Object.fromEntries(line.slice(3).trim().split(/\s+/).map(kv=>kv.split('=')));
+    $('sBootN').textContent=m.boot;
+    marks.push({t:Date.now(), kind:'boot'});
+    const isReboot = !connIsUsb || lastBootSeen!==null || lastCmd!==null;   // USB는 연결할 때 한 번 재시작하므로 첫 #B 제외
+    lastBootSeen=Date.now();
+    addLog(line,'boot');
+    if(isReboot){ bootsHere++; $('sBoots').textContent=bootsHere; $('sBoots').className='bad'; diagnoseBoot(m); onAutoBoot(); }
+    winMin=Infinity; return;
+  }
+  if(line.startsWith('#S ')){ const [i,mv]=line.slice(3).split(' ').map(Number); addLog(line+'   ← 서보 '+i+' 켠 직후 '+v(mv),'tel'); return; }
+  if(line.startsWith('#C ')){ addLog(line+'   ← 보드가 명령 받음','ack'); return; }
+  addLog(line);
+  if(/끝, 차렷/.test(line)) onAutoDone();
+}
+
+function diagnoseBoot(m){
+  const rst=parseInt(m.rst||'0',16);
+  const parts=[];
+  if(lastCmd){ const dt=(Date.now()-lastCmd.t)/1000; parts.push(`"${lastCmd.text}" 보낸 지 ${dt.toFixed(2)}초 뒤 재시작`); }
+  else parts.push('재시작 감지');
+  if(isFinite(winMin)) parts.push(`직전 최저 전압 ${v(winMin)}`);
+  const gap = lastTelT ? (Date.now()-lastTelT)/1000 : null;
+  if(gap!==null && gap>0.5) parts.push(`마지막 전압 기록 뒤 ${gap.toFixed(2)}초 동안 소식 없음`);
+  let why;
+  if(rst&4) why='보드가 "저전압(BOD)"으로 재시작했다고 알려 줌 → 전원 부족 확실';
+  else if(isFinite(winMin) && winMin<4300) why='전압이 4.3V 아래로 떨어진 뒤 재시작 → 서보 전류 때문에 전원이 버티지 못함(가장 유력)';
+  else if(isFinite(winMin)) why='기록된 최저 전압은 괜찮았음 → 0.2초 사이 순간적으로 떨어졌거나(기록 간격보다 짧음), 선 접촉 불량·리셋 핀 문제 가능. v 값을 낮춰 다시 시험';
+  else why='전압 기록이 없음 → 펌웨어에 debug.h가 들어갔는지, "dbg on" 했는지 확인';
+  if(m.vcc) parts.push(`켜질 때 전압 ${v(+m.vcc)}`);
+  addLog('진단: '+parts.join(', ')+' — '+why,'diag');
+  $('diag').innerHTML='<b class="bad">마지막 재시작</b>: '+esc(parts.join(', '))+'<br>'+esc(why);
+}
+
+// ── 연결 ──
+$('conn').onclick = async () => {
+  if(!navigator.serial){ setStatus('이 브라우저는 시리얼 연결이 안 돼요 (노트북 크롬·엣지)','bad'); return; }
+  try{
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 9600 });
+    writer = port.writable.getWriter();
+    const info=port.getInfo(); connIsUsb=!!info.usbVendorId;
+    setStatus('연결됨'+(info.usbVendorId?' (USB: 보드가 한 번 재시작해요)':' (블루투스)'),'ok');
+    addLog(`=== 연결 — 전원 상태: ${$('power').value} ===`,'sys');
+    $('conn').disabled=true; $('disc').disabled=false;
+    lastBootSeen=null; lastCmd=null; lastRx=performance.now();
+    readLoop();
+  }catch(e){ setStatus('연결 실패: '+e.message,'bad'); addLog('연결 실패: '+e.message,'sys'); }
+};
+async function readLoop(){
+  const dec=new TextDecoder();
+  try{
+    reader=port.readable.getReader();
+    for(;;){
+      const {value,done}=await reader.read(); if(done) break;
+      rx+=dec.decode(value,{stream:true});
+      let i; while((i=rx.indexOf('\n'))>=0){ const line=rx.slice(0,i).replace(/\r/g,''); rx=rx.slice(i+1); if(line.length) onLine(line); }
+    }
+  }catch(e){
+    addLog('!! 연결이 끊김: '+e.message+' — 블루투스 모듈 전원이 나갔거나 노트북과 연결이 끊겼을 수 있음','diag');
+    marks.push({t:Date.now(),kind:'boot'});
+  }finally{
+    try{ reader.releaseLock(); }catch(e){}
+    await closePort();
+  }
+}
+async function closePort(){
+  try{ writer && writer.releaseLock(); }catch(e){}
+  try{ port && await port.close(); }catch(e){}
+  writer=null; port=null;
+  $('conn').disabled=false; $('disc').disabled=true;
+  setStatus('연결 안 됨');
+}
+$('disc').onclick = async () => { try{ await reader.cancel(); }catch(e){} };
+navigator.serial && navigator.serial.addEventListener('disconnect', ()=>addLog('!! 시리얼 장치가 빠짐','diag'));
+
+async function send(c){
+  if(!writer){ setStatus('먼저 연결하세요','bad'); return; }
+  try{
+    await writer.write(enc.encode(c+'\n'));
+    lastCmd={t:Date.now(), text:c}; marks.push({t:Date.now(), kind:'cmd', text:c});
+    if(/^[wblrusmk]\b/.test(c)) winMin=Infinity;
+    addLog('> '+c,'tx');
+  }catch(e){ addLog('보내기 실패: '+e.message,'diag'); }
+}
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+$('sendb').onclick=()=>{ const c=$('cmd').value.trim(); if(c){ send(c); $('cmd').value=''; } };
+$('cmd').onkeydown=e=>{ if(e.key==='Enter') $('sendb').click(); };
+
+// ── 자동 시험 ──
+const PLAN = [
+  { name:'기본 (v 150, a 100, p 1000)', pre:['v 150','a 100','p 1000'], cmd:'w 2' },
+  { name:'느리게 (v 100)',             pre:['v 100'],                 cmd:'w 2' },
+  { name:'더 느리게 (v 60)',           pre:['v 60'],                  cmd:'w 2' },
+  { name:'보폭 줄임 (v 60, a 60)',     pre:['a 60'],                  cmd:'w 2' },
+  { name:'주기 김 (v 60, a 60, p 1500)', pre:['p 1500'],             cmd:'w 2' },
+  { name:'돌기 (같은 조건)',           pre:[],                        cmd:'l 2' },
+];
+let autoRun=false, autoMin=Infinity, autoWait=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function onAutoBoot(){ if(autoWait) autoWait('재시작'); }
+function onAutoDone(){ if(autoWait) autoWait('정상'); }
+$('auto').onclick = async () => {
+  if(!writer){ setStatus('먼저 연결하세요','bad'); return; }
+  autoRun=true; $('auto').disabled=true; $('autoStop').disabled=false; $('results').innerHTML='';
+  addLog(`=== 자동 시험 시작 — 전원 상태: ${$('power').value} ===`,'sys');
+  for(const step of PLAN){
+    if(!autoRun) break;
+    for(const c of step.pre){ await send(c); await sleep(400); }
+    await sleep(1000);
+    autoMin=Infinity; const t0=Date.now();
+    const result = await new Promise(res=>{ autoWait=res; send(step.cmd); setTimeout(()=>res('시간 초과'), 15000); });
+    autoWait=null;
+    const dt=((Date.now()-t0)/1000).toFixed(1)+'초';
+    const tr=document.createElement('tr');
+    const cls = result==='정상'?'ok':'bad';
+    tr.innerHTML=`<td>${esc(step.name)} · ${esc(step.cmd)}</td><td class="${cls}">${result}</td><td>${isFinite(autoMin)?v(autoMin):'-'}</td><td>${dt}</td>`;
+    $('results').appendChild(tr);
+    addLog(`자동 시험: ${step.name} · ${step.cmd} → ${result}, 최저 ${isFinite(autoMin)?v(autoMin):'-'}`,'sys');
+    if(result!=='정상') await sleep(5000);   // 재시작 뒤 서보 켜기 끝날 때까지
+    else await sleep(1500);
+  }
+  addLog('=== 자동 시험 끝 ===','sys');
+  autoRun=false; $('auto').disabled=false; $('autoStop').disabled=true;
+};
+$('autoStop').onclick=()=>{ autoRun=false; if(autoWait) autoWait('중단'); send('x'); };
+
+// ── 화면 갱신 · 그래프 ──
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function draw(){
+  const c=$('chart'), g=c.getContext('2d');
+  const W=c.width=c.clientWidth*devicePixelRatio, H=c.height=220*devicePixelRatio;
+  g.clearRect(0,0,W,H); g.lineWidth=1.5*devicePixelRatio; g.font=(11*devicePixelRatio)+'px sans-serif';
+  const now=Date.now(), span=60000, lo=3500, hi=5300;
+  const X=t=>(1-(now-t)/span)*W, Y=mv=>H-(mv-lo)/(hi-lo)*H;
+  g.fillStyle=css('--muted');
+  for(const mv of [4000,4500,5000]){ g.fillText((mv/1000).toFixed(1)+'V',4,Y(mv)-2); g.globalAlpha=.25; g.fillRect(0,Y(mv),W,1); g.globalAlpha=1; }
+  g.strokeStyle=css('--warn'); g.setLineDash([6,6]); g.beginPath(); g.moveTo(0,Y(4300)); g.lineTo(W,Y(4300)); g.stroke(); g.setLineDash([]);
+  for(const m of marks){ if(now-m.t>span) continue; g.strokeStyle= m.kind==='boot'?css('--bad'):css('--go'); g.globalAlpha=m.kind==='boot'?1:.5; g.beginPath(); g.moveTo(X(m.t),0); g.lineTo(X(m.t),H); g.stroke(); g.globalAlpha=1;
+    if(m.text){ g.fillStyle=css('--go'); g.fillText(m.text,X(m.t)+3,12*devicePixelRatio); } }
+  const pts=tel.filter(p=>now-p.t<=span);
+  for(const [key,col] of [['vmin','--bad'],['vcc','--go']]){
+    g.strokeStyle=css(col); g.beginPath(); let prev=null;
+    for(const p of pts){ if(prev && p.t-prev.t>3000) g.moveTo(X(p.t),Y(p[key])); else if(prev) g.lineTo(X(p.t),Y(p[key])); else g.moveTo(X(p.t),Y(p[key])); prev=p; }
+    g.stroke();
+  }
+}
+setInterval(()=>{
+  if(writer){
+    const age=(performance.now()-lastRx)/1000;
+    $('sAge').textContent = age<1 ? '방금' : age.toFixed(1)+'초 전';
+    $('sAge').className = age>2.5 ? 'bad' : 'ok';
+  }
+  draw();
+}, 250);
+
+$('showTel').onchange=e=>$('log').classList.toggle('hideTel',!e.target.checked);
+$('clear').onclick=()=>{ $('log').textContent=''; };
+function download(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'})); a.download=name; a.click(); }
+const stamp=()=>new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
+$('save').onclick=()=>download(`otto-debug-${stamp()}.txt`, `# 전원 상태: ${$('power').value}\n`+logLines.join('\n')+'\n');
+$('saveCsv').onclick=()=>download(`otto-vcc-${stamp()}.csv`, 'pc_time,board_ms,vcc_mv,vmin_mv,act,loop_max_ms\n'+tel.map(p=>[new Date(p.t).toISOString(),p.ms,p.vcc,p.vmin,p.act,p.loop].join(',')).join('\n')+'\n');
+</script>
+</html>
