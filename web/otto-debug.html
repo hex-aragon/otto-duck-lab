@@ -92,6 +92,14 @@ small{color:var(--muted)}
   </div>
 
   <section class="card">
+    <h2>부품별 영향 점검 <small>— 서 있는 상태에서 하나씩 끄며 6초씩 전압을 잰다 (약 30초)</small></h2>
+    <div class="row"><button class="p" id="parts">부품 점검 시작</button>
+      <button data-c="eco on">절전 켬 (걸을 때 도트·소리 끔)</button><button data-c="eco off">절전 끔</button></div>
+    <table><thead><tr><th>상태</th><th>평균 전압</th><th>최저 전압</th><th>기준 대비</th></tr></thead><tbody id="partRes"></tbody></table>
+    <small>"서보 힘 뺌"에서 최저 전압이 크게 오르면 서보가 범인, "도트 끔"에서 오르면 도트가 범인.</small>
+  </section>
+
+  <section class="card">
     <div class="row">
       <h2 style="flex:1">로그</h2>
       <label><input type="checkbox" id="showTel" checked> 전압 줄(#D) 보기</label>
@@ -270,6 +278,37 @@ $('auto').onclick = async () => {
   autoRun=false; $('auto').disabled=false; $('autoStop').disabled=true;
 };
 $('autoStop').onclick=()=>{ autoRun=false; if(autoWait) autoWait('중단'); send('x'); };
+
+// ── 부품별 영향 점검 ──
+const PARTS = [
+  { name:'전부 켬 (서보 차렷 + 눈)', cmds:['h','e eyes'] },
+  { name:'도트 끔',                  cmds:['e off'] },
+  { name:'도트 끔 + 서보 힘 뺌',     cmds:['off'] },
+  { name:'서보 힘 뺌 + 도트 전부 켬', cmds:['e all'] },
+];
+$('parts').onclick = async () => {
+  if(!writer){ setStatus('먼저 연결하세요','bad'); return; }
+  $('parts').disabled=true; $('partRes').innerHTML='';
+  addLog(`=== 부품 점검 시작 — 전원 상태: ${$('power').value} ===`,'sys');
+  let base=null;
+  for(const ph of PARTS){
+    for(const c of ph.cmds){ await send(c); await sleep(300); }
+    await sleep(1500);                         // 바뀐 상태가 자리 잡을 때까지
+    const t0=Date.now(); await sleep(6000);
+    const pts=tel.filter(p=>p.t>=t0);
+    const avg = pts.length ? pts.reduce((a,p)=>a+p.vcc,0)/pts.length : NaN;
+    const mn  = pts.length ? Math.min(...pts.map(p=>p.vmin)) : NaN;
+    if(!base) base={avg,mn};
+    const d = isFinite(mn)&&base ? ((mn-base.mn)/1000) : NaN;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(ph.name)}</td><td>${isFinite(avg)?v(avg):'-'}</td><td class="${mn<4300?'bad':mn<4600?'warn':'ok'}">${isFinite(mn)?v(mn):'-'}</td><td>${isFinite(d)?(d>=0?'+':'')+d.toFixed(2)+'V':'-'}</td>`;
+    $('partRes').appendChild(tr);
+    addLog(`부품 점검: ${ph.name} → 평균 ${isFinite(avg)?v(avg):'-'}, 최저 ${isFinite(mn)?v(mn):'-'} (#D ${pts.length}줄)`,'sys');
+  }
+  await send('e eyes'); await sleep(300); await send('h');
+  addLog('=== 부품 점검 끝 ===','sys');
+  $('parts').disabled=false;
+};
 
 // ── 화면 갱신 · 그래프 ──
 function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }

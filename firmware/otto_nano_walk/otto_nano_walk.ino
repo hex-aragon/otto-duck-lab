@@ -22,6 +22,7 @@
  *   x            멈추고 차렷           off  서보 힘 빼기
  *   d            데모 바로 시작
  *   demo on|off  전원 켤 때 자동 데모 켜기/끄기 (EEPROM 저장, 기본 끔)
+ *   eco on|off   절전: 걸을 때만 도트 끄고 소리 멈춤 (EEPROM 저장, 기본 끔)
  *   dbg on|off   디버그 기록(#B #S #C #D 줄) 켜기/끄기 (EEPROM 저장, 기본 켬)   dbg reset  켠 횟수 0으로
  *                → 노트북 크롬에서 web/otto-debug.html로 열면 전압 그래프 · 재시작 표시 · 로그 저장
  *
@@ -113,7 +114,25 @@ void moveTo(const float target[SERVO_COUNT], uint16_t ms) {
   for (int i = 0; i < SERVO_COUNT; i++) writeServo(i, target[i]);
 }
 
+// ───── 절전 (eco) ─────
+// 걷는 동안 도트를 끄고(MAX7219 대기 모드, 0.15mA) 소리를 멈춰 서보에 전류를 몰아 준다.
+// 차렷으로 돌아오면 다시 켠다. 'eco on|off' (EEPROM 10번지, 기본 끔)
+static const uint8_t EE_ECO_ADDR = 10, EE_ECO_ON = 0xEC;
+bool ecoOn = false, ecoSleeping = false;
+void ecoSleep() {
+  if (!ecoOn || ecoSleeping) return;
+  dotWrite(0x0C, 0);
+  sndNotes = nullptr; noTone(BUZZER);
+  ecoSleeping = true;
+}
+void ecoWake() {
+  if (!ecoSleeping) return;
+  dotWrite(0x0C, 1);
+  ecoSleeping = false;
+}
+
 void home(uint16_t ms = 500) {
+  ecoWake();
   float t[SERVO_COUNT] = { 90, 90, 90, 90 };
   moveTo(t, ms);
   curAct = ACT_HOME;
@@ -141,6 +160,7 @@ Face faceFor(Action a) {
 void startAction(Action a, int steps) {
   if (steps < 1) steps = 1;
   setFace(faceFor(a));
+  ecoSleep();
   GaitParams p = scaled(a);
   for (int i = 0; i < SERVO_COUNT; i++) p.A[i] = 0;   // tickAction이 진폭 0에서 시작하므로 시작 자세도 진폭 0
   float first[SERVO_COUNT];
@@ -360,6 +380,11 @@ void handle(char* line) {
   }
   stopDemo();   // 다른 명령이 오면 데모는 멈춘다
 
+  if (!strcmp(cmd, "eco")) {   // 걸을 때 도트·소리 끄기
+    if (a1) { ecoOn = !strcmp(a1, "on"); EEPROM.update(EE_ECO_ADDR, ecoOn ? EE_ECO_ON : 0); if (!ecoOn) ecoWake(); }
+    Serial.println(ecoOn ? F("> 절전: 걸을 때 도트·소리 끔 (저장됨)") : F("> 절전 끔: 걸을 때도 도트·소리 켬 (저장됨)"));
+    return;
+  }
   if (!strcmp(cmd, "dbg")) {   // 디버그 기록 켜기/끄기 (EEPROM 저장)
     if (a1 && !strcmp(a1, "reset")) { EEPROM.update(EE_BOOT_ADDR, 0); EEPROM.update(EE_BOOT_ADDR + 1, 0); Serial.println(F("> 켠 횟수 0으로")); return; }
     if (a1) { dbgOn = strcmp(a1, "off") != 0; EEPROM.update(EE_DBG_ADDR, dbgOn ? 0 : 0xDB); }
@@ -446,7 +471,7 @@ void handle(char* line) {
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode dbg"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode dbg eco"));
 }
 
 void readSerial() {
@@ -468,6 +493,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   debugBoot();
   demoAuto = (EEPROM.read(EE_DEMO_ADDR) == EE_DEMO_ON);
+  ecoOn = (EEPROM.read(EE_ECO_ADDR) == EE_ECO_ON);
   loadTrims();
   uint8_t dv = EEPROM.read(EE_DOT_ADDR);
   if ((dv & 0xF0) == 0xD0) { dotRot = dv & 3; dotFlip = dv & 4; }
