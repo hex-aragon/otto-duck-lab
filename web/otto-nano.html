@@ -1,116 +1,143 @@
 <!doctype html>
 <html lang="ko">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>오또 리모컨</title>
 <style>
-/* 폰 한 손 조작: 위 연결 → 가운데 방향 패드 → 아래 춤·설정. 큰 버튼 */
+/* 폰 한 손 조작: 위 연결 → 가운데 방향 패드 → 아래 춤 · 표정 · 소리. 큰 버튼 */
 :root{
   --bg:#f2f4f7; --panel:#fff; --fg:#18202b; --muted:#5e6875; --line:#d7dde5;
-  --go:#2463c9; --stop:#d23b2f; --dance:#7a4fc4; --ok:#1f8a52;
+  --go:#2463c9; --stop:#d23b2f; --dance:#7a4fc4; --ok:#1f8a52; --warn:#b26b00; --snd:#1f8a7a;
   font-family:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
-@media (prefers-color-scheme:dark){:root{--bg:#12161c;--panel:#1c222b;--fg:#e9eef4;--muted:#9ea9b6;--line:#323b46;--go:#5e95ff;--dance:#a07ef0;color-scheme:dark}}
-body{margin:0;background:var(--bg);color:var(--fg);padding:16px max(16px,env(safe-area-inset-left)) 32px}
-main{max-width:520px;margin:0 auto;display:grid;gap:14px}
-h1{margin:0;font-size:24px}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--panel:#1c222b;--fg:#e9eef4;--muted:#9ea9b6;--line:#323b46;--go:#5e95ff;--dance:#a07ef0;--ok:#4cc985;--warn:#f0a83a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);padding:12px max(12px,env(safe-area-inset-left)) 40px}
+main{max-width:520px;margin:0 auto;display:grid;gap:12px}
+h1{margin:0;font-size:22px} h2{margin:0;font-size:15px;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-button{font:inherit;font-size:17px;font-weight:600;border:0;border-radius:12px;padding:14px 10px;background:var(--line);color:var(--fg);cursor:pointer;touch-action:manipulation;min-height:56px}
-button:active{transform:scale(.97)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-size:17px;font-weight:600;border:0;border-radius:12px;padding:12px 8px;background:var(--line);color:var(--fg);cursor:pointer;touch-action:manipulation;min-height:54px;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.96)}
 button:focus-visible{outline:3px solid var(--go);outline-offset:2px}
 button:disabled{opacity:.4}
-.conn button{flex:1}
+.conn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.conn .main{grid-column:1/-1;background:var(--go);color:#fff;font-size:19px;min-height:62px}
+.conn small{font-weight:400;font-size:12px;opacity:.85}
+#status{font-size:15px;color:var(--muted)} #status.on{color:var(--ok);font-weight:700} #status.bad{color:var(--stop);font-weight:700}
+.meter{display:flex;gap:12px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.meter b{color:var(--fg)} .meter b.bad{color:var(--stop)} .meter b.warn{color:var(--warn)} .meter b.ok{color:var(--ok)}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pad .go{background:var(--go);color:#fff;font-size:22px}
+.pad button{min-height:78px;font-size:21px}
+.pad .go{background:var(--go);color:#fff}
 .pad .stop{background:var(--stop);color:#fff}
-.dance{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.steps{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
+.steps button{min-height:40px;padding:6px 12px;font-size:15px}
+.steps button.on{background:var(--go);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grid4 button{font-size:15px;min-height:52px;padding:6px 2px}
 .dance button{background:var(--dance);color:#fff}
-.set{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sounds button{background:var(--snd);color:#fff}
+.tog.on{background:var(--ok);color:#fff}
 label{font-size:14px;color:var(--muted);display:grid;gap:4px}
 input[type=range]{width:100%}
-#status{font-size:14px;color:var(--muted)}
-#status.on{color:var(--ok);font-weight:700}
-#log{font:12px/1.4 ui-monospace,monospace;background:var(--bg);border-radius:8px;padding:8px;height:110px;overflow:auto;white-space:pre-wrap;margin:0}
+details summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0}
+#log{font:12px/1.4 ui-monospace,monospace;background:var(--bg);border-radius:8px;padding:8px;height:120px;overflow:auto;white-space:pre-wrap;margin:0}
 .send{display:flex;gap:8px}.send input{flex:1;min-width:0;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .send button{min-height:44px;padding:8px 14px}
-.faces{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.faces button{font-size:15px;min-height:48px;padding:8px 4px}
-.sounds button{background:#1f8a7a;color:#fff}
-.modes button{background:#8a5a1f;color:#fff}
-.modes button.on{outline:3px solid var(--ok)}
-h2{margin:0;font-size:16px;color:var(--muted)}
-#dist{font-size:28px;font-weight:800}
+.help{font-size:13px;color:var(--muted);line-height:1.5}
+.help ol{margin:4px 0;padding-left:20px}
 #voice.on{background:var(--stop);color:#fff}
+#dist{font-size:24px;font-weight:800}
 </style>
 <main>
   <h1>오또 리모컨</h1>
 
   <section class="card">
-    <div class="row conn">
-      <button id="usb">노트북 연결<br><small>USB · 블루투스 COM</small></button>
-      <button id="bt">BLE 연결<br><small>폰 크롬 · BLE 모듈</small></button>
+    <div class="conn">
+      <button class="main" id="btSerial">📱 블루투스 연결<br><small>JDY-31 · HC-05/06 (폰·노트북 크롬)</small></button>
+      <button id="usb">💻 USB / COM 선택<br><small>노트북 크롬</small></button>
+      <button id="ble">BLE 연결<br><small>HM-10 같은 BLE 모듈</small></button>
     </div>
     <div id="status">연결 안 됨</div>
-    <div style="font-size:13px;color:var(--muted)">JDY-31 같은 클래식 모듈: 노트북에서 페어링 후 <b>노트북 연결</b> → "Bluetooth 링크를 통한 표준 직렬(COM)" 중 보내는 쪽 포트 선택</div>
+    <div class="meter">
+      <span>전압 <b id="vcc">-</b></span><span>최저 <b id="vmin">-</b></span><span>재시작 <b id="boots">0</b>회</span><span id="ack"></span>
+    </div>
+    <details class="help">
+      <summary>처음 한 번: 폰 연결 방법</summary>
+      <ol>
+        <li>안드로이드 <b>설정 → 블루투스</b>에서 <b>JDY-31-SPP</b> 페어링 (PIN <b>1234</b>).</li>
+        <li><b>Serial Bluetooth Terminal</b> 같은 앱이 모듈에 붙어 있으면 앱에서 연결 끊기 (모듈은 한 곳만 연결됨).</li>
+        <li>이 페이지를 <b>크롬</b>으로 열고 <b>📱 블루투스 연결</b> → 목록에서 JDY-31-SPP 선택. "근처 기기" 권한을 물으면 허용.</li>
+        <li>목록이 비면: 크롬 최신으로 업데이트(137 이상), 폰 블루투스·위치 켜기, 모듈 불 깜빡이는지 확인.</li>
+      </ol>
+      아이폰은 브라우저가 블루투스 시리얼을 지원하지 않아요. 노트북은 같은 버튼 또는 USB/COM 선택(COM15) 사용.
+    </details>
   </section>
 
   <section class="card">
     <div class="pad">
-      <span></span><button class="go" data-c="w 4">▲ 앞</button><span></span>
-      <button class="go" data-c="l 3">◀ 왼쪽</button><button class="stop" data-c="x">■ 멈춤</button><button class="go" data-c="r 3">오른쪽 ▶</button>
-      <span></span><button class="go" data-c="b 4">▼ 뒤</button><span></span>
+      <button data-c="u">⬆⬇<br><small style="font-size:13px">위아래</small></button><button class="go" data-walk="w">▲ 앞</button><button data-c="s">↔<br><small style="font-size:13px">흔들기</small></button>
+      <button class="go" data-walk="l">◀ 왼쪽</button><button class="stop" data-c="x">■ 멈춤</button><button class="go" data-walk="r">오른쪽 ▶</button>
+      <button data-c="m">🌙<br><small style="font-size:13px">문워크</small></button><button class="go" data-walk="b">▼ 뒤</button><button data-c="k">🩰<br><small style="font-size:13px">까치발</small></button>
     </div>
-  </section>
-
-  <section class="card">
-    <div class="dance">
-      <button data-c="u 3">위아래</button><button data-c="s 3">좌우 흔들기</button>
-      <button data-c="m 3">문워크</button><button data-c="k 3">까치발</button>
-      <button data-c="d">데모 시작</button><button data-c="h">차렷 (90°)</button>
+    <div class="steps">걸음 수
+      <button data-n="1">1</button><button data-n="2">2</button><button data-n="4" class="on">4</button><button data-n="8">8</button><button data-n="20">계속</button>
+    </div>
+    <div class="grid2 dance">
+      <button data-c="d">🎬 데모 시작</button><button data-c="h">🧍 차렷</button>
     </div>
   </section>
 
   <section class="card">
     <h2>표정 (도트)</h2>
-    <div class="faces">
+    <div class="grid4">
       <button data-c="e eyes">👀 눈</button><button data-c="e smile">🙂 웃음</button><button data-c="e happy">😆 신남</button><button data-c="e sad">😢 슬픔</button>
       <button data-c="e surprise">😮 놀람</button><button data-c="e heart">❤ 하트</button><button data-c="e x">✖ 엑스</button><button data-c="e off">끄기</button>
+      <button data-c="e up">⬆</button><button data-c="e down">⬇</button><button data-c="e left">⬅</button><button data-c="e right">➡</button>
     </div>
     <h2>소리 (부저)</h2>
-    <div class="faces sounds">
+    <div class="grid4 sounds">
       <button data-c="z beep">삐</button><button data-c="z hello">안녕</button><button data-c="z happy">신남</button><button data-c="z sad">슬픔</button>
-      <button data-c="z alarm">경고</button><button data-c="z ok">확인</button><button data-c="z song">노래</button><button data-c="mute">음소거</button>
+      <button data-c="z alarm">경고</button><button data-c="z ok">확인</button><button data-c="z song">노래</button><button id="mute" class="">🔇 음소거</button>
     </div>
   </section>
 
   <section class="card">
-    <h2>초음파 센서</h2>
-    <div class="row"><div>앞까지 거리 <span id="dist">-</span></div></div>
-    <div class="faces modes">
-      <button data-c="test">🔧 자동 점검</button><button data-c="dist">한 번 재기</button><button id="watch">계속 재기</button>
-      <button data-mode="guard">장애물 피하기</button><button data-mode="follow">손 따라오기</button>
-      <button data-mode="react">손 대면 반응</button><button data-mode="off">센서 끔</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>말로 시키기 (크롬)</h2>
-    <button id="voice">🎤 말하기 시작</button>
-    <div style="font-size:13px;color:var(--muted)">예: "앞으로", "뒤로", "왼쪽", "오른쪽", "멈춰", "춤춰", "웃어", "하트", "인사해", "노래해", "따라와", "장애물 조심"</div>
-    <div id="heard" style="font-size:14px"></div>
-  </section>
-
-  <section class="card">
-    <div class="set">
+    <h2>설정</h2>
+    <div class="grid2">
       <label>속도 (한 걸음 <b id="pv">1000</b>ms)<input id="p" type="range" min="600" max="2000" step="100" value="1000"></label>
       <label>보폭 <b id="av">100</b>%<input id="a" type="range" min="30" max="100" step="10" value="100"></label>
+      <label>서보 최고 속도 <b id="vv">150</b>도/초<input id="v" type="range" min="40" max="300" step="10" value="150"></label>
+      <div style="display:grid;gap:6px">
+        <button id="eco" class="tog">🔋 절전 끔</button>
+        <small class="help">절전: 걸을 때 도트·소리 끄고, 쉴 때 서보 힘 빼기</small>
+      </div>
     </div>
+    <div class="grid2"><button data-c="show">설정 보기</button><button data-c="off">서보 힘 빼기</button></div>
+  </section>
+
+  <details class="card">
+    <summary>초음파 · 말로 시키기</summary>
+    <div class="row"><div>앞까지 거리 <span id="dist">-</span></div></div>
+    <div class="grid4">
+      <button data-c="test">🔧 점검</button><button data-c="dist">재기</button><button id="watch">계속 재기</button><button data-mode="off">센서 끔</button>
+      <button data-mode="guard">장애물</button><button data-mode="follow">따라오기</button><button data-mode="react">반응</button><span></span>
+    </div>
+    <button id="voice">🎤 말하기 시작</button>
+    <div class="help">예: "앞으로", "뒤로", "왼쪽", "오른쪽", "멈춰", "춤춰", "웃어", "하트", "인사해", "노래해"</div>
+    <div id="heard" style="font-size:14px"></div>
+  </details>
+
+  <section class="card">
     <div class="send"><input id="cmd" placeholder="직접 명령 (예: t 2 -4, save, show)" autocomplete="off"><button id="sendb">보내기</button></div>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="showDbg"> 디버그 줄(#) 보기</label>
     <pre id="log"></pre>
   </section>
 </main>
 <script>
+const SPP = '00001101-0000-1000-8000-00805f9b34fb';   // 클래식 블루투스 시리얼(JDY-31, HC-05/06)
 // 지원하는 BLE UART 서비스: HM-10/BT05/AT-09/JDY-08(FFE0/FFE1), Nordic UART, 일부 JDY(FFF0)
 const BLE = [
   { svc: 0xffe0, rx: 0xffe1, tx: 0xffe1 },
@@ -118,21 +145,76 @@ const BLE = [
   { svc: 0xfff0, rx: 0xfff2, tx: 0xfff1 },
 ];
 const $ = id => document.getElementById(id);
-let writeFn = null;
-const enc = new TextEncoder(), dec = new TextDecoder();
+let writeFn = null, serialPort = null, serialReader = null;
+const enc = new TextEncoder();
+let steps = 4, bootsSeen = 0, sentAny = false;
 
 let rxBuf='';
-function onText(t){ rxBuf+=t; let i; while((i=rxBuf.indexOf('\n'))>=0){ const line=rxBuf.slice(0,i).replace('\r',''); rxBuf=rxBuf.slice(i+1); log(line); const m=line.match(/거리 (\d+)cm/); if(m) $('dist').textContent=m[1]+' cm'; } }
-function log(s){ const l=$('log'); l.textContent += s; if(!s.endsWith('\n')) l.textContent+='\n'; l.scrollTop=l.scrollHeight; }
-function setStatus(t,on){ $('status').textContent=t; $('status').classList.toggle('on',!!on); }
+function onText(t){
+  rxBuf+=t; let i;
+  while((i=rxBuf.indexOf('\n'))>=0){
+    const line=rxBuf.slice(0,i).replace(/\r/g,''); rxBuf=rxBuf.slice(i+1);
+    if(!line) continue;
+    if(line.startsWith('#D ')){
+      const [, vcc, vmin] = line.slice(3).split(' ').map(Number);
+      const mv = vmin===65535 ? vcc : vmin;
+      $('vcc').textContent=(vcc/1000).toFixed(2)+'V'; $('vcc').className = vcc<4300?'bad':vcc<4600?'warn':'ok';
+      $('vmin').textContent=(mv/1000).toFixed(2)+'V'; $('vmin').className = mv<4000?'bad':mv<4400?'warn':'ok';
+    } else if(line.startsWith('#B ')){
+      if(sentAny){ bootsSeen++; $('boots').textContent=bootsSeen; $('boots').className='bad'; log('⚠ 보드가 재시작했어요 (전원 부족 가능). 보조배터리·절전 켜기·속도 낮추기'); }
+    } else if(line.startsWith('#C ')){
+      $('ack').textContent='✔ 받음: '+line.slice(3);
+    }
+    if(line.startsWith('#') && !$('showDbg').checked) continue;
+    log(line);
+    const m=line.match(/거리 (\d+)cm/); if(m) $('dist').textContent=m[1]+' cm';
+    if(/절전: 걸을 때/.test(line)) setEco(true); else if(/절전 끔/.test(line)) setEco(false);
+  }
+}
+function log(s){ const l=$('log'); l.textContent += s + '\n'; if(l.textContent.length>20000) l.textContent=l.textContent.slice(-15000); l.scrollTop=l.scrollHeight; }
+function setStatus(t,cls){ $('status').textContent=t; $('status').className=cls||''; }
 
 async function send(c){
-  if(!writeFn){ setStatus('먼저 연결하세요'); return; }
-  try{ await writeFn(enc.encode(c+'\n')); log('> '+c); }catch(e){ log('보내기 실패: '+e.message); }
+  if(!writeFn){ setStatus('먼저 연결하세요','bad'); return; }
+  try{ await writeFn(enc.encode(c+'\n')); sentAny=true; log('> '+c); }
+  catch(e){ log('보내기 실패: '+e.message); setStatus('보내기 실패 — 다시 연결해 보세요','bad'); }
 }
 
-$('bt').onclick = async () => {
-  if(!navigator.bluetooth){ setStatus('이 브라우저는 블루투스 웹 연결을 지원하지 않아요 (안드로이드·PC 크롬 사용, 아이폰 불가)'); return; }
+// ── Web Serial (USB · 클래식 블루투스 RFCOMM) ──
+async function openSerial(opts, label){
+  if(!navigator.serial){
+    setStatus('이 브라우저는 블루투스 시리얼을 지원하지 않아요. 안드로이드는 크롬 최신(137 이상), 노트북은 크롬·엣지를 쓰세요. 아이폰은 안 돼요.','bad'); return;
+  }
+  try{
+    await closeSerial();
+    const port = await navigator.serial.requestPort(opts);
+    setStatus(label+' 여는 중…');
+    await port.open({ baudRate: 9600 });
+    serialPort = port;
+    const w = port.writable.getWriter();
+    writeFn = d => w.write(d);
+    const info = port.getInfo();
+    setStatus(info.usbVendorId ? 'USB 연결됨 (보드가 한 번 재시작해요, 2초 뒤 명령)' : '블루투스 연결됨 ✔', 'on');
+    sentAny=false;
+    (async()=>{
+      const dec=new TextDecoder();
+      try{ serialReader=port.readable.getReader(); for(;;){ const {value,done}=await serialReader.read(); if(done)break; onText(dec.decode(value,{stream:true})); } }
+      catch(e){ log('연결 끊김: '+e.message); }
+      finally{ try{serialReader.releaseLock();}catch(e){} try{w.releaseLock();}catch(e){} try{await port.close();}catch(e){} if(serialPort===port){ serialPort=null; writeFn=null; setStatus('연결 끊김 — 다시 연결하세요','bad'); } }
+    })();
+  }catch(e){
+    if(e.name==='NotFoundError') setStatus('기기를 고르지 않았어요. 목록이 비면 아래 "폰 연결 방법"을 확인하세요.','bad');
+    else setStatus('연결 실패: '+e.message+' — 다른 앱(터미널 앱·다른 탭)이 모듈을 잡고 있거나 모듈 전원이 꺼졌을 수 있어요.','bad');
+  }
+}
+async function closeSerial(){ if(serialReader){ try{ await serialReader.cancel(); }catch(e){} } }
+
+$('btSerial').onclick = () => openSerial({ allowedBluetoothServiceClassIds:[SPP], filters:[{ bluetoothServiceClassId: SPP }] }, '블루투스');
+$('usb').onclick      = () => openSerial({ allowedBluetoothServiceClassIds:[SPP] }, 'COM 포트');
+
+// ── BLE ──
+$('ble').onclick = async () => {
+  if(!navigator.bluetooth){ setStatus('이 브라우저는 BLE 웹 연결을 지원하지 않아요 (안드로이드·PC 크롬)','bad'); return; }
   try{
     const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices: BLE.map(b=>b.svc) });
     setStatus(dev.name+' 연결 중…');
@@ -141,38 +223,36 @@ $('bt').onclick = async () => {
     for(const b of BLE){
       try{ const s=await gatt.getPrimaryService(b.svc); rxC=await s.getCharacteristic(b.rx); txC=await s.getCharacteristic(b.tx); break; }catch(e){}
     }
-    if(!rxC){ setStatus('이 모듈에서 UART 서비스를 못 찾았어요. 클래식 블루투스(HC-05/06)일 수 있어요'); gatt.disconnect(); return; }
+    if(!rxC){ setStatus('이 모듈은 BLE가 아니에요. JDY-31은 위의 📱 블루투스 연결을 쓰세요','bad'); gatt.disconnect(); return; }
+    const dec=new TextDecoder();
     try{ await txC.startNotifications(); txC.addEventListener('characteristicvaluechanged', e=>onText(dec.decode(e.target.value,{stream:true}))); }catch(e){}
     writeFn = async data => { for(let i=0;i<data.length;i+=20){ const part=data.slice(i,i+20); rxC.writeValueWithoutResponse ? await rxC.writeValueWithoutResponse(part) : await rxC.writeValue(part); } };
-    dev.addEventListener('gattserverdisconnected', ()=>{ writeFn=null; setStatus('연결 끊김'); });
-    setStatus('블루투스 연결됨: '+(dev.name||'모듈'), true);
-  }catch(e){ setStatus('연결 취소/실패: '+e.message); }
+    dev.addEventListener('gattserverdisconnected', ()=>{ writeFn=null; setStatus('연결 끊김','bad'); });
+    setStatus('BLE 연결됨: '+(dev.name||'모듈'), 'on');
+  }catch(e){ setStatus('연결 취소/실패: '+e.message,'bad'); }
 };
 
-$('usb').onclick = async () => {
-  if(!navigator.serial){ setStatus('이 브라우저는 시리얼 연결을 지원하지 않아요 (노트북 크롬·엣지 사용)'); return; }
-  try{
-    const port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 9600 });
-    const w = port.writable.getWriter();
-    writeFn = d => w.write(d);
-    setStatus('연결됨 (USB면 보드가 재시작해요, 2초 뒤 명령)', true);
-    (async()=>{ const r=port.readable.getReader(); try{ for(;;){ const {value,done}=await r.read(); if(done)break; onText(dec.decode(value,{stream:true})); } }catch(e){} })();
-  }catch(e){ setStatus('연결 취소/실패: '+e.message); }
-};
-
-document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+// ── 버튼 ──
+const DANCE = new Set(['u','s','m','k']);
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+  const c=b.dataset.c; send(DANCE.has(c) ? c+' '+Math.min(steps,8) : c);
+});
+document.querySelectorAll('[data-walk]').forEach(b=>b.onclick=()=>send(b.dataset.walk+' '+steps));
+document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{ steps=+b.dataset.n; document.querySelectorAll('[data-n]').forEach(x=>x.classList.toggle('on',x===b)); });
 $('p').oninput=e=>$('pv').textContent=e.target.value; $('p').onchange=e=>send('p '+e.target.value);
 $('a').oninput=e=>$('av').textContent=e.target.value; $('a').onchange=e=>send('a '+e.target.value);
+$('v').oninput=e=>$('vv').textContent=e.target.value; $('v').onchange=e=>send('v '+e.target.value);
+let eco=false; function setEco(on){ eco=on; $('eco').classList.toggle('on',on); $('eco').textContent=on?'🔋 절전 켬':'🔋 절전 끔'; }
+$('eco').onclick=()=>{ setEco(!eco); send('eco '+(eco?'on':'off')); };
+let muted=false; $('mute').onclick=()=>{ muted=!muted; send(muted?'mute':'unmute'); $('mute').textContent=muted?'🔊 소리 켜기':'🔇 음소거'; };
 $('sendb').onclick=()=>{ const v=$('cmd').value.trim(); if(v){ send(v); $('cmd').value=''; } };
 $('cmd').onkeydown=e=>{ if(e.key==='Enter') $('sendb').click(); };
 
-// 센서 모드 버튼
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ send('mode '+b.dataset.mode); document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on', x===b && b.dataset.mode!=='off')); });
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ send('mode '+b.dataset.mode); document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('tog',true)); document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on', x===b && b.dataset.mode!=='off')); });
 let watching=false;
 $('watch').onclick=()=>{ watching=!watching; send('watch '+(watching?'on':'off')); $('watch').textContent=watching?'재기 멈춤':'계속 재기'; };
 
-// 음성 명령: 들은 문장에서 낱말을 찾아 명령으로 바꾼다 (크롬 음성 인식, 인터넷 필요)
+// 음성 명령 (크롬 음성 인식, 인터넷 필요)
 const VOICE = [
   [/멈|정지|그만|스톱/, ['x']],
   [/앞/, ['w 4']], [/뒤/, ['b 4']], [/왼/, ['l 3']], [/오른/, ['r 3']],

@@ -190,7 +190,7 @@ function diagnoseBoot(m){
 $('conn').onclick = async () => {
   if(!navigator.serial){ setStatus('이 브라우저는 시리얼 연결이 안 돼요 (노트북 크롬·엣지)','bad'); return; }
   try{
-    port = await navigator.serial.requestPort();
+    port = await navigator.serial.requestPort({ allowedBluetoothServiceClassIds:['00001101-0000-1000-8000-00805f9b34fb'] });   // 폰 크롬에서도 JDY-31이 보이도록
     await port.open({ baudRate: 9600 });
     writer = port.writable.getWriter();
     const info=port.getInfo(); connIsUsb=!!info.usbVendorId;
