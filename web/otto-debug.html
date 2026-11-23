@@ -199,7 +199,14 @@ $('conn').onclick = async () => {
     $('conn').disabled=true; $('disc').disabled=false;
     lastBootSeen=null; lastCmd=null; lastRx=performance.now();
     readLoop();
-  }catch(e){ setStatus('연결 실패: '+e.message,'bad'); addLog('연결 실패: '+e.message,'sys'); }
+  }catch(e){
+    const info = port && port.getInfo ? port.getInfo() : {};
+    const hint = info.usbVendorId
+      ? 'USB 포트를 다른 프로그램이 잡고 있어요 → 아두이노 IDE를 완전히 끄거나(시리얼 모니터 탭 닫기만으론 부족할 때가 있음) 다른 크롬 탭(리모컨)을 닫고 다시.'
+      : '블루투스 포트: 모듈과 무선 연결이 안 됐어요 → ① 폰 앱이 모듈에 연결돼 있으면 끊기 ② 모듈 불이 깜빡이는지(전원) ③ COM16 말고 COM15인지 확인 후 다시. USB 시험이면 목록에서 COM12(USB-SERIAL CH340)를 고르세요.';
+    setStatus('연결 실패: '+hint,'bad'); addLog('연결 실패: '+e.message+' — '+hint,'sys');
+    port=null;
+  }
 };
 async function readLoop(){
   const dec=new TextDecoder();
