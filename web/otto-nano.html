@@ -88,6 +88,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0}
     <div class="grid2 dance">
       <button data-c="d">🎬 데모 시작</button><button data-c="h">🧍 차렷</button>
     </div>
+    <div class="grid2 dance">
+      <button data-c="mj 4">🕺 빌리진 문워크 4초</button><button data-c="mj 10">🕺 빌리진 문워크 10초</button>
+    </div>
   </section>
 
   <section class="card">
@@ -100,7 +103,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0}
     <h2>소리 (부저)</h2>
     <div class="grid4 sounds">
       <button data-c="z beep">삐</button><button data-c="z hello">안녕</button><button data-c="z happy">신남</button><button data-c="z sad">슬픔</button>
-      <button data-c="z alarm">경고</button><button data-c="z ok">확인</button><button data-c="z song">노래</button><button id="mute" class="">🔇 음소거</button>
+      <button data-c="z alarm">경고</button><button data-c="z ok">확인</button><button data-c="z song">노래</button><button data-c="z billie 4">빌리진</button><button id="mute" class="">🔇 음소거</button>
     </div>
   </section>
 
@@ -256,7 +259,7 @@ $('watch').onclick=()=>{ watching=!watching; send('watch '+(watching?'on':'off')
 const VOICE = [
   [/멈|정지|그만|스톱/, ['x']],
   [/앞/, ['w 4']], [/뒤/, ['b 4']], [/왼/, ['l 3']], [/오른/, ['r 3']],
-  [/춤/, ['e happy','u 3','s 3']], [/문워크/, ['m 3']], [/까치발/, ['k 3']],
+  [/춤/, ['e happy','u 3','s 3']], [/빌리진|마이클|잭슨/, ['mj 10']], [/문워크/, ['mj 4']], [/까치발/, ['k 3']],
   [/웃/, ['e smile']], [/하트|사랑/, ['e heart','z happy']], [/놀라/, ['e surprise','z alarm']], [/슬퍼|울어/, ['e sad','z sad']],
   [/인사|안녕/, ['e happy','z hello']], [/노래/, ['z song']], [/거리/, ['dist']],
   [/따라/, ['mode follow']], [/조심|장애물/, ['mode guard','w 6']], [/차렷/, ['h']],

@@ -29,7 +29,9 @@
  *   ── 도트 · 부저 · 초음파 (extras.h, 핀은 docs/otto-조립-지도.html) ──
  *   e <표정>     도트 표정: eyes blink smile happy sad surprise heart up down left right x all off
  *   e rot <0~3>  도트를 90°씩 돌림 (거꾸로 붙였을 때)     e flip  좌우 거울     e bright <0~15>
- *   z <소리>     부저: beep hello happy sad alarm ok song      z <Hz> <ms>  직접 음 내기
+ *   z <소리>     부저: beep hello happy sad alarm ok song billie   z <Hz> <ms>  직접 음 내기
+ *   z billie <초> 빌리진 리프를 초만큼 반복 (1~30)
+ *   mj <초>      빌리진 틀고 그 시간만큼 문워크 (기본 4초, 최대 30초). 그냥 m도 4~10초 음악이 같이 나옴
  *   mute / unmute 소리 끄기 / 켜기
  *   test         도트·부저·초음파 자동 점검 (초음파 선이 바뀌었는지도 알려 줌)
  *   dist         초음파 거리(cm) 한 번 출력            watch on|off  0.5초마다 거리 출력
@@ -183,6 +185,9 @@ void startAction(Action a, int steps) {
   Serial.print(F(" x")); Serial.print(steps);
   Serial.print(F(", 주기 ")); Serial.print(periodMs);
   Serial.print(F("ms, 진폭 ")); Serial.print(ampPct); Serial.println('%');
+  // 문워크엔 빌리진. 춤 길이만큼(최소 4초, 최대 10초). 절전 중엔 소리 안 냄
+  if (a == ACT_MOONWALK_LEFT || a == ACT_MOONWALK_RIGHT)
+    if (!ecoOn) playSoundFor(SND_BILLIE, constrain(actDuration, 4000UL, 10000UL));
   Serial.flush();   // 걷기 시작 직후 재시작해도 이 줄은 나가도록
 }
 
@@ -417,9 +422,14 @@ void handle(char* line) {
     return;
   }
   if (!strcmp(cmd, "z") && a1) {
+    if (a2 && soundByName(a1) >= 0) {   // z billie 10 → 10초 반복
+      int sec = constrain(atoi(a2), 1, 30);
+      playSoundFor(soundByName(a1), (uint32_t)sec * 1000);
+      Serial.print(F("> 소리 ")); Serial.print(a1); Serial.print(' '); Serial.print(sec); Serial.println(F("초")); return;
+    }
     if (a2) { tone(BUZZER, constrain(atoi(a1), 31, 8000), constrain(atoi(a2), 10, 3000)); Serial.println(F("> 삐")); return; }
     int i = soundByName(a1);
-    if (i < 0) { Serial.println(F("? 소리: beep hello happy sad alarm ok song")); return; }
+    if (i < 0) { Serial.println(F("? 소리: beep hello happy sad alarm ok song billie")); return; }
     playSound(i); Serial.print(F("> 소리 ")); Serial.println(a1); return;
   }
   if (!strcmp(cmd, "test")) {   // 도트 · 부저 · 초음파 자동 점검
@@ -446,7 +456,7 @@ void handle(char* line) {
     Serial.println(F("[점검 끝]"));
     return;
   }
-  if (!strcmp(cmd, "mute"))   { soundOn = false; noTone(BUZZER); Serial.println(F("> 소리 끔")); return; }
+  if (!strcmp(cmd, "mute"))   { soundOn = false; sndNotes = nullptr; noTone(BUZZER); Serial.println(F("> 소리 끔")); return; }
   if (!strcmp(cmd, "unmute")) { soundOn = true; playSound(0); Serial.println(F("> 소리 켬")); return; }
   if (!strcmp(cmd, "dist"))   { uint16_t d = readCm(); Serial.print(F("거리 ")); Serial.print(d); Serial.println(d ? F("cm") : F("cm (반사 없음: 너무 멀거나 선 확인)")); return; }
   if (!strcmp(cmd, "watch") && a1) { watchDist = !strcmp(a1, "on"); return; }
@@ -458,7 +468,7 @@ void handle(char* line) {
     Serial.println(F("? mode off | guard | follow | react")); return;
   }
 
-  if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { clearQueue(); home(); setFace(F_EYES); idleBlink = true; Serial.println(F("> 차렷")); }
+  if(!strcmp(cmd, "h") || !strcmp(cmd, "x")) { clearQueue(); sndNotes = nullptr; noTone(BUZZER); home(); setFace(F_EYES); idleBlink = true; Serial.println(F("> 차렷")); }
   else if (!strcmp(cmd, "off"))  { curAct = ACT_HOME; detachAll(); Serial.println(F("> 서보 힘 뺌")); }
   else if (!strcmp(cmd, "i"))    identify();
   else if (!strcmp(cmd, "show")) show();
@@ -480,8 +490,13 @@ void handle(char* line) {
   else if (!strcmp(cmd, "u")) startAction(ACT_UPDOWN, n);
   else if (!strcmp(cmd, "s")) startAction(ACT_SWING, n);
   else if (!strcmp(cmd, "m")) startAction(ACT_MOONWALK_LEFT, n);
+  else if (!strcmp(cmd, "mj")) {   // 빌리진 문워크: 초만큼 춤추고 음악도 그만큼
+    int sec = a1 ? constrain(atoi(a1), 1, 30) : 4;
+    startAction(ACT_MOONWALK_LEFT, (sec * 1000L + periodMs - 1) / periodMs);
+    if (!ecoOn) playSoundFor(SND_BILLIE, (uint32_t)sec * 1000);
+  }
   else if (!strcmp(cmd, "k")) startAction(ACT_TIPTOE, n);
-  else Serial.println(F("? 명령: h i t save show w b l r u s m k p a v x off d / e z mute dist watch mode dbg eco"));
+  else Serial.println(F("? 명령: h i t save show w b l r u s m mj k p a v x off d / e z mute dist watch mode dbg eco"));
 }
 
 void readSerial() {
