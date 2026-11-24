@@ -34,6 +34,8 @@ button:disabled{opacity:.4}
 .steps{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--muted)}
 .steps button{min-height:40px;padding:6px 12px;font-size:15px}
 .steps button.on{background:var(--go);color:#fff}
+.trim{display:grid;grid-template-columns:1fr 52px 44px 52px;gap:6px;align-items:center;margin:4px 0}
+.trim b{text-align:center}
 .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .grid4 button{font-size:15px;min-height:52px;padding:6px 2px}
@@ -133,6 +135,24 @@ details summary{cursor:pointer;font-weight:700;color:var(--muted);padding:4px 0}
     <div id="heard" style="font-size:14px"></div>
   </details>
 
+  <details class="card">
+    <summary>🛠 고급 (영점 · 자동 데모 · 도트 · 기록)</summary>
+    <h2>영점 맞추기 (차렷 때 다리가 똑바로 서게)</h2>
+    <div id="trims"></div>
+    <div class="grid2"><button data-c="show">지금 값 불러오기</button><button data-c="save">💾 영점 저장</button></div>
+    <div class="grid2"><button data-c="i">서보 하나씩 흔들기</button><button data-c="h">🧍 차렷</button></div>
+    <div class="help">− / + 한 번에 1도. 맞으면 꼭 💾 저장 (안 하면 껐다 켜면 돌아가요).</div>
+    <h2>전원 켤 때 자동 데모</h2>
+    <div class="grid2"><button data-c="demo on">켬 (건전지 리허설용)</button><button data-c="demo off">끔 (조립·조종용)</button></div>
+    <h2>도트 방향 · 밝기</h2>
+    <div class="grid4">
+      <button data-c="e rot 0">0°</button><button data-c="e rot 1">90°</button><button data-c="e rot 2">180°</button><button data-c="e rot 3">270°</button>
+    </div>
+    <div class="grid2"><button data-c="e flip">↔ 좌우 거울</button><label>밝기 <b id="bv">8</b><input id="bright" type="range" min="0" max="15" value="8"></label></div>
+    <h2>디버그 기록 (전압 · 재시작)</h2>
+    <div class="grid4"><button data-c="dbg on">켬</button><button data-c="dbg off">끔</button><button data-c="dbg reset">켠 횟수 0</button><button data-c="dbg">지금 전압</button></div>
+  </details>
+
   <section class="card">
     <div class="send"><input id="cmd" placeholder="직접 명령 (예: t 2 -4, save, show)" autocomplete="off"><button id="sendb">보내기</button></div>
     <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="showDbg"> 디버그 줄(#) 보기</label>
@@ -171,6 +191,7 @@ function onText(t){
     if(line.startsWith('#') && !$('showDbg').checked) continue;
     log(line);
     const m=line.match(/거리 (\d+)cm/); if(m) $('dist').textContent=m[1]+' cm';
+    readTrims(line);
     if(/절전: 걸을 때/.test(line)) setEco(true); else if(/절전 끔/.test(line)) setEco(false);
   }
 }
@@ -247,6 +268,12 @@ $('a').oninput=e=>$('av').textContent=e.target.value; $('a').onchange=e=>send('a
 $('v').oninput=e=>$('vv').textContent=e.target.value; $('v').onchange=e=>send('v '+e.target.value);
 let eco=false; function setEco(on){ eco=on; $('eco').classList.toggle('on',on); $('eco').textContent=on?'🔋 절전 켬':'🔋 절전 끔'; }
 $('eco').onclick=()=>{ setEco(!eco); send('eco '+(eco?'on':'off')); };
+// 영점: show 응답 "트림: 왼다리(골반)=3 ..." 을 읽어 표시
+const TRIM_NAMES=['왼다리(골반)','오른다리(골반)','왼발','오른발'], trimVal=[0,0,0,0];
+$('trims').innerHTML=TRIM_NAMES.map((n,i)=>`<div class="trim"><span>${i} ${n}</span><button data-t="${i}" data-d="-1">−</button><b id="tv${i}">0</b><button data-t="${i}" data-d="1">+</button></div>`).join('');
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.t; trimVal[i]=Math.max(-30,Math.min(30,trimVal[i]+(+b.dataset.d))); $('tv'+i).textContent=trimVal[i]; send('t '+i+' '+trimVal[i]); });
+function readTrims(line){ if(!line.startsWith('트림:')) return; TRIM_NAMES.forEach((n,i)=>{ const m=line.match(new RegExp(n.replace(/[()]/g,'\\$&')+'=(-?\\d+)')); if(m){ trimVal[i]=+m[1]; $('tv'+i).textContent=m[1]; } }); }
+$('bright').oninput=e=>$('bv').textContent=e.target.value; $('bright').onchange=e=>send('e bright '+e.target.value);
 let muted=false; $('mute').onclick=()=>{ muted=!muted; send(muted?'mute':'unmute'); $('mute').textContent=muted?'🔊 소리 켜기':'🔇 음소거'; };
 $('sendb').onclick=()=>{ const v=$('cmd').value.trim(); if(v){ send(v); $('cmd').value=''; } };
 $('cmd').onkeydown=e=>{ if(e.key==='Enter') $('sendb').click(); };
