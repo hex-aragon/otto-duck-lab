@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>오리 로봇 공부 노트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 레이아웃: 위에 고정 목차 탭, 아래로 5개 장(테스트 → 전기 → 물리 → 강화학습 → 숫자표). 한 장 = 개념 카드 묶음 */
+:root{
+  --bg:#f5f6f3; --paper:#ffffff; --ink:#1d2324; --muted:#5d6869; --line:#d9ddd8;
+  --duck:#e3a008; --duck-soft:#fff4d6; --duck-ink:#7a5400;
+  --blue:#2a6fdb; --blue-soft:#e4eefc; --red:#c2372b; --red-soft:#fbe5e2; --green:#2f7d4f; --green-soft:#e3f2e8;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --blue:#6aa2ff; --blue-soft:#18263d; --red:#ff7a6e; --red-soft:#3b1b19; --green:#6cc58f; --green-soft:#173226; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --blue:#6aa2ff; --blue-soft:#18263d; --red:#ff7a6e; --red-soft:#3b1b19; --green:#6cc58f; --green-soft:#173226; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:64px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.7;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:1.95rem} h2{font-size:1.45rem} h3{font-size:1.08rem}
+p{margin:0}
+a{color:var(--duck-ink)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--duck);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:64ch}
+.small{font-size:.87rem;color:var(--muted)}
+code,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+code{font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
+pre{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:.85rem;line-height:1.55}
+
+/* 상단 탭 */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bg);border-bottom:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-left,0px))}
+nav.toc ul{list-style:none;margin:0 auto;padding:0;max-width:900px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.toc a{display:block;white-space:nowrap;text-decoration:none;color:var(--ink);font-size:.9rem;padding:5px 12px;border-radius:99px;border:1px solid var(--line);background:var(--paper)}
+nav.toc a:hover{border-color:var(--duck)}
+
+header{padding-top:32px;display:flex;flex-direction:column;gap:10px}
+.part{display:flex;flex-direction:column;gap:18px}
+.part-head{display:flex;flex-direction:column;gap:6px;border-top:3px solid var(--ink);padding-top:14px}
+.part-head .num{font-family:var(--f-mono);font-size:.8rem;color:var(--duck-ink);letter-spacing:.06em}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card ul,.card ol{margin:0;padding-left:1.2em}
+.card li+li{margin-top:4px}
+.why{background:var(--duck-soft);border-radius:6px;padding:8px 12px;font-size:.92rem}
+.why b{color:var(--duck-ink)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.formula{font-family:var(--f-mono);font-size:1.05rem;background:var(--bg);border-radius:6px;padding:8px 12px;text-align:center;font-weight:600}
+.danger{background:var(--red-soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.danger h3{color:var(--red)}
+.danger ul{margin:0;padding-left:1.2em}
+.tag{display:inline-block;font-size:.74rem;font-weight:700;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.t3{background:var(--red-soft);color:var(--red)}
+.t2{background:var(--blue-soft);color:var(--blue)}
+.t1{background:var(--green-soft);color:var(--green)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:540px;font-size:.92rem}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* 체크리스트 */
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.check li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.check input{width:18px;height:18px;margin-top:4px;accent-color:var(--duck)}
+.check label{cursor:pointer}
+.check .day{font-family:var(--f-mono);font-size:.78rem;color:var(--duck-ink);display:block}
+
+/* 계산기 */
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.calc .card label{font-size:.85rem;color:var(--muted)}
+.calc input{width:100%;font:inherit;font-family:var(--f-mono);padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.out{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:1.05rem;font-weight:600;color:var(--duck-ink)}
+
+.fig{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.s-box{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.s-duck{fill:var(--duck-soft);stroke:var(--duck);stroke-width:1.5}
+.s-blue{fill:var(--blue-soft);stroke:var(--blue);stroke-width:1.5}
+.s-line{stroke:var(--ink);stroke-width:1.8;fill:none}
+.s-arrow{fill:var(--ink)}
+.tx{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.tx-b{fill:var(--ink);font-family:var(--f-body);font-size:14px;font-weight:700}
+.tx-m{fill:var(--muted);font-family:var(--f-body);font-size:12px}
+.tx-d{fill:var(--duck-ink);font-family:var(--f-mono);font-size:12px;font-weight:600}
+
+.src{font-size:.86rem;color:var(--muted)}
+.src ul{margin:6px 0 0;padding-left:1.2em}
+.src li{overflow-wrap:anywhere}
+@media (max-width:620px){h1{font-size:1.55rem} h2{font-size:1.25rem}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body>
+
+<nav class="toc" aria-label="목차">
+  <ul>
+    <li><a href="#test">1 받은 뒤 할 일</a></li>
+    <li><a href="#elec">2 전기 · 전자</a></li>
+    <li><a href="#phys">3 물리 · 기계</a></li>
+    <li><a href="#rl">4 강화학습</a></li>
+    <li><a href="#nums">5 숫자표 · 계산기</a></li>
+    <li><a href="#path">6 공부 순서</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Open Duck Mini v2 · 처음부터 배우는 노트</span>
+  <h1>오리 로봇 공부 노트</h1>
+  <p class="lede">전기 · 전자 · 물리를 잘 몰라도 오픈미니덕 v2를 시험하고 걷게 만들 수 있도록, <b>꼭 필요한 것만</b> 모았습니다. 모든 설명은 지금 산 부품(Feetech STS3215 C001 서보 2개, Waveshare 서보 보드, AA 건전지 4개)을 예로 듭니다.</p>
+  <p class="small">중요도 표시: <span class="tag t3" style="margin-left:0">필수</span> 1단계 시험 전에 알아야 함 · <span class="tag t2">2~4단계</span> 조립 · 걷기 때 필요 · <span class="tag t1">나중에</span> 재학습 · 개조 때 필요</p>
+</header>
+
+<!-- ───────────── 1. 받은 뒤 할 일 ───────────── -->
+<section class="part" id="test">
+  <div class="part-head"><span class="num">PART 1</span><h2>받은 뒤 할 일</h2>
+  <p class="lede">택배가 오면 이 순서대로 체크하세요. 체크 표시는 이 브라우저에만 저장됩니다.</p></div>
+
+  <ol class="check" id="checklist">
+    <li><input type="checkbox" id="c1"><label for="c1"><span class="day">도착한 날</span>서보 스티커에 <b>C001</b>(또는 7.4V · 1:345)이 적혀 있는지, 보드에 <b>Bus Servo Adapter (A)</b>가 적혀 있는지 확인하고 사진을 찍어 둡니다.</label></li>
+    <li><input type="checkbox" id="c2"><label for="c2"><span class="day">도착한 날</span>오또 AA 홀더에 <b>새 알카라인 건전지 4개</b>를 넣습니다. 멀티미터가 있으면 전압을 잽니다(6.0~6.5V면 정상).</label></li>
+    <li><input type="checkbox" id="c3"><label for="c3"><span class="day">준비</span>PC에 Python과 Runtime(<code>Open_Duck_Mini_Runtime</code>, <code>v2</code> 브랜치)을 설치합니다. Windows면 Feetech FD 프로그램도 받아 둡니다.</label></li>
+    <li><input type="checkbox" id="c4"><label for="c4"><span class="day">연결</span>서보 몸통을 책상에 테이프나 클램프로 고정합니다. 혼에는 아무것도 달지 않습니다.</label></li>
+    <li><input type="checkbox" id="c5"><label for="c5"><span class="day">연결</span>보드 점퍼를 <b>B</b>에 꽂고, <b>전원을 끈 상태에서</b> 서보 1개만 연결합니다. USB-C로 PC와 연결하고 COM 포트가 생기는지 봅니다.</label></li>
+    <li><input type="checkbox" id="c6"><label for="c6"><span class="day">ID</span>건전지 스위치를 켜고 서보 1의 ID를 <b>22</b>로 바꿉니다. 끄고, 서보 2만 꽂아 <b>23</b>으로 바꿉니다.</label></li>
+    <li><input type="checkbox" id="c7"><label for="c7"><span class="day">백업</span>두 서보의 <b>레지스터(설정값) 전체를 파일로 저장</b>합니다. 펌웨어 버전도 적어 둡니다.</label></li>
+    <li><input type="checkbox" id="c8"><label for="c8"><span class="day">측정 ①</span>공장 설정 그대로 최고 속도를 3번 잽니다. 6V 사양은 <b>42RPM = 4.4 rad/s</b>입니다.</label></li>
+    <li><input type="checkbox" id="c9"><label for="c9"><span class="day">측정 ②</span>레지스터 85(최대 가속도)를 0으로 바꾸고 다시 3번 잽니다. 무엇이 달라졌는지 기록합니다.</label></li>
+    <li><input type="checkbox" id="c10"><label for="c10"><span class="day">판단</span>결과를 관문 1과 비교합니다. 사양값 근처면 나머지 12~13개를 주문합니다.</label></li>
+  </ol>
+
+  <div class="danger">
+    <h3>시험 중 절대 하지 말 것</h3>
+    <ul>
+      <li>전원이 켜진 채 선을 꽂거나 빼기. 보드가 망가질 수 있습니다.</li>
+      <li>7.4V를 넘는 전원 쓰기. 공유기 어댑터(9V · 12V)는 특히 조심합니다.</li>
+      <li>건전지 +와 −를 바꿔 연결하기, 선끼리 맞닿게 두기(합선).</li>
+      <li>서보를 손으로 잡고 억지로 돌리기. 기어가 상할 수 있습니다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ───────────── 2. 전기 · 전자 ───────────── -->
+<section class="part" id="elec">
+  <div class="part-head"><span class="num">PART 2</span><h2>전기 · 전자 기초</h2>
+  <p class="lede">전기를 "관 속을 흐르는 물"로 생각하면 대부분 이해됩니다.</p></div>
+
+  <div class="fig" role="img" aria-label="물탱크 높이는 전압, 흐르는 물의 양은 전류, 관이 좁은 곳은 저항이라는 비유 그림">
+  <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg">
+    <rect class="s-blue" x="30" y="40" width="110" height="130" rx="6"/>
+    <rect x="30" y="80" width="110" height="90" rx="0" fill="var(--blue)" opacity=".35"/>
+    <text class="tx-b" x="85" y="30" text-anchor="middle">물탱크 높이</text>
+    <text class="tx-d" x="85" y="125" text-anchor="middle">= 전압 V</text>
+    <path class="s-line" d="M140 150 L 300 150"/>
+    <path class="s-line" d="M140 165 L 300 165"/>
+    <text class="tx-b" x="220" y="138" text-anchor="middle">흐르는 물의 양</text>
+    <text class="tx-d" x="220" y="190" text-anchor="middle">= 전류 A</text>
+    <path class="s-line" d="M300 150 L 360 154 L 420 154 L 480 150"/>
+    <path class="s-line" d="M300 165 L 360 161 L 420 161 L 480 165"/>
+    <text class="tx-b" x="390" y="138" text-anchor="middle">좁은 관</text>
+    <text class="tx-d" x="390" y="190" text-anchor="middle">= 저항 Ω</text>
+    <path class="s-line" d="M480 150 L 560 150"/>
+    <path class="s-line" d="M480 165 L 560 165"/>
+    <circle class="s-duck" cx="610" cy="157" r="40"/>
+    <text class="tx-b" x="610" y="153" text-anchor="middle">물레방아</text>
+    <text class="tx-d" x="610" y="170" text-anchor="middle">= 모터</text>
+    <text class="tx-m" x="360" y="60" text-anchor="middle">탱크가 높을수록(전압↑) 물이 세게 흐르고,</text>
+    <text class="tx-m" x="360" y="78" text-anchor="middle">물레방아가 무거운 걸 돌릴수록 물을 많이 씁니다(전류↑).</text>
+  </svg>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>전압 (V, 볼트) <span class="tag t3">필수</span></h3>
+      <p>전기를 밀어내는 힘입니다. 건전지 1개는 1.5V, 4개를 한 줄로 이으면 6V입니다.</p>
+      <div class="why"><b>오리에서:</b> 서보는 7.4V용입니다. 전압이 낮으면 느려지고(6V에서 42RPM, 7.4V에서 52RPM), 너무 높으면 보호 기능이 꺼 버리거나 고장 납니다.</div>
+    </div>
+    <div class="card">
+      <h3>전류 (A, 암페어) <span class="tag t3">필수</span></h3>
+      <p>실제로 흐르는 전기의 양입니다. 1A = 1000mA. 모터는 힘을 많이 쓸수록 전류를 많이 먹습니다.</p>
+      <div class="why"><b>오리에서:</b> 서보 1개는 가만히 있으면 0.15A, 꽉 막혀 힘을 최대로 쓰면 약 2.5A입니다. 14개가 동시에 힘을 쓰면 이론상 35A까지 필요합니다.</div>
+    </div>
+    <div class="card">
+      <h3>저항 · 옴의 법칙 <span class="tag t2">2~4단계</span></h3>
+      <div class="formula">V = I × R</div>
+      <p>같은 전압에서 저항이 작으면 전류가 많이 흐릅니다. 선이 가늘거나 접촉이 나쁘면 저항이 생겨 열이 나고 전압이 떨어집니다.</p>
+      <div class="why"><b>오리에서:</b> 듀폰 점퍼선으로 큰 전류를 흘리다 선이 탄 제작 사례가 있습니다. 전원선은 굵은 선과 XT30 같은 큰 커넥터를 씁니다.</div>
+    </div>
+    <div class="card">
+      <h3>전력 (W, 와트) <span class="tag t2">2~4단계</span></h3>
+      <div class="formula">P = V × I</div>
+      <p>일하는 양입니다. 전원 장치는 "몇 V, 몇 A까지"로 표시하고, 둘을 곱한 값이 최대 전력입니다.</p>
+      <div class="why"><b>오리에서:</b> 7.4V로 걷는 중 평균 13.5A를 쓴다면 약 100W입니다(국내 제작자의 시뮬레이션 추정값). 전원 크기를 고를 때 씁니다.</div>
+    </div>
+    <div class="card">
+      <h3>직류(DC)와 교류(AC) <span class="tag t3">필수</span></h3>
+      <p>콘센트는 220V 교류, 건전지와 배터리는 직류입니다. 전자 기기는 직류를 씁니다. 어댑터(SMPS)는 220V 교류를 6V 직류 같은 낮은 전압으로 바꿔 주는 상자입니다.</p>
+      <div class="why"><b>안전:</b> 220V를 직접 만지는 배선은 하지 않습니다. 반드시 밀폐된 어댑터나 벤치 전원을 씁니다.</div>
+    </div>
+    <div class="card">
+      <h3>극성 (+, −) 과 GND <span class="tag t3">필수</span></h3>
+      <p>직류는 방향이 있습니다. 빨강 = +, 검정 = −(GND, 접지). 반대로 꽂으면 부품이 탈 수 있습니다.</p>
+      <p>둥근 DC 플러그는 보통 <b>가운데 핀이 +</b>입니다. 여러 장치를 이을 때는 <b>GND를 모두 연결</b>해야 신호가 통합니다.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>배터리 읽는 법 <span class="tag t2">5단계 배터리 자립 때</span></h3>
+    <div class="tbl"><table>
+      <thead><tr><th>표시</th><th>뜻</th><th>오리 예</th></tr></thead>
+      <tbody>
+        <tr><td><b>1S, 2S</b></td><td>리튬 셀을 몇 개 직렬로 이었나. 셀 1개 = 평균 3.7V, 완충 4.2V</td><td class="num">2S = 7.4V(평균), 8.4V(완충), 약 6.6V(빈 상태)</td></tr>
+        <tr><td><b>mAh</b></td><td>얼마나 오래 쓰나(용량)</td><td class="num">1800mAh ÷ 13.5A ≈ 8분 (이론)</td></tr>
+        <tr><td><b>C</b></td><td>한 번에 얼마나 세게 뽑아 쓸 수 있나</td><td class="num">1800mAh × 20C = 36A</td></tr>
+        <tr><td><b>BMS</b></td><td>과충전 · 과방전 · 합선을 막는 보호 회로</td><td>18650을 쓸 때 필요</td></tr>
+        <tr><td><b>밸런스 충전</b></td><td>셀마다 전압을 맞춰 충전. 리튬폴리머(LiPo)는 전용 충전기 필수</td><td>충전 중 자리 비우지 않기</td></tr>
+      </tbody>
+    </table></div>
+    <div class="why"><b>중요한 함정:</b> 완충 2S는 8.4V인데, 서보는 7.4V를 넘으면 과전압 보호가 걸린다고 사양서에 적혀 있습니다. 그래서 최대 전압 설정값을 올리거나(한 제작자는 9.0V로 올림) 7.2V로 낮춰 주는 모듈을 씁니다.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>UART 시리얼 통신 <span class="tag t3">필수</span></h3>
+      <p>선 하나로 0과 1을 차례대로 보내는 방식입니다. 오리 서보는 <b>1Mbps</b>(1초에 100만 비트) 속도로 말합니다.</p>
+      <ul>
+        <li><b>반이중(half-duplex):</b> 신호선 하나로 보내기와 받기를 번갈아 합니다. 무전기처럼 한 번에 한쪽만 말합니다.</li>
+        <li><b>데이지 체인:</b> 서보를 기차처럼 줄줄이 연결합니다. 모두 같은 선을 듣습니다.</li>
+        <li><b>ID:</b> 각 서보의 이름표입니다. 명령에 ID를 붙이면 그 서보만 대답합니다. 그래서 <b>ID가 겹치면 안 됩니다.</b></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>패킷과 체크섬 <span class="tag t2">2~4단계</span></h3>
+      <p>명령 한 개는 이렇게 생긴 바이트 묶음입니다.</p>
+      <pre>FF FF │ ID │ 길이 │ 명령 │ 값들… │ 체크섬</pre>
+      <p>체크섬은 "앞의 값을 더해 만든 검산 숫자"입니다. 받는 쪽이 다시 계산해 다르면 오류로 버립니다.</p>
+      <div class="why"><b>오리에서:</b> "read crc … computed crc" 같은 오류(원본 이슈 #49)는 선이 헐겁거나 끊겨 신호가 깨졌다는 뜻입니다. 한 제작자는 혼 나사 풀림과 끊어진 케이블이 원인이었습니다.</div>
+    </div>
+    <div class="card">
+      <h3>레지스터 · EEPROM <span class="tag t3">필수</span></h3>
+      <p>서보 안의 "설정 칸 번호표"입니다. 칸마다 번호(주소)가 있고 값이 들어 있습니다.</p>
+      <ul>
+        <li><b>EEPROM:</b> 전원을 꺼도 남는 칸 (ID, 최대 전압, 최대 가속도 등). 바꾸려면 잠금을 풀어야 하는 경우가 많습니다</li>
+        <li><b>RAM:</b> 전원을 끄면 지워지는 칸 (목표 위치, 현재 위치 등)</li>
+      </ul>
+      <div class="why"><b>오리에서:</b> 85번 = 최대 가속도(공장값 50). 이 값 때문에 서보가 느리게 따라간다는 보고가 있어 1단계에서 직접 확인합니다. 85번은 <b>1바이트</b>입니다. 2바이트로 쓰면 86번까지 덮어씁니다.</div>
+    </div>
+    <div class="card">
+      <h3>3.3V 로직 · I2C <span class="tag t2">3단계</span></h3>
+      <p>라즈베리파이 핀은 <b>3.3V</b>만 견딥니다. 5V 신호를 넣으면 고장 납니다.</p>
+      <p><b>I2C</b>는 선 2개(SDA 데이터, SCL 시계)로 여러 센서와 대화하는 방식입니다. 오리의 IMU(BNO055)가 I2C를 씁니다.</p>
+      <div class="why"><b>오리에서:</b> 파이의 하드웨어 I2C로 BNO055를 읽으면 값이 자주 깨진다는 기록이 있어, 소프트웨어 I2C(<code>i2c-gpio</code>)로 바꿔 씁니다.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>멀티미터 쓰는 법 <span class="tag t3">필수</span></h3>
+    <div class="tbl"><table>
+      <thead><tr><th>재는 것</th><th>다이얼</th><th>방법</th><th>주의</th></tr></thead>
+      <tbody>
+        <tr><td>전압</td><td><b>V⎓</b> (직류 V, 20V 범위)</td><td>빨간 탐침은 +, 검은 탐침은 −에 댐. 회로는 켜진 상태</td><td>값 앞에 −가 붙으면 탐침이 반대</td></tr>
+        <tr><td>끊김 · 연결 확인</td><td>🔊 (통전)</td><td>선 양 끝에 대면 "삑" 소리가 나면 연결됨</td><td><b>전원을 끄고</b> 잼</td></tr>
+        <tr><td>전류</td><td>A</td><td>회로를 끊고 그 사이에 멀티미터를 넣음</td><td>잘못 대면 퓨즈가 끊김. 처음엔 벤치 전원 화면의 전류값을 보는 게 안전</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="danger">
+    <h3>전기 안전 규칙 5개</h3>
+    <ul>
+      <li><b>선을 꽂고 빼기 전에 전원 끄기.</b> 켜진 채 꽂다 보드가 망가진 사례가 있습니다.</li>
+      <li><b>합선 금지.</b> +와 −가 직접 닿으면 순간적으로 큰 전류가 흘러 선이 녹거나 배터리가 부풀 수 있습니다.</li>
+      <li><b>모터 전원에 스위치를 꼭 단다(비상 정지).</b> 원본 코드는 Ctrl+C로 멈춰도 모터 힘을 끄지 않습니다.</li>
+      <li><b>모터 전원과 파이 전원을 나눈다.</b> 모터가 갑자기 전류를 먹으면 전압이 떨어져 파이가 꺼질 수 있습니다(오또에서 겪은 재시작과 같은 원리).</li>
+      <li><b>뜨거워지는 곳이 있으면 즉시 끈다.</b> 선 · 커넥터 · 서보가 손으로 못 잡을 만큼 뜨거우면 이상입니다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ───────────── 3. 물리 · 기계 ───────────── -->
+<section class="part" id="phys">
+  <div class="part-head"><span class="num">PART 3</span><h2>물리 · 기계 기초</h2>
+  <p class="lede">걷는 로봇에 필요한 물리는 "얼마나 빨리 돌고, 얼마나 세게 버티고, 어떻게 균형을 잡나"입니다.</p></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>각도와 회전 속도 <span class="tag t3">필수</span></h3>
+      <p>한 바퀴 = 360° = 2π 라디안(약 6.28 rad). 로봇 코드는 거의 라디안을 씁니다.</p>
+      <div class="formula">rad/s = RPM × 2π ÷ 60</div>
+      <p>52RPM(1분에 52바퀴) → <b>5.45 rad/s</b>. 원본 정책이 가정한 모터 최고 속도는 5.24 rad/s라서 거의 같습니다. 이슈 #48에서 제작자들이 잰 2.7 rad/s는 절반 정도라 문제가 된 것입니다.</p>
+    </div>
+    <div class="card">
+      <h3>토크 <span class="tag t3">필수</span></h3>
+      <p>돌리는 힘입니다. 같은 힘이라도 축에서 멀리 걸리면 더 버티기 어렵습니다.</p>
+      <div class="formula">토크 = 힘 × 축에서의 거리</div>
+      <p>19.5 kg·cm = 축에서 1cm 떨어진 곳의 19.5kg을 들고 버틴다는 뜻입니다. 10cm 떨어지면 1.95kg만 버팁니다.</p>
+      <p class="small">단위 바꾸기: 1 kg·cm ≈ 0.098 N·m → 19.5 kg·cm ≈ 1.91 N·m</p>
+    </div>
+  </div>
+
+  <div class="fig" role="img" aria-label="같은 무게도 축에서 멀리 매달수록 더 큰 토크가 필요하다는 지렛대 그림">
+  <svg viewBox="0 0 720 190" xmlns="http://www.w3.org/2000/svg">
+    <circle class="s-duck" cx="90" cy="90" r="26"/>
+    <text class="tx-b" x="90" y="95" text-anchor="middle">서보</text>
+    <path class="s-line" d="M116 90 L 230 90" stroke-width="5"/>
+    <path class="s-line" d="M230 90 L 230 120"/>
+    <rect class="s-blue" x="210" y="120" width="40" height="30" rx="3"/>
+    <text class="tx" x="230" y="140" text-anchor="middle">1kg</text>
+    <text class="tx-m" x="173" y="78" text-anchor="middle">5cm</text>
+    <text class="tx-d" x="170" y="178" text-anchor="middle">토크 5 kg·cm → 여유 있음</text>
+
+    <circle class="s-duck" cx="420" cy="90" r="26"/>
+    <text class="tx-b" x="420" y="95" text-anchor="middle">서보</text>
+    <path class="s-line" d="M446 90 L 680 90" stroke-width="5"/>
+    <path class="s-line" d="M680 90 L 680 120"/>
+    <rect class="s-blue" x="660" y="120" width="40" height="30" rx="3"/>
+    <text class="tx" x="680" y="140" text-anchor="middle">1kg</text>
+    <text class="tx-m" x="563" y="78" text-anchor="middle">20cm</text>
+    <text class="tx-d" x="560" y="178" text-anchor="middle">토크 20 kg·cm → 정지 토크 19.5를 넘음, 못 버팀</text>
+  </svg>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>기어비 <span class="tag t3">필수</span></h3>
+      <p>작은 모터가 빨리 돌고, 기어가 속도를 줄여 힘을 키웁니다. 1:345 = 모터가 345바퀴 돌 때 출력축이 1바퀴.</p>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>모델</th><th>기어비</th><th>특징</th></tr></thead>
+        <tbody>
+          <tr><td>C001 (구매함)</td><td class="num">1:345</td><td>힘 세고 느림</td></tr>
+          <tr><td>C044</td><td class="num">1:191</td><td>중간</td></tr>
+          <tr><td>C046</td><td class="num">1:147</td><td>빠르고 힘 약함</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small">기어비를 바꾸면 속도와 힘이 바뀌어, 정책을 다시 학습해야 할 수 있습니다.</p>
+    </div>
+    <div class="card">
+      <h3>정지 토크 · 정격 토크 · 모터 곡선 <span class="tag t2">2~4단계</span></h3>
+      <ul>
+        <li><b>정지 토크 19.5 kg·cm:</b> 꽉 막혀 못 도는 순간의 최대 힘. 계속 쓰면 뜨거워집니다</li>
+        <li><b>정격 토크 5 kg·cm:</b> 오래 써도 괜찮은 힘</li>
+        <li>모터는 <b>빨리 돌수록 힘이 약해지고</b>, 힘을 많이 쓸수록 느려집니다. 전압이 떨어지면 둘 다 줄어듭니다</li>
+      </ul>
+      <div class="why"><b>오리에서:</b> 국내 제작자 분석에 따르면 시뮬레이션은 ±3.23 N·m까지 허용했는데 실제 서보는 약 1.86 N·m에서 멈춥니다. 시뮬레이션보다 실물이 약하면 실물에서 덜 걷습니다.</div>
+    </div>
+    <div class="card">
+      <h3>가속도와 지연 <span class="tag t3">필수</span></h3>
+      <p>최고 속도가 빨라도, 그 속도까지 올라가는 데(가속) 오래 걸리면 결국 늦게 도착합니다.</p>
+      <div class="why"><b>오리에서:</b> 레지스터 85(최대 가속도)가 가속을 제한합니다. 공장값 50일 때 따라가는 지연이 200ms, 0으로 바꾸자 80ms였다는 기록이 있습니다. 시뮬레이션은 약 60ms였습니다.</div>
+    </div>
+    <div class="card">
+      <h3>제어 주기 <span class="tag t3">필수</span></h3>
+      <p>오리는 1초에 50번(50Hz) "센서 읽기 → 판단 → 모터 명령"을 반복합니다. 한 번에 <b>20ms</b>. 이 안에 다 끝나야 합니다.</p>
+      <p class="small">2단계에서 파이의 판단(추론) 1회 시간을 재는 이유입니다.</p>
+    </div>
+    <div class="card">
+      <h3>위치 제어와 P 게인 <span class="tag t2">4단계</span></h3>
+      <p>서보에 "이 각도로 가라"고 하면 서보가 스스로 모터를 돌립니다. 목표와 현재 각도의 차이(오차)에 비례해 힘을 줍니다.</p>
+      <div class="formula">힘 ∝ Kp × (목표 − 현재)</div>
+      <p><b>Kp(P 게인)</b>가 크면 빠르고 단단하지만 떨리고, 작으면 부드럽지만 늦습니다. 원본은 다리 30 · 머리 8이고, 한 제작자는 바닥에서 떨려 다리를 20으로 낮췄습니다.</p>
+    </div>
+    <div class="card">
+      <h3>백래시(유격) <span class="tag t1">나중에</span></h3>
+      <p>기어 사이의 작은 틈입니다. 방향을 바꿀 때 잠깐 헛도는 각도가 생깁니다. 이 서보는 0.5° 이하입니다.</p>
+      <p class="small">원본 학습 과제 이름 <code>flat_terrain_backlash</code>는 이 유격까지 시뮬레이션에 넣었다는 뜻으로 보입니다.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>무게중심과 균형 <span class="tag t2">4단계</span></h3>
+      <p>무게중심이 발이 닿은 면적(지지 다각형) 안에 있으면 서 있고, 밖으로 나가면 넘어집니다.</p>
+      <ul>
+        <li><b>정적 균형:</b> 천천히 움직여 늘 무게중심이 발 위에 있음 (오또의 걸음)</li>
+        <li><b>동적 균형:</b> 넘어지려는 순간 다른 발을 내밀어 받음 (오리 · 사람의 걸음)</li>
+      </ul>
+      <p class="small">오리는 동적 균형이라 사람이 규칙으로 짜기 어렵고, 그래서 강화학습을 씁니다.</p>
+    </div>
+    <div class="card">
+      <h3>IMU: 가속도계와 자이로 <span class="tag t2">3~4단계</span></h3>
+      <ul>
+        <li><b>가속도계:</b> 가만히 있으면 중력(1g = 9.81 m/s²) 방향을 알려 줍니다 → 기울기</li>
+        <li><b>자이로:</b> 얼마나 빨리 돌고 있는지(rad/s)</li>
+        <li>자이로만 더하면 오차가 쌓여 흐릅니다(드리프트). 에어 밴드 스틱에서 겪은 그 문제입니다</li>
+      </ul>
+      <div class="why"><b>오리에서:</b> 원본 실행 코드는 BNO055의 자이로 3개와 가속도 3개만 정책에 넣습니다. 센서 축 방향과 부호(+/−)가 시뮬레이션과 같아야 합니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── 4. 강화학습 ───────────── -->
+<section class="part" id="rl">
+  <div class="part-head"><span class="num">PART 4</span><h2>오픈미니덕 v2 강화학습</h2>
+  <p class="lede">처음 걷게 할 때는 학습이 필요 없습니다. 공개된 정책(<code>BEST_WALK_ONNX_2.onnx</code>)을 쓰면 됩니다. 아래는 그 정책이 어떻게 만들어졌는지, 그리고 내가 직접 고치려면 무엇을 알아야 하는지입니다.</p></div>
+
+  <div class="fig" role="img" aria-label="시뮬레이션에서 수천 마리 오리를 학습시켜 정책 파일을 만들고, 라즈베리파이가 1초에 50번 정책을 돌려 모터를 움직이는 흐름">
+  <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="s-arrow"/></marker></defs>
+    <rect class="s-blue" x="16" y="30" width="230" height="170" rx="10"/>
+    <text class="tx-b" x="131" y="56" text-anchor="middle">① 시뮬레이션 (GPU)</text>
+    <text class="tx" x="131" y="84" text-anchor="middle">MuJoCo Playground</text>
+    <text class="tx" x="131" y="106" text-anchor="middle">가상 오리 수천 마리가 동시에</text>
+    <text class="tx" x="131" y="126" text-anchor="middle">넘어지며 연습</text>
+    <text class="tx-d" x="131" y="154" text-anchor="middle">PPO · 모방 보상</text>
+    <text class="tx-m" x="131" y="180" text-anchor="middle">수억 걸음 (예: 3억 스텝)</text>
+    <path class="s-line" d="M246 115 L 300 115" marker-end="url(#ah)"/>
+    <rect class="s-duck" x="300" y="80" width="150" height="70" rx="10"/>
+    <text class="tx-b" x="375" y="110" text-anchor="middle">② 정책 파일</text>
+    <text class="tx-d" x="375" y="132" text-anchor="middle">policy.onnx</text>
+    <path class="s-line" d="M450 115 L 504 115" marker-end="url(#ah)"/>
+    <rect class="s-box" x="504" y="30" width="240" height="170" rx="10"/>
+    <text class="tx-b" x="624" y="56" text-anchor="middle">③ 실물 오리 (Pi Zero 2W)</text>
+    <text class="tx" x="624" y="84" text-anchor="middle">1초에 50번 반복</text>
+    <text class="tx" x="624" y="108" text-anchor="middle">센서 101개 읽기</text>
+    <text class="tx" x="624" y="128" text-anchor="middle">→ 정책 → 행동 14개</text>
+    <text class="tx" x="624" y="148" text-anchor="middle">→ 모터 목표 각도</text>
+    <text class="tx-m" x="624" y="180" text-anchor="middle">학습은 안 함. 실행만</text>
+    <text class="tx-m" x="380" y="232" text-anchor="middle">가상과 실물의 차이를 줄이는 일 = sim2real</text>
+  </svg>
+  </div>
+
+  <div class="card">
+    <h3>기본 용어 <span class="tag t3">필수</span></h3>
+    <div class="tbl"><table>
+      <thead><tr><th>용어</th><th>뜻</th><th>오리에서</th></tr></thead>
+      <tbody>
+        <tr><td><b>에이전트</b></td><td>배우는 주체</td><td>가상 오리의 두뇌(신경망)</td></tr>
+        <tr><td><b>환경</b></td><td>에이전트가 사는 세상</td><td>MuJoCo 시뮬레이션 바닥 · 중력 · 몸</td></tr>
+        <tr><td><b>관측 (observation)</b></td><td>매 순간 보는 정보</td><td>센서 · 관절 · 명령 등 숫자 101개</td></tr>
+        <tr><td><b>행동 (action)</b></td><td>매 순간 내리는 결정</td><td>관절 14개의 움직임 값</td></tr>
+        <tr><td><b>보상 (reward)</b></td><td>잘했는지 점수</td><td>명령대로 걸으면 +, 넘어지면 −</td></tr>
+        <tr><td><b>정책 (policy)</b></td><td>관측 → 행동으로 바꾸는 규칙</td><td>작은 신경망. 학습 결과물</td></tr>
+        <tr><td><b>에피소드</b></td><td>시작부터 끝까지 한 판</td><td>넘어지거나 시간이 다 되면 끝</td></tr>
+        <tr><td><b>스텝</b></td><td>한 번의 관측 → 행동</td><td>50Hz면 1초에 50스텝</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>오리 정책의 입력 101개 <span class="tag t2">4단계</span></h3>
+      <div class="tbl"><table style="min-width:0">
+        <tbody>
+          <tr><td>자이로</td><td class="num">3</td></tr>
+          <tr><td>가속도</td><td class="num">3</td></tr>
+          <tr><td>명령 (앞뒤 · 옆 · 회전 · 머리 등)</td><td class="num">7</td></tr>
+          <tr><td>관절 위치 · 속도 14 × 2</td><td class="num">28</td></tr>
+          <tr><td>이전 행동 14 × 3</td><td class="num">42</td></tr>
+          <tr><td>모터 목표</td><td class="num">14</td></tr>
+          <tr><td>발 스위치 (좌 · 우)</td><td class="num">2</td></tr>
+          <tr><td>걸음 위상 (지금 걸음의 어디쯤)</td><td class="num">2</td></tr>
+          <tr><th>합계</th><th class="num">101</th></tr>
+        </tbody>
+      </table></div>
+      <p class="small">순서를 바꾸면 정책이 엉뚱하게 움직입니다. 출처: 원본 실행 코드 분석(11/4).</p>
+    </div>
+    <div class="card">
+      <h3>출력 14개 → 모터 <span class="tag t2">4단계</span></h3>
+      <div class="formula">목표 각도 = 기본 자세 + 0.25 × 행동</div>
+      <p>정책은 기본 자세(예: hip_pitch −0.63, knee 1.368, ankle −0.784 rad)에서 얼마나 움직일지를 냅니다. 0.25를 곱해 너무 크게 움직이지 않게 합니다.</p>
+      <p>그 목표를 서보가 P 게인으로 따라갑니다. <b>서보가 느리게 따라가면, 정책이 기대한 움직임과 실제 움직임이 어긋나서</b> 넘어집니다. 1단계 속도 시험이 중요한 이유입니다.</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>PPO <span class="tag t1">나중에</span></h3>
+      <p>가장 많이 쓰는 강화학습 방법입니다. 오리 수천 마리를 동시에 굴려 경험을 모은 뒤, "점수가 좋았던 행동은 더 자주, 나빴던 건 덜" 하도록 신경망을 조금씩 고칩니다.</p>
+      <p>"조금씩"이 핵심입니다. 한 번에 너무 많이 바꾸면 배운 걸 망가뜨리므로 변화 폭을 제한(clip)합니다.</p>
+      <ul>
+        <li><b>정책 신경망(actor):</b> 행동을 고름</li>
+        <li><b>가치 신경망(critic):</b> "지금 상태가 얼마나 좋은지" 예측해 학습을 도움</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>모방 보상 <span class="tag t1">나중에</span></h3>
+      <p>"걸어라"는 점수만 주면 이상한 자세로 기어가는 법을 배우기 쉽습니다. 그래서 <b>보기 좋은 기준 걸음</b>을 미리 만들고, 그 걸음과 비슷할수록 점수를 더 줍니다. 디즈니 BDX 논문의 방식입니다.</p>
+      <ul>
+        <li>기준 걸음 생성: <code>Open_Duck_reference_motion_generator</code></li>
+        <li>결과를 다항식으로 맞춘 파일: <code>polynomial_coefficients.pkl</code></li>
+        <li>정책 입력의 "걸음 위상 2개"가 이 기준 걸음의 어디쯤인지 알려 줍니다</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>보상은 여러 점수의 합 <span class="tag t1">나중에</span></h3>
+      <p>보통 이런 항목을 더하고 빼서 만듭니다. 정확한 항목과 가중치는 <code>Open_Duck_Playground</code> 코드에서 확인해야 합니다.</p>
+      <ul>
+        <li>명령한 속도를 잘 따라감 (+)</li>
+        <li>기준 걸음과 닮음 (+)</li>
+        <li>몸이 똑바로 서 있음 (+)</li>
+        <li>넘어짐 (큰 −)</li>
+        <li>관절을 너무 세게 · 급하게 씀, 발이 미끄러짐 (−)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>sim2real: 가상과 실물의 차이 <span class="tag t2">4단계</span></h3>
+      <p>시뮬레이션은 실물과 똑같지 않습니다. 그래서 학습할 때 일부러 세상을 흔듭니다(<b>도메인 랜덤화</b>).</p>
+      <ul>
+        <li>무게 · 마찰 · 모터 힘을 조금씩 바꿈</li>
+        <li>센서 지연 0~3스텝(최대 60ms), 자이로 잡음 ±0.1, 가속도 잡음 ±0.05 (원본 학습 코드)</li>
+        <li>모터 특성은 <b>BAM</b>으로 실제 서보를 측정해 맞춤</li>
+      </ul>
+      <div class="why"><b>실물이 그 범위 밖이면</b>(서보가 너무 느림, 지연이 너무 큼, 센서 축이 반대) 시뮬레이션에서 잘 걷던 정책도 넘어집니다.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>직접 학습하려면 필요한 것 <span class="tag t1">나중에</span></h3>
+    <div class="tbl"><table>
+      <thead><tr><th>분야</th><th>알아야 할 것</th><th>현재 상태</th></tr></thead>
+      <tbody>
+        <tr><td>컴퓨터</td><td>엔비디아 GPU (JAX CUDA). 수천 마리를 동시에 굴림</td><td>리더 PC에 엔비디아 GPU 없음 → 클라우드 GPU 필요</td></tr>
+        <tr><td>Python · uv</td><td>코드 실행, 패키지 설치 (<code>uv run …</code>)</td><td>오또 · 에어 밴드에서 일부 경험</td></tr>
+        <tr><td>Linux · SSH · Git</td><td>파이 · 클라우드 접속, 코드 받기</td><td></td></tr>
+        <tr><td>MuJoCo · MJCF</td><td>로봇 모델 파일(관절 · 질량 · 충돌), 화면으로 확인</td><td></td></tr>
+        <tr><td>ONNX</td><td>학습한 신경망을 파이에서 돌릴 수 있게 내보낸 파일</td><td>에어 밴드 TinyML과 비슷한 개념</td></tr>
+        <tr><td>실험 기록</td><td>학습 곡선 보기 (Weights &amp; Biases 등)</td><td></td></tr>
+      </tbody>
+    </table></div>
+    <pre># 원본 문서에 적힌 학습 명령 예 (실행해 보지 않음)
+uv run playground/open_duck_mini_v2/runner.py --task flat_terrain_backlash --num_timesteps 300000000</pre>
+  </div>
+</section>
+
+<!-- ───────────── 5. 숫자표 · 계산기 ───────────── -->
+<section class="part" id="nums">
+  <div class="part-head"><span class="num">PART 5</span><h2>자주 쓰는 숫자와 계산기</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>항목</th><th>값</th><th>출처</th></tr></thead>
+    <tbody>
+      <tr><td>서보 무부하 속도</td><td class="num">42RPM@6V · 52RPM@7.4V</td><td>DFRobot ST3215 사양</td></tr>
+      <tr><td>서보 정지 토크</td><td class="num">16.5 kg·cm@6V · 19.5 kg·cm@7.4V</td><td>같음</td></tr>
+      <tr><td>서보 전류</td><td class="num">무부하 0.15A · 정격 0.65A · 정지 2.5A (@7.4V)</td><td>같음</td></tr>
+      <tr><td>서보 전압 보호</td><td class="num">7.4V 초과 · 4V 미만이면 작동 (설정 변경 가능)</td><td>같음</td></tr>
+      <tr><td>엔코더</td><td class="num">4096단계 = 0.088°, 가운데 2048</td><td>같음</td></tr>
+      <tr><td>통신</td><td class="num">반이중 UART, 1Mbps, ID 0~253</td><td>같음</td></tr>
+      <tr><td>정책 가정 모터 속도</td><td class="num">5.24 rad/s</td><td>원본 실행 코드</td></tr>
+      <tr><td>제어 주기</td><td class="num">50Hz = 20ms</td><td>원본</td></tr>
+      <tr><td>모터 ID</td><td class="num">왼다리 20~24 · 오른다리 10~14 · 목·머리 30~33</td><td>원본 configure_motors</td></tr>
+      <tr><td>P 게인</td><td class="num">다리 30 · 머리 8</td><td>원본</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="calc">
+    <div class="card">
+      <h3>RPM → rad/s</h3>
+      <label for="rpm">RPM</label>
+      <input id="rpm" type="number" value="52" step="1" inputmode="decimal">
+      <p>= <span class="out" id="rad">5.45</span> rad/s</p>
+      <p class="small">정책 가정 5.24 rad/s와 비교: <span id="radcmp">104%</span></p>
+    </div>
+    <div class="card">
+      <h3>토크 단위 바꾸기</h3>
+      <label for="kgcm">kg·cm</label>
+      <input id="kgcm" type="number" value="19.5" step="0.1" inputmode="decimal">
+      <p>= <span class="out" id="nm">1.91</span> N·m</p>
+      <label for="arm">버틸 무게를 알고 싶은 거리 (cm)</label>
+      <input id="arm" type="number" value="10" step="1" inputmode="decimal">
+      <p>그 거리에서 최대 <span class="out" id="kgat">1.95</span> kg</p>
+    </div>
+    <div class="card">
+      <h3>전원 크기 어림</h3>
+      <label for="n">서보 개수</label>
+      <input id="n" type="number" value="14" step="1" inputmode="numeric">
+      <label for="amp">서보 1개 평균 전류 (A)</label>
+      <input id="amp" type="number" value="1" step="0.1" inputmode="decimal">
+      <label for="volt">전압 (V)</label>
+      <input id="volt" type="number" value="7.4" step="0.1" inputmode="decimal">
+      <p>합계 <span class="out" id="itot">14.0</span> A · <span class="out" id="ptot">104</span> W</p>
+      <p class="small">모두 정지 토크로 막히면 2.5A씩: <span id="istall">35.0</span> A</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── 6. 공부 순서 ───────────── -->
+<section class="part" id="path">
+  <div class="part-head"><span class="num">PART 6</span><h2>공부 순서와 자료</h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>언제</th><th>무엇을</th><th>자료</th></tr></thead>
+    <tbody>
+      <tr><td>택배 오기 전</td><td>이 페이지 2장 · 3장의 <b>필수</b> 표시만</td><td>이 페이지</td></tr>
+      <tr><td>1단계 중</td><td>버스 서보 통신, 레지스터</td><td><a href="https://wiki.seeedstudio.com/feetech_servo/">Seeed Feetech 서보 문서</a> · <a href="https://github.com/apirrone/Open_Duck_Mini/blob/v2/docs/configure_motors.md">configure_motors</a></td></tr>
+      <tr><td>2~3단계</td><td>원본 실행 코드의 50Hz 반복 읽기</td><td><a href="https://github.com/apirrone/Open_Duck_Mini_Runtime/tree/v2">Open_Duck_Mini_Runtime</a></td></tr>
+      <tr><td>2~3단계 병행</td><td>강화학습 기초, PPO</td><td><a href="https://huggingface.co/learn/deep-rl-course">Hugging Face Deep RL Course</a> · <a href="https://spinningup.openai.com/en/latest/algorithms/ppo.html">Spinning Up: PPO</a></td></tr>
+      <tr><td>4단계</td><td>MuJoCo 모델 파일, 시뮬레이터로 확인</td><td><a href="https://mujoco.readthedocs.io/">MuJoCo 문서</a> · <a href="https://github.com/apirrone/Open_Duck_Mini/blob/v2/docs/sim2real.md">ODM sim2real</a></td></tr>
+      <tr><td>걷고 난 뒤</td><td>모방 보상 · 기준 걸음 · 재학습</td><td><a href="https://arxiv.org/abs/2501.05204">디즈니 BDX 논문</a> · <a href="https://github.com/apirrone/Open_Duck_Playground">Open_Duck_Playground</a> · <a href="https://github.com/apirrone/Open_Duck_reference_motion_generator">reference motion generator</a></td></tr>
+      <tr><td>모터를 바꿀 때</td><td>모터 특성 측정 · 모델</td><td><a href="https://github.com/Rhoban/bam">Rhoban BAM</a></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="card">
+    <h3>먼저 걸어 본 사람들의 기록</h3>
+    <ul>
+      <li><a href="https://github.com/apirrone/Open_Duck_Mini/issues/48">원본 이슈 #48</a>: 서보가 느리다는 보고와 분석</li>
+      <li><a href="https://github.com/jyxddd/open-duck-mini-notes">jyxddd/open-duck-mini-notes</a>: 레지스터 85, 최대 전압, I2C, P 게인 등 실제 조립 · 디버깅 기록</li>
+      <li><a href="https://github.com/VatoLabs/STS3215_profile">VatoLabs/STS3215_profile</a>: STS3215 가속 설정 측정</li>
+      <li><a href="https://github.com/soyeon24/open-duck-mini-v2-build">soyeon24/open-duck-mini-v2-build</a>: 국내 제작 기록, 구매 내역, 토크 한계 분석</li>
+    </ul>
+  </div>
+
+  <p class="small">이 페이지는 2026-11-24에 공개 자료를 바탕으로 정리한 공부용 메모입니다. 서보 사양은 판매처 사양서 기준이고, 제작 기록은 검증되지 않은 개인 보고입니다. 숫자는 실물 시험으로 다시 확인합니다.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  // 체크리스트: 이 브라우저에만 저장
+  var KEY='duck-study-check-v1', saved={};
+  try{ saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ saved={}; }
+  var boxes=document.querySelectorAll('#checklist input[type=checkbox]');
+  boxes.forEach(function(b){
+    if(saved[b.id]) b.checked=true;
+    b.addEventListener('change',function(){
+      saved[b.id]=b.checked;
+      try{ localStorage.setItem(KEY,JSON.stringify(saved)); }catch(e){}
+    });
+  });
+
+  function num(id){ var v=parseFloat(document.getElementById(id).value); return isFinite(v)?v:0; }
+  function set(id,t){ document.getElementById(id).textContent=t; }
+  function calc(){
+    var rad=num('rpm')*2*Math.PI/60;
+    set('rad',rad.toFixed(2));
+    set('radcmp',Math.round(rad/5.24*100)+'%');
+    var k=num('kgcm');
+    set('nm',(k*0.0980665).toFixed(2));
+    var arm=num('arm');
+    set('kgat',arm>0?(k/arm).toFixed(2):'—');
+    var n=num('n'),a=num('amp'),v=num('volt');
+    set('itot',(n*a).toFixed(1));
+    set('ptot',Math.round(n*a*v));
+    set('istall',(n*2.5).toFixed(1));
+  }
+  ['rpm','kgcm','arm','n','amp','volt'].forEach(function(id){ document.getElementById(id).addEventListener('input',calc); });
+  calc();
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>서보 2개 연결도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 레이아웃: 위에서 아래로 "살 것 → 연결도 → 순서". 그림은 가로 스크롤 상자 안 */
+:root{
+  --bg:#f5f6f3; --paper:#ffffff; --ink:#1d2324; --muted:#5d6869; --line:#d9ddd8;
+  --duck:#e3a008; --duck-soft:#fff4d6; --duck-ink:#7a5400;
+  --pcb:#23302f; --pcb-ink:#e9efe9; --wire-sig:#2a6fdb; --wire-vcc:#d23b2f; --wire-gnd:#2b2b2b; --wire-usb:#7a7f86;
+  --ok:#2f7d4f; --ok-soft:#e3f2e8; --warn:#b5541b; --warn-soft:#fbe9dd;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --pcb:#0f1717; --pcb-ink:#dfe8e2; --wire-sig:#6aa2ff; --wire-vcc:#ff7a6e; --wire-gnd:#c9ced3; --wire-usb:#9aa1a8;
+  --ok:#6cc58f; --ok-soft:#173226; --warn:#f0965c; --warn-soft:#3a2416; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141819; --paper:#1c2223; --ink:#e7ebe8; --muted:#9aa5a4; --line:#2e3638;
+  --duck:#f2b42a; --duck-soft:#3a2f12; --duck-ink:#f6cf72;
+  --pcb:#0f1717; --pcb-ink:#dfe8e2; --wire-sig:#6aa2ff; --wire-vcc:#ff7a6e; --wire-gnd:#c9ced3; --wire-usb:#9aa1a8;
+  --ok:#6cc58f; --ok-soft:#173226; --warn:#f0965c; --warn-soft:#3a2416; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:1.85rem} h2{font-size:1.3rem} h3{font-size:1.05rem}
+p{margin:0}
+a{color:var(--duck-ink)}
+a:focus-visible{outline:2px solid var(--duck);outline-offset:2px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:62ch}
+section{display:flex;flex-direction:column;gap:14px}
+.small{font-size:.86rem;color:var(--muted)}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td a{overflow-wrap:anywhere}
+.fig{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:640px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:4px;border-radius:2px;display:inline-block}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);font-family:var(--f-mono);font-weight:600;width:26px;height:26px;border-radius:6px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:.85rem;margin-top:1px}
+.warn{background:var(--warn-soft);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.warn ul{margin:0;padding-left:1.15em}
+.note{background:var(--duck-soft);border:1px solid var(--duck);border-radius:8px;padding:12px 14px}
+/* SVG 색 */
+.s-paper{fill:var(--paper);stroke:var(--line);stroke-width:1.5}
+.s-box{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.s-pcb{fill:var(--pcb);stroke:var(--ink);stroke-width:1.5}
+.s-part{fill:var(--bg);stroke:var(--pcb-ink);stroke-width:1.2}
+.s-hi{fill:var(--duck);stroke:var(--duck);stroke-width:1.2}
+.s-term{fill:#3f9b5a;stroke:var(--pcb-ink);stroke-width:1}
+.t{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+.t-b{fill:var(--ink);font-family:var(--f-body);font-size:14px;font-weight:700}
+.t-m{fill:var(--muted);font-family:var(--f-body);font-size:12px}
+.t-pcb{fill:var(--pcb-ink);font-family:var(--f-mono);font-size:11px}
+.t-pcb-b{fill:var(--pcb-ink);font-family:var(--f-body);font-size:12.5px;font-weight:700}
+.t-hi{fill:#1d2324;font-family:var(--f-mono);font-size:11px;font-weight:600}
+.t-duck{fill:var(--duck-ink);font-family:var(--f-body);font-size:13px;font-weight:700}
+.w-usb{stroke:var(--wire-usb);stroke-width:5;fill:none;stroke-linecap:round}
+.w-pwr{stroke:var(--wire-vcc);stroke-width:3;fill:none;stroke-linecap:round}
+.w-gnd{stroke:var(--wire-gnd);stroke-width:3;fill:none;stroke-linecap:round}
+.w-sig{stroke:var(--wire-sig);stroke-width:3;fill:none;stroke-linecap:round}
+.servo{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.horn{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+.conn{fill:var(--ink)}
+.x{stroke:var(--warn);stroke-width:2.5}
+@media (max-width:620px){h1{font-size:1.5rem}}
+</style></head><body>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Open Duck Mini v2 · 1단계</span>
+  <h1>서보 2개 연결도</h1>
+  <p class="lede">오리를 조립하는 게 아니라, <b>서보 2개를 PC에 연결해 속도를 재는 책상 위 시험</b>입니다. 나사 조립은 없고 선만 꽂으면 됩니다.</p>
+</header>
+
+<section>
+  <h2>알리에서 살 것</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>품목</th><th>링크</th><th>가격</th><th>확인할 것</th></tr></thead>
+    <tbody>
+      <tr><td>Feetech STS3215 × 2</td><td><a href="https://ko.aliexpress.com/item/1005009981870399.html">Feetech Official Store</a></td><td class="num">₩52,055</td><td>옵션 <b>ST-3215-C001</b> (이미 장바구니에 있음 ✅)</td></tr>
+      <tr><td>Serial Bus Servo Adapter (A) × 1</td><td><a href="https://ko.aliexpress.com/item/1005012794471621.html">FireChip Hardware Store</a><br><span class="small">옵션 "Bus Servo Adapter (A)", 335개 판매, 무료 배송</span></td><td class="num">₩9,460</td><td>제목에 <b>"Bus Servo Adapter (A)"</b>, 그림에 "DC 9~12.6V", A/B 점퍼, USB-C</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">알리 합계 약 ₩61,500 (서보 ₩52,055 + 어댑터 ₩9,460). 어댑터는 11/29~12/05, 서보는 11/30~12/05 도착 예정.</p>
+</section>
+
+<section>
+  <h2>그림 1. 최종 연결 (서보 2개 이어 붙이기)</h2>
+  <div class="fig" role="img" aria-label="PC가 USB-C로 어댑터에 연결되고, 어댑터의 서보 포트에서 서보 1로, 서보 1의 두 번째 커넥터에서 서보 2로 이어지며, 전원 어댑터가 DC 잭에 꽂힌 그림">
+  <svg viewBox="0 0 780 400" xmlns="http://www.w3.org/2000/svg">
+    <!-- PC -->
+    <rect class="s-box" x="16" y="40" width="130" height="86" rx="8"/>
+    <rect class="s-paper" x="30" y="52" width="102" height="52" rx="3"/>
+    <text class="t-b" x="81" y="84" text-anchor="middle">PC</text>
+    <text class="t-m" x="81" y="146" text-anchor="middle">FD 프로그램 / Python</text>
+
+    <!-- USB cable -->
+    <path class="w-usb" d="M146 82 C 190 82, 190 118, 236 118"/>
+    <text class="t-m" x="160" y="70">USB-C 데이터 케이블</text>
+
+    <!-- Power adapter -->
+    <rect class="s-box" x="16" y="262" width="130" height="70" rx="8"/>
+    <text class="t-b" x="81" y="292" text-anchor="middle">전원 어댑터</text>
+    <text class="t" x="81" y="312" text-anchor="middle">6V 2A 이상</text>
+    <text class="t-m" x="81" y="352" text-anchor="middle">또는 벤치 전원 7.2V</text>
+    <path class="w-pwr" d="M146 297 C 190 297, 200 250, 250 250"/>
+    <text class="t-m" x="156" y="320">플러그 5.5×2.1mm</text>
+
+    <!-- Board -->
+    <rect class="s-pcb" x="236" y="60" width="250" height="230" rx="10"/>
+    <text class="t-pcb-b" x="361" y="282" text-anchor="middle">Bus Servo Adapter (A)</text>
+    <!-- USB-C port -->
+    <rect class="s-part" x="230" y="106" width="22" height="26" rx="4"/>
+    <text class="t-pcb" x="260" y="123">USB</text>
+    <!-- jumper -->
+    <rect x="290" y="150" width="70" height="56" rx="4" fill="none" stroke="var(--pcb-ink)" stroke-dasharray="3 3"/>
+    <rect class="s-part" x="300" y="160" width="18" height="36" rx="2"/>
+    <text class="t-pcb" x="309" y="214" text-anchor="middle">A</text>
+    <rect class="s-hi" x="330" y="160" width="18" height="36" rx="2"/>
+    <text class="t-pcb" x="339" y="214" text-anchor="middle">B</text>
+    <text class="t-pcb" x="290" y="144">점퍼</text>
+    <!-- DC jack -->
+    <rect class="s-part" x="244" y="232" width="34" height="34" rx="4"/>
+    <circle cx="261" cy="249" r="7" fill="var(--pcb)" stroke="var(--pcb-ink)"/>
+    <text class="t-pcb" x="284" y="246">DC</text>
+    <text class="t-pcb" x="284" y="259">잭</text>
+    <!-- screw terminal -->
+    <rect class="s-term" x="372" y="232" width="44" height="26" rx="3"/>
+    <text class="t-pcb" x="394" y="226" text-anchor="middle">DC+ DC−</text>
+    <!-- UART header -->
+    <rect class="s-part" x="398" y="150" width="68" height="18" rx="2"/>
+    <text class="t-pcb" x="432" y="185" text-anchor="middle">TX RX GND</text>
+    <text class="t-pcb" x="432" y="198" text-anchor="middle">(안 씀)</text>
+    <!-- servo ports -->
+    <rect class="s-part" x="410" y="74" width="62" height="22" rx="3"/>
+    <text class="t-pcb" x="441" y="110" text-anchor="middle">D V G</text>
+    <rect class="s-part" x="330" y="74" width="62" height="22" rx="3"/>
+    <text class="t-pcb" x="361" y="110" text-anchor="middle">D V G</text>
+    <text class="t-pcb" x="252" y="90">서보 포트 ×2</text>
+
+    <!-- cable board -> servo1 -->
+    <path class="w-sig" d="M472 80 C 520 80, 520 72, 566 72"/>
+    <path class="w-pwr" d="M472 85 C 520 85, 520 77, 566 77"/>
+    <path class="w-gnd" d="M472 90 C 520 90, 520 82, 566 82"/>
+
+    <!-- Servo 1 -->
+    <rect class="servo" x="566" y="40" width="150" height="92" rx="6"/>
+    <circle class="horn" cx="690" cy="86" r="18"/>
+    <circle cx="690" cy="86" r="4" fill="var(--ink)"/>
+    <rect class="conn" x="566" y="66" width="10" height="22" rx="1"/>
+    <rect class="conn" x="566" y="100" width="10" height="22" rx="1"/>
+    <text class="t-b" x="586" y="62">서보 1</text>
+    <text class="t-duck" x="586" y="126">ID 22</text>
+
+    <!-- cable servo1 second connector -> servo2 -->
+    <path class="w-sig" d="M566 106 C 520 106, 520 236, 566 236"/>
+    <path class="w-pwr" d="M566 111 C 526 111, 526 241, 566 241"/>
+    <path class="w-gnd" d="M566 116 C 532 116, 532 246, 566 246"/>
+    <text class="t-m" x="496" y="180" text-anchor="end">서보 1의 두 번째 커넥터 →</text>
+    <text class="t-m" x="496" y="196" text-anchor="end">서보 2</text>
+
+    <!-- Servo 2 -->
+    <rect class="servo" x="566" y="204" width="150" height="92" rx="6"/>
+    <circle class="horn" cx="690" cy="250" r="18"/>
+    <circle cx="690" cy="250" r="4" fill="var(--ink)"/>
+    <rect class="conn" x="566" y="230" width="10" height="22" rx="1"/>
+    <rect class="conn" x="566" y="264" width="10" height="22" rx="1"/>
+    <text class="t-b" x="586" y="226">서보 2</text>
+    <text class="t-duck" x="586" y="290">ID 23</text>
+
+    <!-- callouts -->
+    <text class="t-duck" x="361" y="330" text-anchor="middle">점퍼는 B (USB → SERVO)</text>
+    <text class="t-m" x="361" y="350" text-anchor="middle">전원은 DC 잭이나 초록 나사 단자 중 하나만</text>
+    <text class="t-m" x="641" y="322" text-anchor="middle">혼에는 아무것도 달지 않음 (무부하)</text>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--wire-sig)"></i>신호 (파란 선)</span>
+    <span><i class="sw" style="background:var(--wire-vcc)"></i>전원 + (빨간 선)</span>
+    <span><i class="sw" style="background:var(--wire-gnd)"></i>GND (검은 선)</span>
+    <span><i class="sw" style="background:var(--wire-usb)"></i>USB</span>
+  </div>
+  <p class="small">서보마다 커넥터가 2개 있고 안에서 서로 이어져 있어서, 기차처럼 줄줄이 연결할 수 있습니다(데이지 체인). 보드의 서보 포트 2개에 하나씩 꽂아도 됩니다. 선 색은 DFRobot 사양서 기준(검정 GND, 빨강 VCC, 파랑 신호)이고, 보드 포트 표시는 상품 사진의 "D V G"를 옮긴 것입니다. 케이블은 한 방향으로만 꽂히는 모양입니다.</p>
+</section>
+
+<section>
+  <h2>그림 2. ID 정할 때는 하나씩</h2>
+  <div class="note">새 서보는 ID가 모두 같아서(보통 1) 둘을 같이 꽂으면 신호가 부딪칩니다. <b>하나만 꽂아 ID를 바꾸고, 그다음 하나를 꽂아 바꿉니다.</b></div>
+  <div class="fig" role="img" aria-label="왼쪽은 서보 1만 연결해 ID 22로 바꾸는 단계, 가운데는 서보 1을 빼고 서보 2만 연결해 ID 23으로 바꾸는 단계, 오른쪽은 둘을 함께 연결하는 단계">
+  <svg viewBox="0 0 780 220" xmlns="http://www.w3.org/2000/svg">
+    <!-- step 1 -->
+    <text class="t-b" x="20" y="26">① 서보 1만</text>
+    <rect class="s-pcb" x="20" y="50" width="90" height="70" rx="8"/>
+    <text class="t-pcb-b" x="65" y="90" text-anchor="middle">보드</text>
+    <path class="w-sig" d="M110 85 L 150 85"/>
+    <rect class="servo" x="150" y="55" width="80" height="60" rx="5"/>
+    <text class="t" x="190" y="82" text-anchor="middle">서보 1</text>
+    <text class="t-duck" x="190" y="102" text-anchor="middle">1 → 22</text>
+    <text class="t-m" x="20" y="150">ID 1 확인 → 22로 변경</text>
+    <text class="t-m" x="20" y="168">→ 전원 끄고 선 빼기</text>
+
+    <!-- step 2 -->
+    <text class="t-b" x="280" y="26">② 서보 2만</text>
+    <rect class="s-pcb" x="280" y="50" width="90" height="70" rx="8"/>
+    <text class="t-pcb-b" x="325" y="90" text-anchor="middle">보드</text>
+    <path class="w-sig" d="M370 85 L 410 85"/>
+    <rect class="servo" x="410" y="55" width="80" height="60" rx="5"/>
+    <text class="t" x="450" y="82" text-anchor="middle">서보 2</text>
+    <text class="t-duck" x="450" y="102" text-anchor="middle">1 → 23</text>
+    <text class="t-m" x="280" y="150">ID 1 확인 → 23으로 변경</text>
+    <text class="t-m" x="280" y="168">→ 전원 끄기</text>
+
+    <!-- step 3 -->
+    <text class="t-b" x="540" y="26">③ 둘 다</text>
+    <rect class="s-pcb" x="540" y="50" width="70" height="70" rx="8"/>
+    <text class="t-pcb-b" x="575" y="90" text-anchor="middle">보드</text>
+    <path class="w-sig" d="M610 85 L 630 85"/>
+    <rect class="servo" x="630" y="55" width="60" height="60" rx="5"/>
+    <text class="t-duck" x="660" y="90" text-anchor="middle">22</text>
+    <path class="w-sig" d="M690 85 L 705 85"/>
+    <rect class="servo" x="705" y="55" width="60" height="60" rx="5"/>
+    <text class="t-duck" x="735" y="90" text-anchor="middle">23</text>
+    <text class="t-m" x="540" y="150">22, 23 둘 다 응답하면 통과</text>
+    <text class="t-m" x="540" y="168">→ 속도 측정 시작</text>
+  </svg>
+  </div>
+</section>
+
+<section>
+  <h2>순서</h2>
+  <ol class="steps">
+    <li><span><b>서보 몸통을 책상에 고정합니다.</b> 양면테이프나 클램프로 붙여서 빠르게 돌 때 튀지 않게 합니다. 혼은 끼워만 두고 아무것도 달지 않습니다.</span></li>
+    <li><span>보드 <b>점퍼를 B(USB → SERVO)</b>에 꽂습니다. A는 다른 보드의 UART로 제어할 때 씁니다.</span></li>
+    <li><span><b>전원을 끈 상태에서</b> 서보 1만 보드 서보 포트에 꽂습니다.</span></li>
+    <li><span>USB-C 케이블로 PC와 연결하고, 장치 관리자에 COM 포트가 새로 생기는지 봅니다. 안 보이면 드라이버가 필요할 수 있습니다(받은 뒤 칩 이름 확인).</span></li>
+    <li><span>전원을 켭니다(6V 어댑터 또는 7.2V). FD 프로그램이나 <code>configure_motor.py --id 22</code>로 ID를 22로 바꿉니다. 그리고 <b>레지스터 전체를 저장</b>합니다.</span></li>
+    <li><span>전원을 끄고 서보 1을 뺀 뒤, 서보 2만 꽂아 ID를 23으로 바꿉니다.</span></li>
+    <li><span>전원을 끄고 그림 1처럼 둘을 이어서 꽂은 뒤, 두 ID가 모두 응답하는지 확인합니다.</span></li>
+    <li><span>속도 측정: 공장 설정 그대로 한 번, 레지스터 85를 0으로 바꾼 뒤 한 번. 사양값은 <b>6V 42RPM(4.4 rad/s), 7.4V 52RPM(5.4 rad/s)</b>입니다.</span></li>
+  </ol>
+</section>
+
+<section>
+  <div class="warn">
+    <h3>꼭 지킬 것</h3>
+    <ul>
+      <li><b>전원이 켜진 채 선을 꽂거나 빼지 않습니다.</b> 이렇게 하다가 보드가 망가진 사례가 있습니다.</li>
+      <li><b>7.4V를 넘는 전원을 쓰지 않습니다.</b> 7.5V 어댑터도 피합니다. 사양서상 7.4V를 넘으면 과전압 보호가 걸립니다. 보드에 적힌 "9~12.6V"는 12V 서보 기준 표시입니다.</li>
+      <li>DC 잭과 초록 나사 단자에 <b>전원을 동시에 넣지 않습니다.</b></li>
+      <li>나사 단자를 쓸 때는 +와 −를 멀티미터로 확인한 뒤 연결합니다.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h3>확인하지 못한 것</h3>
+  <p class="small">Waveshare 문서 페이지가 이 작업 환경에서 열리지 않아, 포트 표시는 상품 사진과 판매처 설명(점퍼 B = USB 제어, DC 잭 5.5×2.1mm, USB-C, 나사 단자)을 바탕으로 그렸습니다. 서보 포트 2개가 서로 같은 신호선인지, USB 칩 이름(드라이버)은 보드를 받은 뒤 확인해야 합니다.</p>
+</section>
+
+</div>
+
+</body></html>
