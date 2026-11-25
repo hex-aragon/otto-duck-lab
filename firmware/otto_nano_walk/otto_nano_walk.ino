@@ -512,6 +512,20 @@ void readSerial() {
   // 줄 끝을 안 보내는 BT 터미널 앱 대응: 150ms 조용하면 한 명령으로 처리
   if (len && millis() - lastChar > 150) { buf[len] = 0; handle(buf); len = 0; }
 }
+// ───── 쌍둥이 페이지용 각도 (web/otto-twin.html) ─────
+// #A <왼다리> <오른다리> <왼발> <오른발> <표정>   각도는 트림·반전 전 값(90 = 차렷), 표정은 Face 번호
+// 움직이는 동안 0.1초마다, 가만히 있으면 1초마다. 디버그 기록(dbg)이 켜져 있을 때만.
+uint32_t nextAng = 0;
+void tickAngles() {
+  if (!dbgOn) return;
+  uint32_t now = millis();
+  if (now < nextAng) return;
+  nextAng = now + (curAct != ACT_HOME ? 100 : 1000);
+  if (Serial.availableForWrite() < 24) return;   // 보내는 버퍼가 차 있으면 건너뜀 (걷기 박자를 막지 않게)
+  Serial.print(F("#A"));
+  for (int i = 0; i < SERVO_COUNT; i++) { Serial.print(' '); Serial.print((int)(lastAngle[i] + 0.5f)); }
+  Serial.print(' '); Serial.println((int)curFace);
+}
 
 void setup() {
   Serial.begin(9600);
@@ -544,4 +558,5 @@ void loop() {
   tickBlink(curAct == ACT_HOME);
   tickEcoRelax();
   tickDebug(curAct);
+  tickAngles();
 }
