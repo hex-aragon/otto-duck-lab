@@ -167,7 +167,9 @@ $('flipP').onchange=e=>store.set('flipP',e.target.checked); $('flipR').onchange=
 let tilt={p:0,r:0}, tiltCur={p:0,r:0}, tiltRaw=null, tiltZero=store.get('zero',{p:0,r:0}), nuSeen=0;
 let source=null, action='home', period=1000, face=1, heading=0, lastA=0, aCount=0;
 
+let actT0=0;
 function setAction(a){
+  if(a!==action) actT0=performance.now();
   action=a; $('badge').textContent=(ACT_KO[a]||a)+(source==='sim'?' · 미리 보기':'');
 }
 
@@ -176,6 +178,7 @@ let tPrev=performance.now();
 (function frame(now){
   const dt=Math.min(0.1,(now-tPrev)/1000); tPrev=now;
   if(source==='sim') simStep(now);
+  else if(source==='otto' && now-lastA>1500) guessFromAction(now);   // 각도 줄이 없는 옛 펌웨어: 동작 이름으로 계산
   const k=1-Math.pow(0.0005,dt);                       // 0.1초 간격 값을 부드럽게 이음
   for(let i=0;i<4;i++) curAng[i]+=(tgtAng[i]-curAng[i])*k;
   const s=i=>(flips[i]?-1:1)*(curAng[i]-90)*Math.PI/180;
@@ -260,7 +263,7 @@ async function connectOtto(opts,label){
     const port=await openPort(opts,9600,onOtto);
     const w=port.writable.getWriter(); ottoWriter=d=>w.write(d);
     source='otto'; $('sim').classList.remove('on'); setAction('home');
-    $('status').textContent=`오또 ${label} 연결됨 ✔ 캐릭터가 실물을 따라 움직여요. (각도 줄 #A가 안 오면 펌웨어를 새로 올리거나 'dbg on')`;
+    $('status').textContent=`오또 ${label} 연결됨 ✔ 캐릭터가 실물을 따라 움직여요. 받는 속도가 0번/초면 옛 펌웨어라 동작 이름으로 어림해서 움직여요 (새 펌웨어를 올리면 실제 각도).`;
   }catch(e){ $('status').textContent='오또 연결 실패: '+e.message; }
 }
 $('cOtto').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP],filters:[{bluetoothServiceClassId:SPP}]},'블루투스');
@@ -311,6 +314,11 @@ function simStep(now){
 }
 // 주소 끝에 #sim 을 붙이면 바로 미리 보기 (화면 확인용)
 if(location.hash==='#sim') setTimeout(()=>{ $('sim').click(); simCommand('w 8'); },50);
+function guessFromAction(now){
+  if(action==='home'){ for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+  const g=gaitFor(action), t=now-actT0, ramp=Math.min(1,t/period), w=2*Math.PI*(t%period)/period;
+  for(let i=0;i<4;i++) tgtAng[i]=90+g.O[i]+g.A[i]*ramp*Math.sin(w+g.phi[i]*Math.PI/180);
+}
 $('sim').onclick=()=>{ source='sim'; $('sim').classList.add('on'); setAction('home'); $('status').textContent='미리 보기: 아래 버튼을 누르면 펌웨어와 같은 계산으로 캐릭터가 움직여요 (실물에는 안 보냄).'; };
 </script>
 </body>
