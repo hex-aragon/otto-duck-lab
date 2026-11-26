@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오또 펫</title>
+<style>
+:root{--bg:#fff7ef;--card:#ffffff;--fg:#2b2340;--muted:#7a7090;--pink:#ff7aa8;--mint:#3cc9a0;--sky:#5b8cff;--sun:#ffc23d;--line:#f0e2d6;--bad:#e5484d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a1626;--card:#241f33;--fg:#f3eefe;--muted:#a79fbf;--line:#3a3350}}
+:root[data-theme="dark"]{--bg:#1a1626;--card:#241f33;--fg:#f3eefe;--muted:#a79fbf;--line:#3a3350}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Jua","Malgun Gothic",system-ui,sans-serif}
+main{max-width:780px;margin:0 auto;padding:16px;display:grid;gap:12px}
+h1{font-size:22px;margin:0;display:flex;gap:8px;align-items:center}
+h2{font-size:17px;margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:14px;display:grid;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;min-height:44px;padding:8px 14px;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button.pink{background:var(--pink);border-color:var(--pink);color:#fff}
+button.mint{background:var(--mint);border-color:var(--mint);color:#fff}
+button.on{outline:3px solid var(--mint)}
+.help{color:var(--muted);font-size:14px}
+#stage{position:relative;padding:0;overflow:hidden}
+#view{width:100%;height:min(58vh,420px);display:block;touch-action:none;background:radial-gradient(circle at 50% 30%,#ffe9f2,#fff3dd 60%,#ffe7c9)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #view{background:radial-gradient(circle at 50% 30%,#3a2e57,#2a2340 60%,#201a30)}}
+#bubble{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#fff;color:#2b2340;border-radius:18px;padding:6px 14px;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.12);max-width:90%;text-align:center}
+#chip{position:absolute;left:12px;bottom:12px;background:rgba(43,35,64,.75);color:#fff;border-radius:999px;padding:3px 12px;font-size:13px}
+.bars{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:520px){.bars{grid-template-columns:repeat(2,1fr)}}
+.bar{font-size:13px;color:var(--muted)}
+.bar i{display:block;height:12px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:3px}
+.bar i b{display:block;height:100%;border-radius:999px;transition:width .6s}
+.bar span{float:right;color:var(--fg)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-size:12px;color:var(--muted)}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stats b{display:block;font-size:17px;color:var(--fg)}
+.addr{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all;background:var(--bg);border-radius:10px;padding:6px 10px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}}
+#mintBtn{font-size:18px;min-height:56px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.moment{border:2px solid var(--line);border-radius:18px;padding:10px;display:grid;gap:4px;font-size:13px;background:linear-gradient(160deg,rgba(255,122,168,.12),rgba(91,140,255,.10))}
+.moment b{font-size:15px}
+.moment.big{border-color:var(--pink)}
+.moment a{color:var(--sky)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:0 8px;color:var(--muted)}
+.kv span:nth-child(2n){color:var(--fg);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+pre{max-height:150px;overflow:auto;font-size:12px;background:var(--bg);padding:8px;border-radius:10px;margin:0}
+details summary{cursor:pointer;font-weight:600}
+.ok{color:var(--mint)}.bad{color:var(--bad)}
+</style>
+</head>
+<body>
+<main>
+  <h1>🐣 오또 펫</h1>
+  <div class="help" style="margin-top:-6px">움직임이 데이터가 되고, 신호를 주면 오또 지갑에 소장 토큰이 쌓여요 · <a href="../docs/otto-physical-ai-map.html">🗺 전체 그림 · 고도화 계획</a></div>
+
+  <section class="card">
+    <div class="row">
+      <button class="pink" id="cNu">🧭 NU40 연결 (USB)</button>
+      <button id="cNuBle">🧭 NU40 연결 (블루투스)</button>
+      <button id="cOtto">📱 오또 연결 (블루투스)</button>
+      <button id="cOttoCom">💻 오또 USB/COM</button>
+      <button id="sim">🎮 로봇 없이 미리 보기</button>
+    </div>
+    <div class="help" id="status">NU40(오또 몸에 얹은 보드)을 연결하면 몸 움직임과 오또 지갑이 붙어요. 오또(Nano)도 연결하면 다리·표정까지 똑같이 움직여요.</div>
+  </section>
+
+  <section class="card" id="stage">
+    <canvas id="view"></canvas>
+    <div id="bubble">안녕! 나는 오또야 🐣</div>
+    <div id="chip">대기 중</div>
+  </section>
+
+  <section class="card">
+    <div class="bars">
+      <div class="bar">😊 기분 <span id="vHappy">70</span><i><b id="bHappy" style="background:var(--pink)"></b></i></div>
+      <div class="bar">⚡ 에너지 <span id="vEnergy">80</span><i><b id="bEnergy" style="background:var(--sun)"></b></i></div>
+      <div class="bar">🏃 운동 <span id="vFit">0</span><i><b id="bFit" style="background:var(--mint)"></b></i></div>
+      <div class="bar">⭐ 레벨 <span id="vLv">1</span><i><b id="bXp" style="background:var(--sky)"></b></i></div>
+    </div>
+    <div class="stats">
+      <div>이번 기록 시간<b id="sDur">0초</b></div>
+      <div>걸음 · 춤<b id="sMove">0 · 0</b></div>
+      <div>가장 많이 기운 각도<b id="sTilt">0°</b></div>
+      <div>쌓인 움직임 줄<b id="sLines">0</b></div>
+    </div>
+    <div class="stats">
+      <div>몸 기울기 (NU40)<b id="tilt">-</b></div>
+      <div>도는 방향<b id="yaw">-</b></div>
+      <div>오또 전압<b id="vcc">-</b></div>
+      <div>받는 속도<b id="rate">-</b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="grid">
+      <button data-c="w 4">▲ 앞</button><button data-c="b 4">▼ 뒤</button><button data-c="l 3">◀ 왼쪽</button><button data-c="r 3">오른쪽 ▶</button>
+      <button data-c="mj 4">🕺 문워크</button><button data-c="mj 10">🕺 빌리진 10초</button><button data-c="s 4">↔ 흔들기</button><button data-c="k 4">🩰 까치발</button>
+      <button data-c="e heart">❤ 하트</button><button data-c="e happy">😆 신남</button><button data-c="d">🎬 데모</button><button data-c="x" style="background:var(--bad);color:#fff;border-color:var(--bad)">■ 멈춤</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>👛 오또 지갑 · 소장 토큰 (솔라나 devnet)</h2>
+    <div>오또 지갑 주소 <small class="help" id="ottoKind">(NU40을 연결하면 보드 안의 키)</small></div>
+    <div class="addr" id="ottoAddr">-</div>
+    <div>수수료 내 주는 후원 지갑 <small class="help">잔액 <b id="spBal">-</b> SOL · 한 번 발행에 약 0.008 SOL</small></div>
+    <div class="addr" id="spAddr">-</div>
+    <div class="row">
+      <button id="faucet">💧 시험 SOL 받으러 가기</button>
+      <button id="refresh">🔄 잔액·보관함 새로고침</button>
+      <button id="copySp">📋 후원 주소 복사</button>
+    </div>
+    <div class="row"><button id="exportNow">🤖 지금 기록을 AI 학습용 데이터로 받기</button><button id="replayNow">▶ 지금 기록 3D 다시 보기</button></div>
+    <button class="mint" id="mintBtn">🪙 지금까지 움직임을 토큰으로 발행</button>
+    <div class="help">신호 주는 법: 위 버튼, 키보드 스페이스바, 또는 <b>NU40 보드 버튼(1~4번 아무거나)</b>. 발행하면 이번 기록이 오또 지갑 아래 새 토큰(1개짜리, 다시 못 찍음)으로 남고 기록은 처음부터 다시 쌓여요.</div>
+    <div class="help" id="mintStatus"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>📦 오또 보관함</h2><small class="help" id="colCount"></small></div>
+    <div class="cards" id="cards"><div class="help">아직 없어요. 오또를 움직이고 발행해 보세요.</div></div>
+  </section>
+
+  <details class="card">
+    <summary>⚙ 맞추기</summary>
+    <div class="row">
+      <label class="help"><input type="checkbox" data-flip="0"> 왼다리 반대</label>
+      <label class="help"><input type="checkbox" data-flip="1"> 오른다리 반대</label>
+      <label class="help"><input type="checkbox" data-flip="2"> 왼발 반대</label>
+      <label class="help"><input type="checkbox" data-flip="3"> 오른발 반대</label>
+      <label class="help"><input type="checkbox" id="flipP"> 앞뒤 기울기 반대</label>
+      <label class="help"><input type="checkbox" id="flipR"> 좌우 기울기 반대</label>
+      <label class="help"><input type="checkbox" id="flipY"> 도는 방향 반대</label>
+    </div>
+    <div class="row"><button id="zero">NU40 지금 자세를 똑바로로</button><button id="center">가운데로</button></div>
+    <div class="help">NU40은 오또 몸통에 단단히 붙이고, 오또를 똑바로 세운 채 "지금 자세를 똑바로로"를 눌러 주세요. 전원은 오또 5V를 같이 쓰지 말고 보조배터리를 따로 연결하세요 (걸을 때 5V가 떨어지면 NU40도 꺼져요).</div>
+  </details>
+
+  <details class="card">
+    <summary>받은 줄 보기</summary>
+    <pre id="log"></pre>
+  </details>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module">
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem('pet.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('pet.'+k,JSON.stringify(v));}catch(e){}}};
+function log(s){const l=$('log'); l.textContent+=s+'\n'; if(l.textContent.length>15000) l.textContent=l.textContent.slice(-12000); if(l.parentElement.open) l.scrollTop=l.scrollHeight;}
+const SPP='00001101-0000-1000-8000-00805f9b34fb';
+const NUS={svc:'6e400001-b5a3-f393-e0a9-e50e24dcca9e',rx:'6e400002-b5a3-f393-e0a9-e50e24dcca9e',tx:'6e400003-b5a3-f393-e0a9-e50e24dcca9e'};
+const ACTIONS=['home','walk_fwd','walk_back','turn_left','turn_right','updown','swing','moonwalk_left','moonwalk_right','tiptoe'];
+const ACT_KO={home:'쉬는 중',walk_fwd:'앞으로 걷기',walk_back:'뒤로 걷기',turn_left:'왼쪽 돌기',turn_right:'오른쪽 돌기',updown:'위아래 춤',swing:'흔들기 춤',moonwalk_left:'문워크',moonwalk_right:'문워크',tiptoe:'까치발 춤'};
+const FACES=[[0,0,0,0,0,0,0,0],[0,0x66,0x66,0x66,0,0,0x3C,0],[0,0,0,0x66,0,0,0x3C,0],[0,0x66,0x66,0,0,0x42,0x3C,0],
+ [0,0x66,0x99,0,0,0x7E,0x3C,0],[0,0x66,0x66,0,0,0x3C,0x42,0],[0,0x66,0x66,0,0x18,0x24,0x24,0x18],[0,0x66,0xFF,0xFF,0x7E,0x3C,0x18,0],
+ [0x18,0x3C,0x7E,0xDB,0x18,0x18,0x18,0x18],[0x18,0x18,0x18,0x18,0xDB,0x7E,0x3C,0x18],[0x10,0x30,0x60,0xFF,0xFF,0x60,0x30,0x10],
+ [0x08,0x0C,0x06,0xFF,0xFF,0x06,0x0C,0x08],[0x81,0x42,0x24,0x18,0x18,0x24,0x42,0x81],[255,255,255,255,255,255,255,255]];
+
+// ═════════ 3D 오또 (귀여운 버전) ═════════
+const cv=$('view'), R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(36,1,0.1,200);
+scene.add(new THREE.HemisphereLight(0xffffff,0xffd9c2,1.0));
+const sun=new THREE.DirectionalLight(0xffffff,0.45); sun.position.set(4,8,6); scene.add(sun);
+const M=(c,e)=>new THREE.MeshLambertMaterial({color:c,emissive:e||0x000000});
+// 동그란 방석 바닥
+const rug=new THREE.Mesh(new THREE.CylinderGeometry(4.2,4.2,0.12,48),M(0xffd1dc)); rug.position.y=-0.06; scene.add(rug);
+const rug2=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,0.13,48),M(0xffe6ee)); rug2.position.y=-0.05; scene.add(rug2);
+const place=new THREE.Group(); scene.add(place);
+const lift=new THREE.Group(); place.add(lift);
+const bob=new THREE.Group(); lift.add(bob);          // 숨쉬기 (살짝 들썩)
+const tiltG=new THREE.Group(); bob.add(tiltG);
+const HIP_Y=1.05;
+// 둥근 머리: 상자 + 모서리를 덮는 큰 구 대신, 살짝 둥근 느낌을 내려고 상자 2개 겹치기
+const headC=0xffcf5c;
+const head=new THREE.Mesh(new THREE.BoxGeometry(2.3,1.95,1.75),M(headC)); head.position.y=HIP_Y+1.18; tiltG.add(head);
+const cap=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.25,1.55),M(0xffdc85)); cap.position.y=HIP_Y+2.25; tiltG.add(cap);
+const hips=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.35,1.45),M(0xf5b83d)); hips.position.y=HIP_Y+0.05; tiltG.add(hips);
+// 초음파 눈 (반짝이 포함)
+const pupils=[];
+[-0.46,0.46].forEach(x=>{
+  const e=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.22,28),M(0xffffff)); e.rotation.x=Math.PI/2; e.position.set(x,HIP_Y+1.5,0.92); tiltG.add(e);
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(0.21,0.21,0.24,28),M(0x2b2340)); p.rotation.x=Math.PI/2; p.position.set(x,HIP_Y+1.5,0.94); tiltG.add(p); pupils.push(p);
+  const g=new THREE.Mesh(new THREE.SphereGeometry(0.06,10,10),new THREE.MeshBasicMaterial({color:0xffffff})); g.position.set(x+0.07,HIP_Y+1.58,1.07); tiltG.add(g);
+});
+// 볼터치
+[-0.92,0.92].forEach(x=>{const b=new THREE.Mesh(new THREE.CircleGeometry(0.17,20),new THREE.MeshBasicMaterial({color:0xff8fb1,transparent:true,opacity:0.7})); b.position.set(x,HIP_Y+1.05,0.88); tiltG.add(b);});
+// 안테나 (기분 따라 색)
+const ant=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.5,8),M(0x7a7090)); ant.position.set(0,HIP_Y+2.6,0); tiltG.add(ant);
+const antBall=new THREE.Mesh(new THREE.SphereGeometry(0.15,16,16),M(0xff7aa8,0x552233)); antBall.position.set(0,HIP_Y+2.88,0); tiltG.add(antBall);
+// 도트 매트릭스 = 실물 표정
+const dotCv=document.createElement('canvas'); dotCv.width=dotCv.height=64;
+const dotTex=new THREE.CanvasTexture(dotCv); dotTex.magFilter=THREE.NearestFilter;
+const dot=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({map:dotTex})); dot.position.set(0,HIP_Y+0.66,0.88); tiltG.add(dot);
+function drawFace(f){ const g=dotCv.getContext('2d'); g.fillStyle='#1b1626'; g.fillRect(0,0,64,64); const rows=FACES[f]||FACES[0];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){ g.fillStyle=(rows[r]&(0x80>>c))?'#ff4f7b':'#3b1b28'; g.beginPath(); g.arc(c*8+4,r*8+4,3.1,0,7); g.fill(); } dotTex.needsUpdate=true; }
+drawFace(1);
+// 다리 · 발
+const joints=[], feet=[];
+[[-0.6,0],[0.6,1]].forEach(([x,i])=>{
+  const hip=new THREE.Group(); hip.position.set(x,HIP_Y,0); tiltG.add(hip);
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.27,0.75,20),M(0x7aa2ff)); leg.position.y=-0.4; hip.add(leg);
+  const ankle=new THREE.Group(); ankle.position.y=-0.8; hip.add(ankle);
+  const foot=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.24,1.25),M(0x5b8cff)); foot.position.set(x<0?-0.12:0.12,-0.12,0.15); ankle.add(foot);
+  joints[i]={hip,ankle}; feet.push(foot);
+});
+// 하트·별 파티클
+const sprites=[];
+function emoji(ch){ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d'); g.font='48px serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(ch,32,36); return new THREE.CanvasTexture(c); }
+const TEX={heart:emoji('💖'),star:emoji('⭐'),coin:emoji('🪙'),sweat:emoji('💦'),zzz:emoji('💤')};
+function burst(kind,n=6){ for(let i=0;i<n;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX[kind],transparent:true})); s.scale.set(0.6,0.6,0.6);
+  s.position.set(place.position.x+(Math.random()-0.5)*2.2,3.2+Math.random(),place.position.z+(Math.random()-0.5)*1.5); s.userData={vy:1+Math.random(),life:1.6}; scene.add(s); sprites.push(s);} }
+
+let camAng=0.5, camDist=10;
+let drag=null; cv.addEventListener('pointerdown',e=>{drag=e.clientX;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{ if(drag!=null){ camAng-=(e.clientX-drag)*0.01; drag=e.clientX; }});
+cv.addEventListener('pointerup',e=>{ if(drag!=null && Math.abs(e.clientX-drag)<3) pet(); drag=null; });
+function resize(){const w=cv.clientWidth,h=cv.clientHeight;R.setPixelRatio(devicePixelRatio);R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+addEventListener('resize',resize); resize();
+
+// ═════════ 상태 ═════════
+const tgtAng=[90,90,90,90], curAng=[90,90,90,90];
+let flips=store.get('flips',[false,false,false,false]);
+document.querySelectorAll('[data-flip]').forEach(c=>{const i=+c.dataset.flip; c.checked=flips[i]; c.onchange=()=>{flips[i]=c.checked; store.set('flips',flips);};});
+$('flipP').checked=store.get('flipP',false); $('flipR').checked=store.get('flipR',false);
+$('flipY').checked=store.get('flipY',false); $('flipY').onchange=e=>store.set('flipY',e.target.checked);
+$('flipP').onchange=e=>store.set('flipP',e.target.checked); $('flipR').onchange=e=>store.set('flipR',e.target.checked);
+let source=null, action='home', actT0=0, period=1000, face=1, heading=0, lastA=0, aCount=0;
+let tilt={p:0,r:0}, tiltCur={p:0,r:0}, tiltRaw=null, zero=store.get('zero',{p:0,r:0,y:0}), yawRaw=0;
+
+// 다마고치 수치
+const pet0=store.get('pet',{happy:70,energy:80,fit:0,xp:0,lv:1});
+const P=pet0;
+function savePet(){ store.set('pet',P); }
+function clamp(v){ return Math.max(0,Math.min(100,v)); }
+function addXp(x){ P.xp+=x; while(P.xp>=100*P.lv){ P.xp-=100*P.lv; P.lv++; say(`레벨 업! 이제 ${P.lv}레벨이야 ⭐`); burst('star',10); } }
+function drawBars(){
+  const set=(k,v)=>{ $('v'+k).textContent=Math.round(v); $('b'+k).style.width=Math.round(v)+'%'; };
+  set('Happy',P.happy); set('Energy',P.energy); set('Fit',P.fit);
+  $('vLv').textContent=P.lv; $('bXp').style.width=Math.round(100*P.xp/(100*P.lv))+'%';
+  antBall.material.color.set(P.happy>60?0xff7aa8:P.happy>30?0xffc23d:0x8a8aa0);
+}
+drawBars();
+let bubbleT=0;
+function say(t){ $('bubble').textContent=t; bubbleT=performance.now(); }
+function pet(){ P.happy=clamp(P.happy+6); addXp(2); burst('heart',5); say(['헤헤 간지러워 💕','또 쓰다듬어 줘!','기분 최고야!'][Math.floor(Math.random()*3)]); drawBars(); savePet(); }
+
+// ═════════ 움직임 기록 (발행 단위) ═════════
+let rec;
+function newRec(){ rec={t0:Date.now(),lines:[],steps:0,danceMs:0,walkMs:0,maxTilt:0,falls:0,pets:0,acts:{}}; }
+newRec();
+function recLine(src,line){ if(rec.lines.length<6000) rec.lines.push((Date.now()-rec.t0)+' '+src+' '+line); }
+let fallen=false;
+
+function setAction(a){
+  if(a!==action){ actT0=performance.now(); recLine('L',String(ACTIONS.indexOf(a))); if(a!=='home'){ rec.acts[a]=(rec.acts[a]||0)+1; } }
+  action=a; $('chip').textContent=(ACT_KO[a]||a)+(source==='sim'?' · 미리 보기':'');
+  if(a.startsWith('walk')) say('영차영차 걷는 중 🐾');
+  else if(a.startsWith('moon')) say('빌리진~ 🕺');
+  else if(a==='swing'||a==='updown'||a==='tiptoe') say('신난다 춤춰야지 💃');
+  else if(a.startsWith('turn')) say('빙글~');
+}
+
+// ═════════ 그리기 루프 ═════════
+const box=new THREE.Box3();
+let tPrev=performance.now(), tick=0;
+function frame(now){
+  const dt=Math.min(0.1,(now-tPrev)/1000); tPrev=now;
+  if(source==='replay') replayStep(now); else if(source==='sim') simStep(now); else if(source==='otto' && now-lastA>1500) guess(now);
+  const k=1-Math.pow(0.0005,dt);
+  for(let i=0;i<4;i++) curAng[i]+=(tgtAng[i]-curAng[i])*k;
+  const s=i=>(flips[i]?-1:1)*(curAng[i]-90)*Math.PI/180;
+  joints[0].hip.rotation.y=s(0); joints[1].hip.rotation.y=s(1); joints[0].ankle.rotation.z=s(2); joints[1].ankle.rotation.z=s(3);
+  tiltCur.p+=(tilt.p-tiltCur.p)*k; tiltCur.r+=(tilt.r-tiltCur.r)*k;
+  tiltG.rotation.set(($('flipP').checked?-1:1)*tiltCur.p*Math.PI/180,0,-($('flipR').checked?-1:1)*tiltCur.r*Math.PI/180);
+  bob.position.y=action==='home'?Math.sin(now/600)*0.03:0;
+  pupils.forEach(p=>p.position.x=Math.sign(p.position.x)*0.46+Math.sin(now/1300)*0.05);
+  lift.position.y=0; place.updateMatrixWorld(true);
+  let minY=1e9; feet.forEach(f=>{box.setFromObject(f); minY=Math.min(minY,box.min.y);}); lift.position.y=-minY;
+  if(action!=='home'){
+    const v=0.9/(period/1000), w=(Math.PI/180)*25/(period/1000);
+    if(action==='walk_fwd') move(v*dt); else if(action==='walk_back') move(-v*dt);
+    else if(action==='turn_left') heading+=w*dt; else if(action==='turn_right') heading-=w*dt;
+  }
+  if(Math.hypot(place.position.x,place.position.z)>2.8){ place.position.multiplyScalar(2.8/Math.hypot(place.position.x,place.position.z)); }
+  // NU40이 붙어 있으면 실제 도는 방향(yaw), 없으면 걸음으로 어림
+  place.rotation.y=(nuSeen&&now-nuSeen<2000)?(yawFlip()*(yawRaw-zero.y)*Math.PI/180):heading;
+  for(let i=sprites.length-1;i>=0;i--){ const sp=sprites[i]; sp.position.y+=sp.userData.vy*dt; sp.userData.life-=dt; sp.material.opacity=Math.max(0,sp.userData.life/1.6); if(sp.userData.life<=0){ scene.remove(sp); sprites.splice(i,1);} }
+  // 다마고치: 1초마다 수치 갱신
+  tick+=dt; if(tick>=1){ tick-=1; petTick(); }
+  if(now-bubbleT>5000){ $('bubble').textContent=idleTalk(); bubbleT=now; }
+  cam.position.set(Math.sin(camAng)*camDist,4.4,Math.cos(camAng)*camDist); cam.lookAt(0,1.5,0);
+  R.render(scene,cam); requestAnimationFrame(frame);
+}
+function yawFlip(){ return $('flipY').checked?-1:1; }
+function move(d){ place.position.x+=Math.sin(heading)*d; place.position.z+=Math.cos(heading)*d; }
+$('center').onclick=()=>{ place.position.set(0,0,0); heading=0; };
+function petTick(){
+  const moving=action!=='home';
+  if(moving){ P.energy=clamp(P.energy-1.2); P.fit=clamp(P.fit+1.5); addXp(1);
+    if(action.startsWith('walk')){ rec.walkMs+=1000; rec.steps+=Math.round(1000/period); } else if(!action.startsWith('turn')){ rec.danceMs+=1000; P.happy=clamp(P.happy+1.5); } }
+  else { P.energy=clamp(P.energy+0.6); P.fit=clamp(P.fit-0.05); P.happy=clamp(P.happy-0.05); }
+  if(P.energy<15 && moving) say('헥헥… 좀 쉬고 싶어 💦');
+  drawBars(); savePet(); drawRec();
+}
+function idleTalk(){
+  if(P.energy<20) return '졸려… 💤';
+  if(P.happy<30) return '심심해… 같이 놀아 줘';
+  if(action!=='home') return ACT_KO[action]+' 중!';
+  return ['나를 눌러서 쓰다듬어 줘 👆','오늘도 같이 걸을까?','신호 주면 지금 순간을 기록해 둘게 🪙','빌리진 출까? 🕺'][Math.floor(Math.random()*4)];
+}
+function drawRec(){
+  $('sDur').textContent=Math.round((Date.now()-rec.t0)/1000)+'초';
+  $('sMove').textContent=rec.steps+' · '+Math.round(rec.danceMs/1000)+'초';
+  $('sTilt').textContent=Math.round(rec.maxTilt)+'°'; $('sLines').textContent=rec.lines.length;
+}
+requestAnimationFrame(frame);
+
+// ═════════ 받은 줄 ═════════
+function splitter(fn){ let b=''; return t=>{ b+=t; let i; while((i=b.indexOf('\n'))>=0){ const l=b.slice(0,i).replace(/\r/g,'').trim(); b=b.slice(i+1); if(l) fn(l); } }; }
+const onOtto=splitter(line=>{
+  if(line.startsWith('#A ')){ const n=line.slice(3).split(' ').map(Number);
+    if(n.length>=4&&n.slice(0,4).every(Number.isFinite)){ for(let i=0;i<4;i++) tgtAng[i]=n[i]; aCount++; lastA=performance.now(); recLine('A',line.slice(3)); }
+    if(Number.isFinite(n[4])&&n[4]!==face){ face=n[4]; drawFace(face); } return; }
+  if(line.startsWith('#D ')){ const [,vcc,vmin,act]=line.slice(3).split(' ').map(Number);
+    $('vcc').textContent=(vcc/1000).toFixed(2)+'V'; $('vcc').className=vcc<4300?'bad':'ok';
+    if(ACTIONS[act]&&ACTIONS[act]!==action) setAction(ACTIONS[act]); recLine('D',line.slice(3)); return; }
+  if(line.startsWith('#B ')){ say('앗 어지러워… (오또 보드가 다시 켜졌어요, 전원 확인)'); log(line); return; }
+  if(line.startsWith('#')) return;
+  log(line);
+  const m=line.match(/^> (\w+) x\d+, 주기 (\d+)ms/); if(m){ period=+m[2]; setAction(m[1]); }
+  if(/끝, 차렷|> 차렷/.test(line)) setAction('home');
+});
+let nuSeen=0, ottoPubBytes=null, pendingSig=null;
+const onNu=splitter(line=>{
+  if(line.startsWith('#T ')){
+    const [ms,p,r,y,g,a]=line.slice(3).split(' ').map(Number);
+    tiltRaw={p,r}; yawRaw=y; nuSeen=performance.now();
+    const w=v=>((v+540)%360)-180;
+    tilt={p:w(p-zero.p),r:w(r-zero.r)};
+    const tmax=Math.max(Math.abs(tilt.p),Math.abs(tilt.r)); if(tmax>rec.maxTilt) rec.maxTilt=tmax;
+    if(tmax>60 && !fallen){ fallen=true; rec.falls++; P.happy=clamp(P.happy-8); say('아야! 넘어졌어 😢'); burst('sweat',4); }
+    if(tmax<25) fallen=false;
+    if(g>250 && action==='home' && tmax<40){ rec.pets++; if(rec.pets%10===1) pet(); }   // 손으로 흔들어 주면 쓰다듬기
+    $('tilt').textContent=`${tilt.p.toFixed(0)}° · ${tilt.r.toFixed(0)}°`; $('yaw').textContent=w(y-zero.y).toFixed(0)+'°';
+    if(source!=='otto') aCount++;
+    recLine('T',`${p} ${r} ${y} ${g} ${a}`); return;
+  }
+  log('[NU40] '+line);
+  if(line.startsWith('#I ')){ const [hex,imu]=line.slice(3).split(' '); setOttoKey(hexToBytes(hex),'NU40 보드 안의 키 · IMU '+imu); return; }
+  if(line.startsWith('#G ')){ if(pendingSig){ pendingSig.res(hexToBytes(line.slice(3).trim())); pendingSig=null; } return; }
+  if(line.startsWith('#K ')){ say('신호 받았어! 지금 순간을 기록할게 🪙'); doMint(); return; }
+  if(line.startsWith('#E ')&&pendingSig&&/sign/.test(line)){ pendingSig.rej(new Error(line)); pendingSig=null; }
+});
+$('zero').onclick=()=>{ if(tiltRaw){ zero={...tiltRaw,y:yawRaw}; store.set('zero',zero); say('이제 이 자세가 똑바로야!'); } };
+setInterval(()=>{ $('rate').textContent=aCount+'번/초'; aCount=0; },1000);
+
+// ═════════ 연결 ═════════
+const enc=new TextEncoder();
+let ottoWrite=null, nuWrite=null;
+async function openSerial(opts,baud,onText){
+  if(!navigator.serial) throw new Error('이 브라우저는 시리얼 연결을 지원하지 않아요 (노트북 크롬·엣지, 안드로이드 크롬 137 이상)');
+  const port=await navigator.serial.requestPort(opts); await port.open({baudRate:baud});
+  const dec=new TextDecoderStream(); port.readable.pipeTo(dec.writable).catch(()=>{});
+  const rd=dec.readable.getReader();
+  (async()=>{ try{ for(;;){ const {value,done}=await rd.read(); if(done) break; onText(value); } }catch(e){ $('status').textContent='연결 끊김: '+e.message; } })();
+  const w=port.writable.getWriter(); return d=>w.write(d);
+}
+async function connectOtto(opts,label){
+  try{ ottoWrite=await openSerial(opts,9600,onOtto); source='otto'; $('sim').classList.remove('on'); $('status').textContent=`오또 ${label} 연결됨 ✔`; say('오또 몸이랑 연결됐어!'); }
+  catch(e){ $('status').textContent='오또 연결 실패: '+e.message; }
+}
+$('cOtto').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP],filters:[{bluetoothServiceClassId:SPP}]},'블루투스');
+$('cOttoCom').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP]},'USB/COM');
+$('cNu').onclick=async()=>{
+  try{ nuWrite=await openSerial({filters:[{usbVendorId:0x239A}]},115200,onNu); await nuWrite(enc.encode('id\n'));
+    $('status').textContent='NU40 연결됨 ✔ 오또를 똑바로 세우고 ⚙ 맞추기 → "지금 자세를 똑바로로"를 눌러 주세요.'; }
+  catch(e){ $('status').textContent='NU40 연결 실패: '+e.message; }
+};
+$('cNuBle').onclick=async()=>{
+  try{
+    if(!navigator.bluetooth) throw new Error('이 브라우저는 BLE 연결을 지원하지 않아요 (크롬·엣지, 아이폰은 Bluefy 앱)');
+    const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Otto-Twin'}],optionalServices:[NUS.svc]});
+    const gatt=await dev.gatt.connect(); const svc=await gatt.getPrimaryService(NUS.svc);
+    const rx=await svc.getCharacteristic(NUS.rx), tx=await svc.getCharacteristic(NUS.tx);
+    const dec=new TextDecoder(); await tx.startNotifications(); tx.addEventListener('characteristicvaluechanged',e=>onNu(dec.decode(e.target.value)));
+    let q=Promise.resolve();
+    nuWrite=d=>(q=q.then(async()=>{ for(let i=0;i<d.length;i+=180) await rx.writeValueWithResponse(d.slice(i,i+180)); }));
+    dev.addEventListener('gattserverdisconnected',()=>{ $('status').textContent='NU40 블루투스 끊김'; nuWrite=null; });
+    await nuWrite(enc.encode('id\n')); $('status').textContent='NU40 블루투스 연결됨 ✔';
+  }catch(e){ $('status').textContent='NU40 블루투스 연결 실패: '+e.message; }
+};
+async function send(c){
+  if(source==='otto'&&ottoWrite){ try{ await ottoWrite(enc.encode(c+'\n')); log('> '+c);}catch(e){log('보내기 실패: '+e.message);} return; }
+  if(source==='sim'){ simCommand(c); return; }
+  $('status').textContent='먼저 오또를 연결하거나 "로봇 없이 미리 보기"를 누르세요.';
+}
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+
+// ═════════ 미리 보기 (펌웨어 gait.h와 같은 계산) ═════════
+function gaitFor(a,h=25){ const G=(A,O,phi)=>({A,O,phi});
+  switch(a){ case 'walk_fwd': case 'walk_back': { const d=a==='walk_fwd'?1:-1; return G([30,30,20,20],[0,0,4,-4],[0,0,-90*d,-90*d]); }
+    case 'turn_left': return G([30,10,20,20],[0,0,4,-4],[0,0,-90,-90]); case 'turn_right': return G([10,30,20,20],[0,0,4,-4],[0,0,-90,-90]);
+    case 'updown': return G([0,0,h,h],[0,0,h,-h],[0,0,-90,90]); case 'swing': return G([0,0,h,h],[0,0,h/2,-h/2],[0,0,0,0]);
+    case 'moonwalk_left': case 'moonwalk_right': { const d=a==='moonwalk_left'?1:-1,ph=-90*d; return G([0,0,h,h],[0,0,h/2+2,-h/2-2],[0,0,ph,ph-60*d]); }
+    case 'tiptoe': return G([0,0,h,h],[0,0,h,-h],[0,0,0,0]); }
+  return G([0,0,0,0],[0,0,0,0],[0,0,0,0]); }
+function angAt(a,t){ const g=gaitFor(a),ramp=Math.min(1,t/period),w=2*Math.PI*(t%period)/period; return g.A.map((A,i)=>90+g.O[i]+A*ramp*Math.sin(w+g.phi[i]*Math.PI/180)); }
+function guess(now){ const v=action==='home'?[90,90,90,90]:angAt(action,now-actT0); for(let i=0;i<4;i++) tgtAng[i]=v[i]; }
+let sim={act:'home',t0:0,dur:0};
+const SIM={w:'walk_fwd',b:'walk_back',l:'turn_left',r:'turn_right',u:'updown',s:'swing',m:'moonwalk_left',mj:'moonwalk_left',k:'tiptoe'};
+function simCommand(c){ const [cmd,arg]=c.split(' ');
+  if(cmd==='x'||cmd==='h'){ sim.act='home'; setAction('home'); return; }
+  if(cmd==='e'){ const i=['off','eyes','blink','smile','happy','sad','surprise','heart'].indexOf(arg); if(i>=0){face=i;drawFace(i); if(arg==='heart') pet();} return; }
+  if(cmd==='d'){ simCommand('mj 4'); return; }
+  const a=SIM[cmd]; if(!a) return; const n=+arg||4;
+  sim={act:a,t0:performance.now(),dur:cmd==='mj'?n*1000:n*period}; face=a.startsWith('walk')?3:4; drawFace(face); setAction(a); }
+function simStep(now){
+  if(sim.act==='home'){ for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+  const t=now-sim.t0; if(t>=sim.dur){ sim.act='home'; face=1; drawFace(1); setAction('home'); return; }
+  const v=angAt(sim.act,t); for(let i=0;i<4;i++) tgtAng[i]=v[i];
+  if(Math.floor(t/100)!==Math.floor((t-16)/100)){ recLine('A',v.map(Math.round).join(' ')+' '+face); aCount++; }
+}
+$('sim').onclick=()=>{ source='sim'; $('sim').classList.add('on'); setAction('home'); $('status').textContent='미리 보기: 버튼을 누르면 펌웨어와 같은 계산으로 움직여요. 오또 지갑은 NU40을 연결하기 전까지 이 브라우저 안의 "연습용 키"를 써요.'; if(!ottoPubBytes) useSoftOtto(); };
+
+// ═════════ 솔라나 (devnet) ═════════
+let W,T,MD,Buf;
+const RPC=new URLSearchParams(location.search).get('rpc')||'https://api.devnet.solana.com';   // ?rpc= 로 다른 체인(시험용 로컬 검증기)
+const EXQ=RPC.includes('devnet')?'?cluster=devnet':'?cluster=custom&customUrl='+encodeURIComponent(RPC);
+let conn, sponsor, softOtto=null, ottoSigner=null;
+async function loadChain(){
+  if(W) return;
+  [W,T,MD,{Buffer:Buf}]=await Promise.all([
+    import('https://esm.sh/@solana/web3.js@1.98.0'),
+    import('https://esm.sh/@solana/spl-token@0.4.9?deps=@solana/web3.js@1.98.0'),
+    import('https://esm.sh/@solana/spl-token-metadata@0.1.6?deps=@solana/web3.js@1.98.0'),
+    import('https://esm.sh/buffer@6.0.3')]);
+  conn=new W.Connection(RPC,'confirmed');
+  // 후원 지갑: 이 브라우저에 저장 (devnet 전용). #import=<비밀키 base58>로 옮겨 올 수 있음
+  const imp=location.hash.match(/import=([1-9A-HJ-NP-Za-km-z]+)/);
+  if(imp){ try{ const k=W.Keypair.fromSecretKey(decode58(imp[1])); store.set('sponsor',[...k.secretKey]); }catch(e){} history.replaceState(null,'',location.pathname); }
+  const s=store.get('sponsor',null);
+  sponsor=s?W.Keypair.fromSecretKey(Uint8Array.from(s)):W.Keypair.generate();
+  if(!s) store.set('sponsor',[...sponsor.secretKey]);
+  $('spAddr').textContent=sponsor.publicKey.toBase58();
+}
+const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function decode58(s){ let n=0n; for(const c of s){ n=n*58n+BigInt(B58.indexOf(c)); } const out=[]; while(n>0n){ out.unshift(Number(n%256n)); n/=256n; } for(const c of s){ if(c==='1') out.unshift(0); else break; } return Uint8Array.from(out); }
+function hexToBytes(h){ const b=new Uint8Array(h.length/2); for(let i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16); return b; }
+function bytesToHex(b){ return [...b].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+
+async function setOttoKey(bytes,kind){
+  await loadChain();
+  ottoPubBytes=bytes;
+  const pk=new W.PublicKey(bytes);
+  ottoSigner={ publicKey:pk, sign:msg=>new Promise((res,rej)=>{
+    if(!nuWrite) return rej(new Error('NU40 연결이 끊겼어요'));
+    pendingSig={res,rej}; setTimeout(()=>{ if(pendingSig){ pendingSig=null; rej(new Error('NU40 서명 응답 없음 (10초)')); } },10000);
+    nuWrite(enc.encode('sign '+bytesToHex(msg)+'\n')).catch(rej);
+  })};
+  $('ottoAddr').textContent=pk.toBase58(); $('ottoKind').textContent='('+kind+')';
+  say('내 지갑 주소가 생겼어! 👛'); refresh();
+}
+async function useSoftOtto(){
+  await loadChain();
+  const s=store.get('softOtto',null);
+  softOtto=s?W.Keypair.fromSecretKey(Uint8Array.from(s)):W.Keypair.generate(); if(!s) store.set('softOtto',[...softOtto.secretKey]);
+  const nacl=await import('https://esm.sh/tweetnacl@1.0.3');
+  ottoPubBytes=softOtto.publicKey.toBytes();
+  ottoSigner={ publicKey:softOtto.publicKey, sign:async m=>(nacl.default||nacl).sign.detached(m,softOtto.secretKey) };
+  $('ottoAddr').textContent=softOtto.publicKey.toBase58(); $('ottoKind').textContent='(연습용 키: 이 브라우저 안. NU40을 연결하면 진짜 오또 키로 바뀌어요)';
+  refresh();
+}
+$('faucet').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); }catch(e){} open('https://faucet.solana.com/','_blank'); $('mintStatus').textContent='후원 주소를 복사했어요. 열린 페이지에서 devnet을 고르고 주소를 붙여 넣어 받으세요.'; };
+$('copySp').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); $('mintStatus').textContent='복사했어요.'; }catch(e){} };
+$('refresh').onclick=()=>refresh();
+
+async function refresh(){
+  await loadChain();
+  try{ const b=await conn.getBalance(sponsor.publicKey); $('spBal').textContent=(b/1e9).toFixed(3); $('spBal').className=b<0.01e9?'bad':'ok'; }catch(e){ $('spBal').textContent='?'; }
+  if(ottoSigner) loadCollection();
+}
+
+// 발행: 새 Token-2022 민트 1개 = "오또 순간" 1장. 메타데이터에 이번 움직임 요약 + 원본 기록 해시
+let minting=false;
+async function doMint(){
+  if(minting) return; minting=true; $('mintBtn').disabled=true;
+  const st=t=>{ $('mintStatus').textContent=t; };
+  try{
+    await loadChain();
+    if(!ottoSigner) throw new Error('오또 지갑이 없어요. NU40을 연결하거나 미리 보기를 켜 주세요.');
+    const bal=await conn.getBalance(sponsor.publicKey);
+    if(bal<0.012e9) throw new Error('후원 지갑 SOL이 모자라요 (💧 시험 SOL 받으러 가기)');
+    st('움직임 기록을 정리하는 중…');
+    const raw=rec.lines.join('\n');
+    const hash=bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(raw))));
+    const dur=Math.round((Date.now()-rec.t0)/1000);
+    const top=Object.entries(rec.acts).sort((a,b)=>b[1]-a[1])[0];
+    const mood=P.happy>70?'신남':P.happy>40?'보통':'심심';
+    const n=(await countMoments())+1;
+    const fields={ when:new Date().toISOString().slice(0,19)+'Z', sec:dur, steps:rec.steps, danceSec:Math.round(rec.danceMs/1000), maxTilt:Math.round(rec.maxTilt), falls:rec.falls,
+      best:top?ACT_KO[top[0]]:'쉬기', mood, level:P.lv, lines:rec.lines.length, sha256:hash, src:source==='sim'?'preview':(nuSeen?'nu40':'nano') };
+    const mint=W.Keypair.generate(), otto=ottoSigner.publicKey, PID=T.TOKEN_2022_PROGRAM_ID;
+    const name=`Otto Moment #${n}`, symbol='OTTO', uri=`https://hex-aragon.github.io/otto-duck-lab/web/otto-pet.html#m=${mint.publicKey.toBase58()}`;
+    const kv=Object.entries(fields).map(([k,v])=>[k,String(v)]);
+    const md={mint:mint.publicKey,updateAuthority:otto,name,symbol,uri,additionalMetadata:kv};
+    const mintLen=T.getMintLen([T.ExtensionType.MetadataPointer]);
+    const lamports=await conn.getMinimumBalanceForRentExemption(mintLen+T.TYPE_SIZE+T.LENGTH_SIZE+MD.pack(md).length);
+    const ata=T.getAssociatedTokenAddressSync(mint.publicKey,otto,false,PID);
+    const tx1=new W.Transaction().add(
+      W.SystemProgram.createAccount({fromPubkey:sponsor.publicKey,newAccountPubkey:mint.publicKey,space:mintLen,lamports,programId:PID}),
+      T.createInitializeMetadataPointerInstruction(mint.publicKey,otto,mint.publicKey,PID),
+      T.createInitializeMintInstruction(mint.publicKey,0,otto,null,PID),
+      MD.createInitializeInstruction({programId:PID,metadata:mint.publicKey,updateAuthority:otto,mint:mint.publicKey,mintAuthority:otto,name,symbol,uri}));
+    const tx2=new W.Transaction();
+    for(const [k,v] of kv) tx2.add(MD.createUpdateFieldInstruction({programId:PID,metadata:mint.publicKey,updateAuthority:otto,field:k,value:v}));
+    tx2.add(T.createAssociatedTokenAccountIdempotentInstruction(sponsor.publicKey,ata,otto,mint.publicKey,PID),
+      T.createMintToInstruction(mint.publicKey,ata,otto,1,[],PID),
+      T.createSetAuthorityInstruction(mint.publicKey,otto,T.AuthorityType.MintTokens,null,[],PID));
+    const sigs=[];
+    for(const [i,tx,extra] of [[1,tx1,[mint]],[2,tx2,[]]]){
+      tx.feePayer=sponsor.publicKey; tx.recentBlockhash=(await conn.getLatestBlockhash()).blockhash;
+      tx.partialSign(sponsor,...extra);
+      st(`오또가 서명하는 중… (${i}/2)${softOtto&&ottoSigner.publicKey.equals(softOtto.publicKey)?'':' · NU40 파란 불이 깜빡여요'}`);
+      const sig=await ottoSigner.sign(new Uint8Array(tx.serializeMessage()));
+      tx.addSignature(otto,Buf.from(sig));
+      if(!tx.verifySignatures()) throw new Error('서명 확인 실패');
+      st(`블록체인에 올리는 중… (${i}/2)`);
+      const s=await conn.sendRawTransaction(tx.serialize());
+      await conn.confirmTransaction(s,'confirmed'); sigs.push(s);
+    }
+    log('발행 '+name+' '+mint.publicKey.toBase58()+' '+sigs.join(' '));
+    saveRaw(mint.publicKey.toBase58(),raw);   // 원본 기록은 이 브라우저에 (체인에는 해시만)
+    st(`✔ ${name} 발행 완료! 오또 지갑으로 들어갔어요.`);
+    say(`${name} 기록 완료! 🪙`); burst('coin',10); addXp(20); P.happy=clamp(P.happy+10); drawBars(); savePet();
+    newRec(); refresh();
+  }catch(e){ st('발행 실패: '+e.message); say('앗, 기록을 못 했어 😢'); console.error(e); }
+  finally{ minting=false; $('mintBtn').disabled=false; }
+}
+$('mintBtn').onclick=doMint;
+addEventListener('keydown',e=>{ if(e.code==='Space'&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){ e.preventDefault(); if(!e.repeat) doMint(); } });
+
+// 보관함: 오또 지갑의 Token-2022 토큰 중 OTTO 순간들
+async function listMoments(owner){
+  const res=await conn.getParsedTokenAccountsByOwner(owner,{programId:T.TOKEN_2022_PROGRAM_ID});
+  const mints=res.value.filter(a=>a.account.data.parsed.info.tokenAmount.uiAmount===1).map(a=>a.account.data.parsed.info.mint);
+  const out=[];
+  for(const m of mints){ try{ const md=await T.getTokenMetadata(conn,new W.PublicKey(m),'confirmed',T.TOKEN_2022_PROGRAM_ID); if(md&&md.symbol==='OTTO') out.push({mint:m,md}); }catch(e){} }
+  out.sort((a,b)=>parseInt(b.md.name.split('#')[1])-parseInt(a.md.name.split('#')[1]));
+  return out;
+}
+async function countMoments(){ try{ return (await listMoments(ottoSigner.publicKey)).length; }catch(e){ return 0; } }
+const FIELD_KO={when:'언제',sec:'기록 시간(초)',steps:'걸음',danceSec:'춤(초)',maxTilt:'최대 기울기',falls:'넘어짐',best:'제일 많이 한 것',mood:'기분',level:'레벨',lines:'움직임 줄',sha256:'원본 해시',src:'출처'};
+function card(m,big){
+  const f=Object.fromEntries(m.md.additionalMetadata);
+  const rows=Object.entries(f).map(([k,v])=>`<span>${FIELD_KO[k]||k}</span><span title="${v}">${k==='sha256'?v.slice(0,10)+'…':v}</span>`).join('');
+  return `<div class="moment${big?' big':''}"><b>🪙 ${m.md.name}</b><div class="kv">${rows}</div>
+    <div class="row" style="gap:6px"><button data-replay="${m.mint}">▶ 3D 다시 보기</button><button data-video="${m.mint}">🎬 영상</button><button data-export="${m.mint}">🤖 데이터</button><button data-verify="${m.mint}" data-hash="${f.sha256||''}">🔒 해시 대조</button></div>
+    <a href="https://explorer.solana.com/address/${m.mint}${EXQ}" target="_blank" rel="noopener">탐색기에서 보기 ↗</a></div>`;
+}
+async function loadCollection(){
+  try{ const list=await listMoments(ottoSigner.publicKey);
+    $('colCount').textContent=list.length+'장';
+    $('cards').innerHTML=list.length?list.map(m=>card(m)).join(''):'<div class="help">아직 없어요. 오또를 움직이고 발행해 보세요.</div>';
+  }catch(e){ $('colCount').textContent='불러오기 실패'; }
+}
+// ═════════ 원본 기록: 저장 · 다시 보기 · AI 학습용 내보내기 · 해시 대조 ═════════
+// 체인에는 요약과 SHA-256 해시만 올리고, 원본 움직임(줄 단위)은 이 브라우저에 둔다.
+// 원본을 누가 고치면 해시가 달라져서 바로 드러난다 (위변조 방지).
+function saveRaw(mint,raw){ try{ localStorage.setItem('pet.raw.'+mint,raw); }catch(e){ log('원본 저장 실패(브라우저 저장 공간 부족): '+e.message); } }
+function loadRaw(mint){ try{ return localStorage.getItem('pet.raw.'+mint); }catch(e){ return null; } }
+async function sha256hex(t){ return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(t)))); }
+function parseRaw(raw){
+  return raw.split('\n').filter(Boolean).map(l=>{ const [t,src,...v]=l.split(' '); return {t:+t,src,v:v.map(Number)}; });
+}
+// AI 학습용: 시간순 샘플 + 그 순간의 동작 이름(라벨). 서보 4개 · 표정 · 몸 기울기 · 방향 · 자이로 · 가속도
+function toDataset(raw,meta){
+  let act='home', last={servo:[90,90,90,90],face:1,pitch:null,roll:null,yaw:null,gyro:null,accMg:null};
+  const samples=[];
+  for(const r of parseRaw(raw)){
+    if(r.src==='D'){ act=ACTIONS[r.v[3]]||act; continue; }
+    if(r.src==='L'){ act=ACTIONS[r.v[0]]||act; continue; }
+    if(r.src==='A'){ last.servo=r.v.slice(0,4); last.face=r.v[4]; }
+    if(r.src==='T'){ [last.pitch,last.roll,last.yaw,last.gyro,last.accMg]=r.v; }
+    samples.push({t_ms:r.t,label:act,...JSON.parse(JSON.stringify(last))});
+  }
+  return { format:'otto-motion/v1', robot:'Otto DIY (SG90 x4) + NU40 DK + LSM6DS IMU', ...meta,
+    columns:{t_ms:'기록 시작부터 ms',label:'동작 이름',servo:'[왼다리,오른다리,왼발,오른발] 도, 90=차렷',face:'도트 표정 번호',pitch:'앞뒤 기울기 도',roll:'좌우 기울기 도',yaw:'도는 방향 도',gyro:'자이로 크기 도/초',accMg:'가속도 크기 mg'},
+    samples, raw_sha256:meta.sha256, raw_lines:raw.split('\n').length };
+}
+function download(name,obj){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,1)],{type:'application/json'})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+let rp=null, rpPrev=null;
+function startReplay(raw,title){
+  const rows=parseRaw(raw); if(!rows.length){ say('다시 볼 기록이 없어요'); return; }
+  // 재생 시각: 첫 줄부터 시작하고, 1초 넘게 비는 구간(가만히 있던 시간)은 1초로 줄인다
+  const orig=rows.map(r=>r.t); let play=0; rows.forEach((r,i)=>{ if(i) play+=Math.min(1000,Math.max(0,orig[i]-orig[i-1])); r.t=play; });
+  rpPrev=source; source='replay'; rp={rows,i:0,t0:performance.now()};
+  $('chip').textContent='▶ '+title+' 다시 보기'; say(title+' 다시 보는 중 🎬');
+}
+function replayStep(now){
+  const el=now-rp.t0;
+  while(rp.i<rp.rows.length && rp.rows[rp.i].t<=el){
+    const r=rp.rows[rp.i++];
+    if(r.src==='A'){ for(let i=0;i<4;i++) tgtAng[i]=r.v[i]; if(r.v[4]!==face){ face=r.v[4]; drawFace(face); } }
+    else if(r.src==='T'){ const w=v=>((v+540)%360)-180; tilt={p:w(r.v[0]-zero.p),r:w(r.v[1]-zero.r)}; }
+    else if(r.src==='D'||r.src==='L'){ const a=ACTIONS[r.src==='D'?r.v[3]:r.v[0]]; if(a){ action=a; $('chip').textContent='▶ 다시 보기 · '+(ACT_KO[a]||a); } }
+  }
+  if(rp.i>=rp.rows.length){ if(recorder) setTimeout(()=>recorder&&recorder.stop(),800); source=rpPrev; rp=null; action='home'; for(let i=0;i<4;i++) tgtAng[i]=90; $('chip').textContent='다시 보기 끝'; say('다시 보기 끝! 🎬'); }
+}
+// 다시 보기를 영상(webm)으로 저장: 소장 · 공유용 (고도화 때 이 영상을 토큰과 묶어 판매)
+let recorder=null;
+function recordReplay(raw,title,mint){
+  if(!cv.captureStream||!window.MediaRecorder){ say('이 브라우저는 영상 저장을 못 해요'); return; }
+  const chunks=[]; recorder=new MediaRecorder(cv.captureStream(30),{mimeType:MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm'});
+  recorder.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  recorder.onstop=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(chunks,{type:'video/webm'})); a.download=`otto-${(mint||'now').slice(0,8)}.webm`; a.click(); say('영상 저장 완료 🎬'); recorder=null; };
+  recorder.start(); startReplay(raw,title);
+}
+$('replayNow').onclick=()=>startReplay(rec.lines.join('\n'),'지금 기록');
+$('exportNow').onclick=async()=>{ const raw=rec.lines.join('\n'); if(!raw){ say('아직 기록이 없어요'); return; }
+  download('otto-motion-now.json',toDataset(raw,{name:'지금 기록 (아직 발행 전)',robot_wallet:$('ottoAddr').textContent,sha256:await sha256hex(raw)})); };
+$('cards').parentElement.addEventListener('click',async e=>{   // 보관함 칸 (맨 위 큰 카드 포함)
+  const b=e.target.closest('button'); if(!b) return;
+  const mint=b.dataset.replay||b.dataset.export||b.dataset.verify||b.dataset.video; const raw=loadRaw(mint);
+  if(!raw){ $('mintStatus').textContent='이 기록의 원본은 발행한 브라우저에만 있어요 (체인에는 해시만 있어요).'; return; }
+  if(b.dataset.video) recordReplay(raw,b.closest('.moment').querySelector('b').textContent.replace('🪙 ',''),mint);
+  if(b.dataset.replay) startReplay(raw,b.closest('.moment').querySelector('b').textContent.replace('🪙 ',''));
+  if(b.dataset.export) download(`otto-motion-${mint.slice(0,8)}.json`,toDataset(raw,{name:b.closest('.moment').querySelector('b').textContent.replace('🪙 ',''),mint,robot_wallet:$('ottoAddr').textContent,sha256:await sha256hex(raw)}));
+  if(b.dataset.verify){ const h=await sha256hex(raw); const ok=h===b.dataset.hash;
+    b.textContent=ok?'✔ 원본 그대로':'✖ 원본이 바뀜'; b.style.color=ok?'var(--mint)':'var(--bad)';
+    $('mintStatus').textContent=ok?'원본 기록의 해시가 체인에 남은 값과 똑같아요. 위변조 없음.':'원본 해시가 체인 값과 달라요. 기록이 바뀌었어요.'; }
+});
+
+// #m=<민트 주소> 로 열면 그 한 장을 맨 위에 보여 줌 (토큰 메타데이터의 uri)
+(async()=>{
+  const mm=location.hash.match(/m=([1-9A-HJ-NP-Za-km-z]{32,44})/);
+  await loadChain(); refresh();
+  if(mm){ try{ const md=await T.getTokenMetadata(conn,new W.PublicKey(mm[1]),'confirmed',T.TOKEN_2022_PROGRAM_ID);
+    $('cards').insertAdjacentHTML('beforebegin',card({mint:mm[1],md},true)); say(md.name+' 을(를) 보고 있어요'); }catch(e){} }
+  if(location.hash.includes('sim')) $('sim').click();
+})();
+</script>
+</body>
+</html>
