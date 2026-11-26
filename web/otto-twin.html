@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오또 쌍둥이</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--fg:#1d2330;--muted:#667085;--go:#2f6fed;--stop:#d92d20;--ok:#12b76a;--warn:#f79009;--line:#d0d5dd}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151b;--card:#1b2029;--fg:#e8ecf2;--muted:#98a2b3;--go:#5b8cff;--line:#344054}}
+:root[data-theme="dark"]{--bg:#12151b;--card:#1b2029;--fg:#e8ecf2;--muted:#98a2b3;--go:#5b8cff;--line:#344054}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Malgun Gothic",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px;display:grid;gap:12px}
+h1{font-size:20px;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.go{background:var(--go);color:#fff;border-color:var(--go)}
+button.stop{background:var(--stop);color:#fff;border-color:var(--stop)}
+button.on{outline:3px solid var(--ok)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
+#stage{position:relative}
+#view{width:100%;height:min(60vh,420px);border-radius:12px;background:linear-gradient(var(--bg),var(--card));display:block;touch-action:none}
+#badge{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:8px;padding:4px 10px;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-size:13px;color:var(--muted)}
+@media (max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stats b{display:block;font-size:18px;color:var(--fg)}
+.ok{color:var(--ok)!important}.warn{color:var(--warn)!important}.bad{color:var(--stop)!important}
+.help{color:var(--muted);font-size:14px}
+details summary{cursor:pointer;font-weight:600}
+pre{max-height:160px;overflow:auto;font-size:12px;background:var(--bg);padding:8px;border-radius:8px;margin:0}
+label.chk{display:flex;gap:6px;align-items:center;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>🪞 오또 쌍둥이 <a href="otto-pet.html" style="font-size:15px;font-weight:500;margin-left:8px">🐣 오또 펫(지갑·토큰) →</a></h1>
+
+  <section class="card">
+    <div class="row">
+      <button class="go" id="cOtto">📱 오또 연결 (블루투스)</button>
+      <button id="cOttoCom">💻 오또 USB/COM</button>
+      <button id="cNu">🧭 NU40 연결 (USB)</button>
+      <button id="sim">🎮 로봇 없이 미리 보기</button>
+    </div>
+    <div class="help" id="status">오또를 연결하면 실물이 움직이는 대로 캐릭터가 따라 움직여요. 데모·장애물 피하기처럼 오또가 혼자 움직여도 따라가요.</div>
+  </section>
+
+  <section class="card" id="stage">
+    <canvas id="view"></canvas>
+    <div id="badge">대기</div>
+    <div class="stats">
+      <div>오또 전압<b id="vcc">-</b></div>
+      <div>최저<b id="vmin">-</b></div>
+      <div>몸 기울기 (NU40)<b id="tilt">-</b></div>
+      <div>받는 속도<b id="rate">-</b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="grid">
+      <button data-c="w 4">▲ 앞</button><button data-c="b 4">▼ 뒤</button><button data-c="l 3">◀ 왼쪽</button><button data-c="r 3">오른쪽 ▶</button>
+      <button data-c="mj 4">🕺 문워크</button><button data-c="mj 10">🕺 빌리진 10초</button><button data-c="s 4">↔ 흔들기</button><button data-c="u 4">⬆⬇ 위아래</button>
+      <button data-c="k 4">🩰 까치발</button><button data-c="d">🎬 데모</button><button data-c="e heart">❤ 하트</button><button class="stop" data-c="x">■ 멈춤</button>
+    </div>
+  </section>
+
+  <details class="card">
+    <summary>⚙ 맞추기 (캐릭터가 실물과 반대로 움직일 때)</summary>
+    <div class="row">
+      <label class="chk"><input type="checkbox" data-flip="0"> 왼다리 반대</label>
+      <label class="chk"><input type="checkbox" data-flip="1"> 오른다리 반대</label>
+      <label class="chk"><input type="checkbox" data-flip="2"> 왼발 반대</label>
+      <label class="chk"><input type="checkbox" data-flip="3"> 오른발 반대</label>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="flipP"> 앞뒤 기울기 반대</label>
+      <label class="chk"><input type="checkbox" id="flipR"> 좌우 기울기 반대</label>
+      <label class="chk"><input type="checkbox" id="walkMove" checked> 걸으면 자리 옮기기 (추정)</label>
+    </div>
+    <div class="row">
+      <button id="zero">NU40 지금 자세를 똑바로로</button>
+      <button id="center">캐릭터 가운데로</button>
+    </div>
+    <div class="help">다리·발 각도와 표정은 Nano가 실제로 서보에 준 값(#A 줄)이고, 몸 기울기는 NU40 IMU가 잰 값이에요. 걸어서 옮긴 자리는 IMU로 잴 수 없어서 걸음 수로 어림한 값이에요.</div>
+  </details>
+
+  <details class="card">
+    <summary>받은 줄 보기</summary>
+    <pre id="log"></pre>
+  </details>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const SPP='00001101-0000-1000-8000-00805f9b34fb';
+const ACTIONS=['home','walk_fwd','walk_back','turn_left','turn_right','updown','swing','moonwalk_left','moonwalk_right','tiptoe'];
+const ACT_KO={home:'차렷',walk_fwd:'앞으로 걷기',walk_back:'뒤로 걷기',turn_left:'왼쪽 돌기',turn_right:'오른쪽 돌기',updown:'위아래',swing:'흔들기',moonwalk_left:'문워크',moonwalk_right:'문워크',tiptoe:'까치발'};
+// 펌웨어 extras.h FACES와 같은 순서·같은 그림 (비트 7 = 왼쪽 칸)
+const FACES=[[0,0,0,0,0,0,0,0],[0,0x66,0x66,0x66,0,0,0x3C,0],[0,0,0,0x66,0,0,0x3C,0],[0,0x66,0x66,0,0,0x42,0x3C,0],
+ [0,0x66,0x99,0,0,0x7E,0x3C,0],[0,0x66,0x66,0,0,0x3C,0x42,0],[0,0x66,0x66,0,0x18,0x24,0x24,0x18],[0,0x66,0xFF,0xFF,0x7E,0x3C,0x18,0],
+ [0x18,0x3C,0x7E,0xDB,0x18,0x18,0x18,0x18],[0x18,0x18,0x18,0x18,0xDB,0x7E,0x3C,0x18],[0x10,0x30,0x60,0xFF,0xFF,0x60,0x30,0x10],
+ [0x08,0x0C,0x06,0xFF,0xFF,0x06,0x0C,0x08],[0x81,0x42,0x24,0x18,0x18,0x24,0x42,0x81],[255,255,255,255,255,255,255,255]];
+
+const store={get(k,d){try{const v=localStorage.getItem('twin.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('twin.'+k,JSON.stringify(v));}catch(e){}}};
+
+// ───────── 3D 캐릭터 ─────────
+const cv=$('view'), R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+const scene=new THREE.Scene(), cam=new THREE.PerspectiveCamera(38,1,0.1,200);
+scene.add(new THREE.HemisphereLight(0xffffff,0x8090a0,0.95));
+const sun=new THREE.DirectionalLight(0xffffff,0.55); sun.position.set(4,8,5); scene.add(sun);
+const M=c=>new THREE.MeshLambertMaterial({color:c});
+const floor=new THREE.GridHelper(20,20,0x98a2b3,0x98a2b3); floor.material.transparent=true; floor.material.opacity=0.35; scene.add(floor);
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(1.3,32),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.12}));
+shadow.rotation.x=-Math.PI/2; shadow.position.y=0.01; scene.add(shadow);
+
+const place=new THREE.Group(); scene.add(place);          // 바닥 위치 + 방향 (걸음으로 어림)
+const lift=new THREE.Group(); place.add(lift);            // 발이 바닥에 닿게 높이 맞춤
+const tiltG=new THREE.Group(); lift.add(tiltG);           // NU40 몸 기울기
+const HIP_Y=1.05;
+// 몸통(머리) : 오또 키트처럼 네모난 머리
+const head=new THREE.Mesh(new THREE.BoxGeometry(2.2,1.9,1.7),M(0xf2c14e)); head.position.y=HIP_Y+1.15; tiltG.add(head);
+const hips=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.35,1.4),M(0xe0a92e)); hips.position.y=HIP_Y+0.05; tiltG.add(hips);
+// 초음파 눈 두 개 (오또 얼굴)
+[-0.45,0.45].forEach(x=>{const e=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.25,24),M(0xd0d5dd)); e.rotation.x=Math.PI/2; e.position.set(x,HIP_Y+1.45,0.95); tiltG.add(e);
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.27,24),M(0x2b2f36)); p.rotation.x=Math.PI/2; p.position.set(x,HIP_Y+1.45,0.96); tiltG.add(p);});
+// 도트 매트릭스 (실물 표정 그대로)
+const dotCv=document.createElement('canvas'); dotCv.width=dotCv.height=64;
+const dotTex=new THREE.CanvasTexture(dotCv); dotTex.magFilter=THREE.NearestFilter;
+const dot=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.9),new THREE.MeshBasicMaterial({map:dotTex}));
+dot.position.set(0,HIP_Y+0.65,0.86); tiltG.add(dot);
+function drawFace(f){
+  const g=dotCv.getContext('2d'); g.fillStyle='#111'; g.fillRect(0,0,64,64);
+  const rows=FACES[f]||FACES[0];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){ g.fillStyle=(rows[r]&(0x80>>c))?'#ff3b30':'#3a1512'; g.beginPath(); g.arc(c*8+4,r*8+4,3.1,0,7); g.fill(); }
+  dotTex.needsUpdate=true;
+}
+drawFace(1);
+// 다리(골반 서보: 세로축 회전) → 발목(발 서보: 앞뒤축 기울임) → 발
+const joints=[]; const feet=[];
+[[-0.6,0],[0.6,1]].forEach(([x,i])=>{
+  const hip=new THREE.Group(); hip.position.set(x,HIP_Y,0); tiltG.add(hip);
+  const leg=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.75,0.6),M(0x2f6fed)); leg.position.y=-0.4; hip.add(leg);
+  const ankle=new THREE.Group(); ankle.position.y=-0.8; hip.add(ankle);
+  const foot=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.22,1.25),M(0x1f4fb8)); foot.position.set(x<0?-0.12:0.12,-0.12,0.15); ankle.add(foot);
+  joints[i]={hip,ankle}; feet.push(foot);
+});
+
+let camAng=0.55, camDist=9.5, camH=4.2;
+function placeCam(){ const p=place.position; cam.position.set(p.x+Math.sin(camAng)*camDist,camH,p.z+Math.cos(camAng)*camDist); cam.lookAt(p.x,1.4,p.z); }
+// 끌어서 돌려 보기
+let drag=null; cv.addEventListener('pointerdown',e=>{drag=e.clientX;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',e=>{ if(drag!=null){ camAng-=(e.clientX-drag)*0.01; drag=e.clientX; }});
+cv.addEventListener('pointerup',()=>drag=null);
+cv.addEventListener('wheel',e=>{e.preventDefault(); camDist=Math.max(5,Math.min(20,camDist+e.deltaY*0.01));},{passive:false});
+function resize(){const w=cv.clientWidth,h=cv.clientHeight;R.setPixelRatio(devicePixelRatio);R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+addEventListener('resize',resize); resize();
+
+// ───────── 상태 ─────────
+const tgtAng=[90,90,90,90], curAng=[90,90,90,90];
+let flips=store.get('flips',[false,false,false,false]);
+document.querySelectorAll('[data-flip]').forEach(c=>{const i=+c.dataset.flip; c.checked=flips[i]; c.onchange=()=>{flips[i]=c.checked; store.set('flips',flips);};});
+$('flipP').checked=store.get('flipP',false); $('flipR').checked=store.get('flipR',false);
+$('flipP').onchange=e=>store.set('flipP',e.target.checked); $('flipR').onchange=e=>store.set('flipR',e.target.checked);
+let tilt={p:0,r:0}, tiltCur={p:0,r:0}, tiltRaw=null, tiltZero=store.get('zero',{p:0,r:0}), nuSeen=0;
+let source=null, action='home', period=1000, face=1, heading=0, lastA=0, aCount=0;
+
+let actT0=0;
+function setAction(a){
+  if(a!==action) actT0=performance.now();
+  action=a; $('badge').textContent=(ACT_KO[a]||a)+(source==='sim'?' · 미리 보기':'');
+}
+
+const box=new THREE.Box3();
+let tPrev=performance.now();
+(function frame(now){
+  const dt=Math.min(0.1,(now-tPrev)/1000); tPrev=now;
+  if(source==='sim') simStep(now);
+  else if(source==='otto' && now-lastA>1500) guessFromAction(now);   // 각도 줄이 없는 옛 펌웨어: 동작 이름으로 계산
+  const k=1-Math.pow(0.0005,dt);                       // 0.1초 간격 값을 부드럽게 이음
+  for(let i=0;i<4;i++) curAng[i]+=(tgtAng[i]-curAng[i])*k;
+  const s=i=>(flips[i]?-1:1)*(curAng[i]-90)*Math.PI/180;
+  joints[0].hip.rotation.y=s(0); joints[1].hip.rotation.y=s(1);
+  joints[0].ankle.rotation.z=s(2); joints[1].ankle.rotation.z=s(3);
+  tiltCur.p+=(tilt.p-tiltCur.p)*k; tiltCur.r+=(tilt.r-tiltCur.r)*k;
+  tiltG.rotation.set(($('flipP').checked?-1:1)*tiltCur.p*Math.PI/180,0,-($('flipR').checked?-1:1)*tiltCur.r*Math.PI/180);
+  // 가장 낮은 발이 바닥에 닿게
+  lift.position.y=0; place.updateMatrixWorld(true);
+  let minY=1e9; feet.forEach(f=>{box.setFromObject(f); minY=Math.min(minY,box.min.y);});
+  lift.position.y=-minY;
+  // 걸음으로 자리 어림 (IMU로는 이동 거리를 잴 수 없음)
+  if($('walkMove').checked && action!=='home'){
+    const v=0.9/(period/1000), w=(Math.PI/180)*25/(period/1000);
+    if(action==='walk_fwd') move(v*dt); else if(action==='walk_back') move(-v*dt);
+    else if(action==='turn_left') heading+=w*dt; else if(action==='turn_right') heading-=w*dt;
+    else if(action==='moonwalk_left') slide(-0.35*v*dt); else if(action==='moonwalk_right') slide(0.35*v*dt);
+  }
+  place.rotation.y=heading;
+  shadow.position.set(place.position.x,0.01,place.position.z);
+  placeCam(); R.render(scene,cam); requestAnimationFrame(frame);
+})(performance.now());
+function move(d){ place.position.x+=Math.sin(heading)*d; place.position.z+=Math.cos(heading)*d; clampPos(); }
+function slide(d){ place.position.x+=Math.cos(heading)*d; place.position.z-=Math.sin(heading)*d; clampPos(); }
+function clampPos(){ ['x','z'].forEach(a=>place.position[a]=Math.max(-9,Math.min(9,place.position[a]))); }
+$('center').onclick=()=>{ place.position.set(0,0,0); heading=0; };
+
+// ───────── 받은 줄 해석 ─────────
+function log(s){const l=$('log'); l.textContent+=s+'\n'; if(l.textContent.length>12000) l.textContent=l.textContent.slice(-9000); if(l.parentElement.open) l.scrollTop=l.scrollHeight;}
+function lineSplitter(fn){ let b=''; return t=>{ b+=t; let i; while((i=b.indexOf('\n'))>=0){ const line=b.slice(0,i).replace(/\r/g,'').trim(); b=b.slice(i+1); if(line) fn(line); } }; }
+const onOtto=lineSplitter(line=>{
+  if(line.startsWith('#A ')){
+    const n=line.slice(3).split(' ').map(Number);
+    if(n.length>=4 && n.slice(0,4).every(Number.isFinite)){ for(let i=0;i<4;i++) tgtAng[i]=n[i]; aCount++; lastA=performance.now(); }
+    if(Number.isFinite(n[4]) && n[4]!==face){ face=n[4]; drawFace(face); }
+    return;
+  }
+  if(line.startsWith('#D ')){
+    const [, vcc, vmin, act] = line.slice(3).split(' ').map(Number);
+    const mv=vmin===65535?vcc:vmin;
+    $('vcc').textContent=(vcc/1000).toFixed(2)+'V'; $('vcc').className=vcc<4300?'bad':vcc<4600?'warn':'ok';
+    $('vmin').textContent=(mv/1000).toFixed(2)+'V'; $('vmin').className=mv<4000?'bad':mv<4400?'warn':'ok';
+    if(ACTIONS[act] && ACTIONS[act]!==action) setAction(ACTIONS[act]);
+    return;
+  }
+  if(line.startsWith('#B ')){ log('⚠ 오또 보드가 다시 켜졌어요: '+line); $('badge').textContent='⚠ 재시작'; return; }
+  if(line.startsWith('#')) return;
+  log(line);
+  const m=line.match(/^> (\w+) x\d+, 주기 (\d+)ms/); if(m){ period=+m[2]; setAction(m[1]); }
+  if(/끝, 차렷|> 차렷/.test(line)) setAction('home');
+});
+const onNu=lineSplitter(line=>{
+  log('[NU40] '+line);
+  // 지금 NU40 펌웨어: "[IMU] ax=.. ay=.. az=.. g"  (나중 우리 펌웨어: "#T <pitch> <roll>")
+  let p,r;
+  const m=line.match(/ax=(-?[\d.]+)\s+ay=(-?[\d.]+)\s+az=(-?[\d.]+)/);
+  if(m){ const ax=+m[1],ay=+m[2],az=+m[3]; p=Math.atan2(ax,Math.hypot(ay,az))*180/Math.PI; r=Math.atan2(ay,az)*180/Math.PI; }
+  const t=line.match(/^#T (-?[\d.]+) (-?[\d.]+)/); if(t){ p=+t[1]; r=+t[2]; }
+  if(p===undefined) return;
+  tiltRaw={p,r}; nuSeen=performance.now();
+  const w=a=>((a+540)%360)-180;
+  tilt={p:w(p-tiltZero.p), r:w(r-tiltZero.r)};
+  $('tilt').textContent=`앞뒤 ${tilt.p.toFixed(0)}° · 좌우 ${tilt.r.toFixed(0)}°`;
+});
+$('zero').onclick=()=>{ if(tiltRaw){ tiltZero={...tiltRaw}; store.set('zero',tiltZero); } };
+setInterval(()=>{ $('rate').textContent=aCount+'번/초'; $('rate').className=aCount>=5?'ok':aCount?'warn':''; aCount=0; },1000);
+
+// ───────── 연결 ─────────
+let ottoWriter=null;
+const enc=new TextEncoder();
+async function openPort(opts,baud,onText){
+  if(!navigator.serial) throw new Error('이 브라우저는 시리얼 연결을 지원하지 않아요 (안드로이드 크롬 137 이상, 노트북 크롬·엣지)');
+  const port=await navigator.serial.requestPort(opts);
+  await port.open({baudRate:baud});
+  const dec=new TextDecoderStream(); port.readable.pipeTo(dec.writable).catch(()=>{});
+  const rd=dec.readable.getReader();
+  (async()=>{ try{ for(;;){ const {value,done}=await rd.read(); if(done) break; onText(value); } }catch(e){ $('status').textContent='연결 끊김: '+e.message; } })();
+  return port;
+}
+async function connectOtto(opts,label){
+  try{
+    const port=await openPort(opts,9600,onOtto);
+    const w=port.writable.getWriter(); ottoWriter=d=>w.write(d);
+    source='otto'; $('sim').classList.remove('on'); setAction('home');
+    $('status').textContent=`오또 ${label} 연결됨 ✔ 캐릭터가 실물을 따라 움직여요. 받는 속도가 0번/초면 옛 펌웨어라 동작 이름으로 어림해서 움직여요 (새 펌웨어를 올리면 실제 각도).`;
+  }catch(e){ $('status').textContent='오또 연결 실패: '+e.message; }
+}
+$('cOtto').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP],filters:[{bluetoothServiceClassId:SPP}]},'블루투스');
+$('cOttoCom').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP]},'USB/COM');
+$('cNu').onclick=async()=>{
+  try{ await openPort({},115200,onNu); $('status').textContent='NU40 연결됨 ✔ 몸 기울기를 받아요. 오또 몸에 똑바로 붙인 뒤 "맞추기 → 지금 자세를 똑바로로"를 눌러 주세요.'; }
+  catch(e){ $('status').textContent='NU40 연결 실패: '+e.message; }
+};
+async function send(c){
+  if(source==='otto' && ottoWriter){ try{ await ottoWriter(enc.encode(c+'\n')); log('> '+c); }catch(e){ log('보내기 실패: '+e.message); } return; }
+  if(source==='sim'){ simCommand(c); return; }
+  $('status').textContent='먼저 오또를 연결하거나 "로봇 없이 미리 보기"를 누르세요.';
+}
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+
+// ───────── 로봇 없이 미리 보기 (펌웨어 gait.h와 같은 계산) ─────────
+function gaitFor(a,h=25){
+  const P=(A,O,phi)=>({A,O,phi});
+  switch(a){
+    case 'walk_fwd': case 'walk_back': { const d=a==='walk_fwd'?1:-1; return P([30,30,20,20],[0,0,4,-4],[0,0,-90*d,-90*d]); }
+    case 'turn_left': return P([30,10,20,20],[0,0,4,-4],[0,0,-90,-90]);
+    case 'turn_right': return P([10,30,20,20],[0,0,4,-4],[0,0,-90,-90]);
+    case 'updown': return P([0,0,h,h],[0,0,h,-h],[0,0,-90,90]);
+    case 'swing': return P([0,0,h,h],[0,0,h/2,-h/2],[0,0,0,0]);
+    case 'moonwalk_left': case 'moonwalk_right': { const d=a==='moonwalk_left'?1:-1, ph=-90*d; return P([0,0,h,h],[0,0,h/2+2,-h/2-2],[0,0,ph,ph-60*d]); }
+    case 'tiptoe': return P([0,0,h,h],[0,0,h,-h],[0,0,0,0]);
+  }
+  return P([0,0,0,0],[0,0,0,0],[0,0,0,0]);
+}
+let sim={act:'home',t0:0,dur:0};
+const SIM_CMD={w:'walk_fwd',b:'walk_back',l:'turn_left',r:'turn_right',u:'updown',s:'swing',m:'moonwalk_left',mj:'moonwalk_left',k:'tiptoe'};
+function simCommand(c){
+  const [cmd,arg]=c.split(' ');
+  if(cmd==='x'||cmd==='h'){ sim.act='home'; setAction('home'); return; }
+  if(cmd==='e'){ const i=['off','eyes','blink','smile','happy','sad','surprise','heart'].indexOf(arg); if(i>=0){ face=i; drawFace(i);} return; }
+  if(cmd==='d'){ simCommand('mj 4'); return; }
+  const a=SIM_CMD[cmd]; if(!a) return;
+  const n=+arg||4; sim={act:a,t0:performance.now(),dur:cmd==='mj'?n*1000:n*period};
+  face=a.startsWith('walk')?3:a.startsWith('turn')?(a==='turn_left'?10:11):4; drawFace(face);
+  setAction(a);
+}
+function simStep(now){
+  if(sim.act==='home'){ for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+  const t=now-sim.t0; if(t>=sim.dur){ sim.act='home'; face=1; drawFace(1); setAction('home'); return; }
+  const g=gaitFor(sim.act), ramp=Math.min(1,t/period), w=2*Math.PI*(t%period)/period;
+  for(let i=0;i<4;i++) tgtAng[i]=90+g.O[i]+g.A[i]*ramp*Math.sin(w+g.phi[i]*Math.PI/180);
+  aCount++;
+}
+// 주소 끝에 #sim 을 붙이면 바로 미리 보기 (화면 확인용)
+if(location.hash==='#sim') setTimeout(()=>{ $('sim').click(); simCommand('w 8'); },50);
+function guessFromAction(now){
+  if(action==='home'){ for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+  const g=gaitFor(action), t=now-actT0, ramp=Math.min(1,t/period), w=2*Math.PI*(t%period)/period;
+  for(let i=0;i<4;i++) tgtAng[i]=90+g.O[i]+g.A[i]*ramp*Math.sin(w+g.phi[i]*Math.PI/180);
+}
+$('sim').onclick=()=>{ source='sim'; $('sim').classList.add('on'); setAction('home'); $('status').textContent='미리 보기: 아래 버튼을 누르면 펌웨어와 같은 계산으로 캐릭터가 움직여요 (실물에는 안 보냄).'; };
+</script>
+</body>
+</html>

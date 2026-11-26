@@ -162,6 +162,7 @@ function onLine(line){
   }
   if(line.startsWith('#S ')){ const [i,mv]=line.slice(3).split(' ').map(Number); addLog(line+'   ← 서보 '+i+' 켠 직후 '+v(mv),'tel'); return; }
   if(line.startsWith('#C ')){ addLog(line+'   ← 보드가 명령 받음','ack'); return; }
+  if(line.startsWith('#A ')) return;   // 쌍둥이 페이지용 서보 각도 (여기선 안 씀)
   addLog(line);
   if(/끝, 차렷/.test(line)) onAutoDone();
 }

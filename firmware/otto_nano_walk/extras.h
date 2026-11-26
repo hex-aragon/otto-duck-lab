@@ -108,21 +108,32 @@ static const Note S_OK[]    PROGMEM = {{1568,80},{2093,140}};
 // 짧은 동요 한 소절 (학교종: 솔솔라라 솔솔미)
 static const Note S_SONG[]  PROGMEM = {{784,250},{784,250},{880,250},{880,250},{784,250},{784,250},{659,500},
                                        {0,100},{784,250},{784,250},{659,250},{659,250},{587,700}};
+// 문워크 음악: 빌리진 베이스 리프 한 바퀴 (F# C# E F# E C# B C#, 117BPM 8분음표, 부저용으로 2옥타브 올림)
+// 한 음 236ms + tickSound 틈 20ms = 256ms, 8음 ≈ 2초. playSoundFor로 4초·10초 반복
+static const Note S_BILLIE[] PROGMEM = {{370,236},{554,236},{659,236},{740,236},
+                                        {659,236},{554,236},{494,236},{554,236}};
 struct Sound { const char* name; const Note* notes; uint8_t n; };
 #define SND(nm, arr) { nm, arr, (uint8_t)(sizeof(arr) / sizeof(arr[0])) }
 static const Sound SOUNDS[] = {
   SND("beep", S_BEEP), SND("hello", S_HELLO), SND("happy", S_HAPPY), SND("sad", S_SAD),
-  SND("alarm", S_ALARM), SND("ok", S_OK), SND("song", S_SONG) };
+  SND("alarm", S_ALARM), SND("ok", S_OK), SND("song", S_SONG), SND("billie", S_BILLIE) };
 static const uint8_t SOUND_COUNT = sizeof(SOUNDS) / sizeof(SOUNDS[0]);
 
 bool        soundOn = true;      // 'mute'로 끔
 const Note* sndNotes = nullptr;
 uint8_t     sndLen = 0, sndIdx = 0;
 uint32_t    sndNext = 0;
+uint32_t    sndUntil = 0;        // 이 시각까지 처음부터 다시 반복 (0 = 한 번만)
+static const uint8_t SND_BILLIE = 7;
 
 static void playSound(uint8_t i) {
   if (!soundOn || i >= SOUND_COUNT) return;
-  sndNotes = SOUNDS[i].notes; sndLen = SOUNDS[i].n; sndIdx = 0; sndNext = 0;
+  sndNotes = SOUNDS[i].notes; sndLen = SOUNDS[i].n; sndIdx = 0; sndNext = 0; sndUntil = 0;
+}
+// ms 동안 반복해서 낸다 (빌리진 4초 = 2바퀴, 10초 = 5바퀴)
+static void playSoundFor(uint8_t i, uint32_t ms) {
+  playSound(i);
+  if (sndNotes) sndUntil = millis() + ms;
 }
 static int soundByName(const char* s) {
   for (uint8_t i = 0; i < SOUND_COUNT; i++) if (!strcmp(s, SOUNDS[i].name)) return i;
@@ -133,6 +144,7 @@ static void tickSound() {
   if (!sndNotes) return;
   uint32_t now = millis();
   if (now < sndNext) return;
+  if (sndIdx >= sndLen && sndUntil && now < sndUntil) sndIdx = 0;   // 반복
   if (sndIdx >= sndLen) { noTone(BUZZER); digitalWrite(BUZZER, LOW); sndNotes = nullptr; return; }
   Note nt; memcpy_P(&nt, &sndNotes[sndIdx++], sizeof(Note));
   if (nt.hz) tone(BUZZER, nt.hz, nt.ms); else noTone(BUZZER);
