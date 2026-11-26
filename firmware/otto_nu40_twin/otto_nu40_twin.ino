@@ -8,7 +8,8 @@
  *      웹이 보낸 트랜잭션 메시지에 서명만 해서 돌려준다 (토큰 발행할 때 오또가 직접 서명).
  *   3. 보드 버튼(BUTTON1~4)을 누르면 "신호"를 보낸다 → 웹이 그 순간까지의 움직임을 토큰으로 발행
  *
- * 연결: USB 시리얼(115200) 또는 BLE(Nordic UART, 이름 "Otto-Twin"). 둘 다 같은 글자 명령.
+ * 연결: USB 시리얼(115200) 또는 BLE(Nordic UART, 이름 "Otto-Twin-XXXX" = 지갑 공개키 앞 4자리). 둘 다 같은 글자 명령.
+ *       여러 대를 한 웹에 띄울 때 이 이름과 지갑 주소로 구분한다.
  *
  * 보내는 줄
  *   #I <공개키 hex 64자> <IMU 종류>      켤 때, 'id' 명령 때
@@ -33,7 +34,7 @@
 
 using namespace Adafruit_LittleFS_Namespace;
 
-static const char*    BLE_NAME  = "Otto-Twin";
+static char           bleName[20] = "Otto-Twin";
 static const char*    KEY_FILE  = "/otto_key";
 static const uint8_t  BUTTONS[] = { PIN_BUTTON1, PIN_BUTTON2, PIN_BUTTON3, PIN_BUTTON4 };
 static const uint16_t MAX_MSG   = 1232;
@@ -146,7 +147,9 @@ void setup() {
 
   Bluefruit.begin();
   Bluefruit.setTxPower(4);
-  Bluefruit.setName(BLE_NAME);
+  loadOrMakeKey();   // 난수는 SoftDevice가 켜진 뒤에 쓸 수 있다
+  snprintf(bleName, sizeof(bleName), "Otto-Twin-%02X%02X", pub[0], pub[1]);
+  Bluefruit.setName(bleName);
   Bluefruit.Periph.setConnectCallback(onConnect);
   Bluefruit.Periph.setDisconnectCallback(onDisconnect);
   bleuart.begin();
@@ -158,7 +161,6 @@ void setup() {
   Bluefruit.Advertising.setInterval(32, 244);
   Bluefruit.Advertising.start(0);
 
-  loadOrMakeKey();
 
   Wire.begin();
   Wire.setClock(400000);
