@@ -31,6 +31,7 @@
  *   e rot <0~3>  도트를 90°씩 돌림 (거꾸로 붙였을 때)     e flip  좌우 거울     e bright <0~15>
  *   z <소리>     부저: beep hello happy sad alarm ok song billie   z <Hz> <ms>  직접 음 내기
  *   z billie <초> 빌리진 리프를 초만큼 반복 (1~30)
+ *   n <Hz> <ms>  웹 노래용 음 하나 (응답 없음)   bpm <n>  박자 맞추기   dn <동작 번호 1~16> <ms>  차렷 없이 다음 동작
  *   kp <0~3>     K-pop 무대 느낌 루틴: 0 POP STAR · 1 HYPE STEP · 2 CUTIE BOUNCE · 3 MOON SHUFFLE (창작 멜로디 + 박자 맞춘 안무)
  *   mj <초>      빌리진 틀고 그 시간만큼 문워크 (기본 4초, 최대 30초). 그냥 m도 4~10초 음악이 같이 나옴
  *   mute / unmute 소리 끄기 / 켜기
@@ -185,6 +186,7 @@ static const uint8_t ROUTINE_COUNT = sizeof(ROUTINES) / sizeof(ROUTINES[0]);
 int8_t   rIdx = -1;
 uint8_t  rStep = 0;
 uint16_t rSavedPeriod = 1000;
+bool     noRamp = false;   // 웹 노래(dn): 동작이 바뀌어도 진폭을 0부터 다시 키우지 않음
 
 void endRoutine() {
   if (rIdx < 0) return;
@@ -236,7 +238,7 @@ void startAction(Action a, int steps) {
   float first[SERVO_COUNT];
   gaitAngles(p, 0, periodMs, first);
   moveTo(first, 300);              // 시작 자세로 부드럽게 들어간 뒤 사인파 시작
-  curAct = a;
+  curAct = a; noRamp = false;
   actStart = millis();
   actDuration = (uint32_t)steps * periodMs;
   Serial.print(F("> ")); Serial.print(ACTION_NAMES[a]);
@@ -249,6 +251,29 @@ void startAction(Action a, int steps) {
   Serial.flush();   // 걷기 시작 직후 재시작해도 이 줄은 나가도록
 }
 
+// 웹 노래 춤: 지금 춤추는 중이면 차렷 없이 바로 다음 동작으로 (박자는 bpm 명령으로)
+void danceNext(int ai, uint32_t ms) {
+  if (ai <= ACT_HOME || ai >= ACT_COUNT) return;
+  endRoutine();
+  Action a = (Action)ai;
+  bool moving = curAct != ACT_HOME;
+  setFace(a == ACT_POSE_L || a == ACT_POSE_R ? F_HEART : a == ACT_KICK ? F_SURPRISE : F_HAPPY);
+  if (!moving) {
+    ecoSleep();
+    GaitParams p = scaled(a);
+    for (int i = 0; i < SERVO_COUNT; i++) p.A[i] = 0;
+    float first[SERVO_COUNT];
+    gaitAngles(p, 0, periodMs, first);
+    moveTo(first, 200);
+  }
+  noRamp = moving;
+  curAct = a;
+  actStart = millis();
+  actDuration = constrain(ms, 100UL, 20000UL);
+  Serial.print(F("> ")); Serial.print(ACTION_NAMES[a]);
+  Serial.print(F(" x1, 주기 ")); Serial.print(periodMs); Serial.println(F("ms"));
+}
+
 void tickAction() {
   if (curAct == ACT_HOME) return;
   uint32_t now = millis();
@@ -259,7 +284,7 @@ void tickAction() {
   if (t >= actDuration) { home(); setFace(F_EYES); Serial.println(F("> 끝, 차렷")); demoAfterAction(); return; }
   GaitParams p = scaled(curAct);
   // 첫 한 걸음 동안 진폭을 0 → 100%로 키운다 (처음부터 크게 움직이면 전압이 떨어짐)
-  if (rIdx < 0 && t < periodMs) { float r = (float)t / periodMs; for (int i = 0; i < SERVO_COUNT; i++) p.A[i] *= r; }
+  if (rIdx < 0 && !noRamp && t < periodMs) { float r = (float)t / periodMs; for (int i = 0; i < SERVO_COUNT; i++) p.A[i] *= r; }
   float out[SERVO_COUNT];
   gaitAngles(p, t, periodMs, out);
   float maxStep = maxSpeed ? maxSpeed * 0.02f : 999;   // 20ms 한 번에 움직일 수 있는 최대 각도
@@ -491,6 +516,17 @@ void handle(char* line) {
     if (i < 0) { Serial.println(F("? 소리: beep hello happy sad alarm ok song billie")); return; }
     playSound(i); Serial.print(F("> 소리 ")); Serial.println(a1); return;
   }
+  // ── 웹 노래 (OTTO LIVE의 🎵 내 노래): 음은 n, 박자는 bpm, 춤은 dn ──
+  if (!strcmp(cmd, "n") && a1) {   // n <Hz> <ms>  조용히 음 하나 (응답 줄 없음, 0Hz면 쉼표)
+    int hz = atoi(a1);
+    if (soundOn && !ecoOn) { sndNotes = nullptr; if (hz > 0) tone(BUZZER, constrain(hz, 31, 8000), a2 ? constrain(atoi(a2), 10, 3000) : 200); else noTone(BUZZER); }
+    return;
+  }
+  if (!strcmp(cmd, "bpm") && a1) {   // bpm <n>  한 주기 = 2박
+    endRoutine(); periodMs = constrain(120000L / constrain(atoi(a1), 40, 300), 400L, 3000L);
+    Serial.print(F("> BPM ")); Serial.print(a1); Serial.print(F(", 주기 ")); Serial.print(periodMs); Serial.println(F("ms")); return;
+  }
+  if (!strcmp(cmd, "dn") && a1) { danceNext(atoi(a1), a2 ? (uint32_t)atol(a2) : periodMs); return; }   // dn <동작 번호> <ms>
   if (!strcmp(cmd, "test")) {   // 도트 · 부저 · 초음파 자동 점검
     Serial.println(F("[점검 1] 도트: 전부 켜기 2초 → 웃음 → 하트"));
     setFace(F_ALL); delay(2000); setFace(F_SMILE); delay(1500); setFace(F_HEART); delay(1500);
