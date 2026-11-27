@@ -15,7 +15,10 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
   font:15px/1.45 "Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif;letter-spacing:-.01em}
-#stage{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+/* 폰 · 가벼운 화면: 3D 위 흐림(blur) 끄기 → 안드로이드 깜빡임 방지 */
+.lite .glass,.lite .drawer{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lite .glass{background:rgba(16,18,26,.9)} .lite .pop{background:rgba(24,27,38,.97)}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .glass{background:var(--glass);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid var(--stroke);border-radius:18px}
 .hud{position:fixed;z-index:5}
@@ -219,7 +222,8 @@ pre{margin:0;max-height:220px;overflow:auto;font-size:11.5px;color:var(--muted);
   <div class="body">
     <div class="card"><b>소리 · 카메라</b>
       <label class="chk"><input type="checkbox" id="music"> 춤출 때 폰 · 노트북 스피커로 음악 (오또 부저와 함께)</label>
-      <label class="chk"><input type="checkbox" id="stageCam"> 춤출 때 무대 카메라 (천천히 돌기)</label></div>
+      <label class="chk"><input type="checkbox" id="stageCam"> 춤출 때 무대 카메라 (천천히 돌기)</label>
+      <label class="chk"><input type="checkbox" id="hq"> 고화질 (빛 번짐 · 흐린 유리 · 부드러운 그림자) — 폰에서 깜빡이면 끄기</label></div>
     <div class="card"><b>실물과 맞추기</b>
       <div class="row">
         <label class="chk"><input type="checkbox" data-flip="0"> 왼다리 반대</label><label class="chk"><input type="checkbox" data-flip="1"> 오른다리 반대</label>
@@ -291,11 +295,15 @@ function angAt(a,t,ramp=true){ const g=gaitFor(a),r=ramp?Math.min(1,t/period):1,
 
 // ═══════════ 3D 무대 ═══════════
 const canvas=$('stage');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+// 화질: 폰(손가락 화면)이거나 좁은 화면이면 가볍게. ?hq=1 이면 고화질, 설정에서 바꾸면 기억
+const hqPref=new URLSearchParams(location.search).get('hq')??store.get('hq',null);
+let HQ=hqPref!=null?String(hqPref)==='1'||hqPref===true:!(matchMedia('(pointer:coarse)').matches||innerWidth<720);
+document.documentElement.classList.toggle('lite',!HQ);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:HQ,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,HQ?2:1.5));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.92;
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=HQ?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07080c);
 scene.fog=new THREE.Fog(0x07080c,16,34);
@@ -310,7 +318,7 @@ controls.minDistance=5; controls.maxDistance=16; controls.maxPolarAngle=Math.PI*
 
 scene.add(new THREE.HemisphereLight(0xc9d4ff,0x1a1020,0.35));
 const key=new THREE.DirectionalLight(0xfff3e6,1.7); key.position.set(4,9,6); key.castShadow=true;
-key.shadow.mapSize.set(2048,2048); Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5}); key.shadow.radius=6; key.shadow.bias=-0.0004;
+key.shadow.mapSize.set(HQ?2048:1024,HQ?2048:1024); Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5}); key.shadow.radius=6; key.shadow.bias=-0.0004;
 scene.add(key);
 const rimA=new THREE.SpotLight(0xff4fb0,22,24,0.5,0.7,1.6); rimA.position.set(-6,7,-5); rimA.target.position.set(0,1.4,0); scene.add(rimA,rimA.target);
 const rimB=new THREE.SpotLight(0x3fe0ff,22,24,0.5,0.7,1.6); rimB.position.set(6,6,-4); rimB.target.position.set(0,1.4,0); scene.add(rimB,rimB.target);
@@ -388,8 +396,17 @@ const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
 const bloom=new UnrealBloomPass(new THREE.Vector2(1,1),0.45,0.45,0.96); composer.addPass(bloom);
 composer.addPass(new OutputPass());
-function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h,false); composer.setSize(w,h); camera.aspect=w/h; camera.fov=w<720?52:32; camera.updateProjectionMatrix(); }
-addEventListener('resize',resize); resize();
+// 크기가 정말 바뀔 때만, 잠깐 멈춘 뒤 한 번 (폰 주소창이 들어갔다 나올 때마다 버퍼를 새로 만들면 깜빡임)
+let lastW=0,lastH=0,rsT=0;
+function resize(){ const w=innerWidth,h=innerHeight; if(w===lastW&&Math.abs(h-lastH)<2) return; lastW=w; lastH=h;
+  renderer.setSize(w,h,false); composer.setSize(w,h); camera.aspect=w/h; camera.fov=w<720?52:32; camera.updateProjectionMatrix(); }
+addEventListener('resize',()=>{ clearTimeout(rsT); rsT=setTimeout(resize,150); }); resize();
+// 고화질인데 느리면(평균 35ms 넘게 3초) 자동으로 빛 번짐 끄기
+let slowN=0,slowAcc=0,slowT=performance.now();
+function watchSpeed(dt){ if(!HQ||hqPref!=null) return; slowAcc+=dt; slowN++; if(performance.now()-slowT<3000) return;
+  if(slowAcc/slowN>0.035){ HQ=false; document.documentElement.classList.add('lite'); renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); lastW=0; resize(); if($('hq')) $('hq').checked=false; }
+  slowAcc=0; slowN=0; slowT=performance.now(); }
+$('hq').checked=HQ; $('hq').onchange=e=>{ store.set('hq',e.target.checked?1:0); location.reload(); };
 
 // ═══════════ 상태 ═══════════
 const tgtAng=[90,90,90,90],curAng=[90,90,90,90];
@@ -496,7 +513,7 @@ function frame(now){
   $('bubble').style.left=((headTop.x+1)/2*innerWidth)+'px'; $('bubble').style.top=((1-headTop.y)/2*innerHeight)+'px';
   if(now-bubbleT>4200){ $('bubble').style.opacity=0; if(now-bubbleT>9000) say(idleTalk()); }
   tick+=dt; if(tick>=1){ tick-=1; petTick(); }
-  composer.render(); requestAnimationFrame(frame);
+  watchSpeed(dt); if(HQ) composer.render(); else renderer.render(scene,camera); requestAnimationFrame(frame);
 }
 function petTick(){
   const moving=action!=='home';
