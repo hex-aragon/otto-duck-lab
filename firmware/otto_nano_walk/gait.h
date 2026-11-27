@@ -29,12 +29,20 @@ enum Action : uint8_t {
   ACT_MOONWALK_LEFT,
   ACT_MOONWALK_RIGHT,
   ACT_TIPTOE,
+  ACT_BOUNCE,      // 무릎 튕기듯 통통 (작은 위아래)
+  ACT_WAVE,        // 발목이 차례로 → 몸 웨이브
+  ACT_TWIST,       // 골반 비틀기
+  ACT_SHUFFLE,     // 다리 엇갈려 셔플
+  ACT_POSE_L,      // 왼쪽으로 기대는 포인트 자세 (멈춤)
+  ACT_POSE_R,
+  ACT_KICK,        // 오른발로 서서 왼발 차기
   ACT_COUNT
 };
 
 static const char* const ACTION_NAMES[ACT_COUNT] = {
   "home", "walk_fwd", "walk_back", "turn_left", "turn_right",
   "updown", "swing", "moonwalk_left", "moonwalk_right", "tiptoe",
+  "bounce", "wave", "twist", "shuffle", "pose_l", "pose_r", "kick",
 };
 
 struct GaitParams {
@@ -76,6 +84,28 @@ static GaitParams gaitFor(Action a, float h = 25) {
     }
     case ACT_TIPTOE:      // 까치발 흔들기
       p = { { 0, 0, h, h }, { 0, 0, h, -h }, { 0, 0, 0, 0 } };
+      break;
+    // ── K-pop 루틴용 (web/otto-pet.html gaitFor와 같은 값) ──
+    case ACT_BOUNCE:
+      p = { { 0, 0, h * 0.5f, h * 0.5f }, { 0, 0, h * 0.5f, -h * 0.5f }, { 0, 0, -90, 90 } };
+      break;
+    case ACT_WAVE:
+      p = { { 8, 8, h, h }, { 0, 0, 0, 0 }, { 0, 0, 0, 90 } };
+      break;
+    case ACT_TWIST:
+      p = { { 25, 25, 0, 0 }, { 0, 0, h / 3, -h / 3 }, { 0, 0, 0, 0 } };
+      break;
+    case ACT_SHUFFLE:
+      p = { { 20, 20, 15, 15 }, { 0, 0, 0, 0 }, { 0, 180, 90, 90 } };
+      break;
+    case ACT_POSE_L:
+      p = { { 0, 0, 0, 0 }, { 12, -12, h, h / 2 }, { 0, 0, 0, 0 } };
+      break;
+    case ACT_POSE_R:
+      p = { { 0, 0, 0, 0 }, { -12, 12, -h / 2, -h }, { 0, 0, 0, 0 } };
+      break;
+    case ACT_KICK:
+      p = { { 10, 0, h * 1.2f, 0 }, { 0, 0, h / 2, -h / 2 }, { 0, 0, 0, 0 } };
       break;
     default:              // HOME: 전부 0 → 차렷
       break;

@@ -112,11 +112,21 @@ static const Note S_SONG[]  PROGMEM = {{784,250},{784,250},{880,250},{880,250},{
 // 한 음 236ms + tickSound 틈 20ms = 256ms, 8음 ≈ 2초. playSoundFor로 4초·10초 반복
 static const Note S_BILLIE[] PROGMEM = {{370,236},{554,236},{659,236},{740,236},
                                         {659,236},{554,236},{494,236},{554,236}};
+// ── K-pop 무대 느낌 루틴용 창작 멜로디 (실제 곡을 옮긴 것이 아님). web/otto-pet.html의 SONGS와 같은 음 ──
+// POP STAR 120BPM (창작 멜로디, 4마디)
+static const Note S_KP0[] PROGMEM = {{659,230},{784,230},{880,480},{784,230},{659,230},{587,480},{523,230},{587,230},{659,230},{784,230},{659,480},{0,480},{880,230},{880,230},{784,230},{659,230},{587,230},{659,230},{784,480},{659,230},{587,230},{523,480},{587,480},{523,480}};
+// HYPE STEP 128BPM (창작 멜로디, 4마디)
+static const Note S_KP1[] PROGMEM = {{440,214},{0,214},{440,214},{523,214},{659,449},{587,214},{523,214},{440,214},{0,214},{440,214},{392,214},{440,449},{0,449},{440,214},{523,214},{659,214},{784,214},{880,449},{784,214},{659,214},{587,449},{523,214},{587,214},{659,918}};
+// CUTIE BOUNCE 110BPM (창작 멜로디, 4마디)
+static const Note S_KP2[] PROGMEM = {{523,253},{698,253},{880,253},{698,253},{784,525},{698,525},{659,253},{784,253},{1047,525},{880,525},{0,525},{698,253},{880,253},{1047,253},{880,253},{784,253},{698,253},{784,525},{880,525},{784,253},{659,253},{698,1071}};
+// MOON SHUFFLE 100BPM (창작 멜로디, 4마디)
+static const Note S_KP3[] PROGMEM = {{587,280},{698,280},{784,280},{880,280},{1047,280},{880,280},{784,580},{698,280},{784,280},{698,280},{587,280},{523,580},{587,580},{587,280},{698,280},{784,280},{880,580},{784,280},{698,280},{784,280},{880,580},{0,280},{698,280},{587,1180}};
 struct Sound { const char* name; const Note* notes; uint8_t n; };
 #define SND(nm, arr) { nm, arr, (uint8_t)(sizeof(arr) / sizeof(arr[0])) }
 static const Sound SOUNDS[] = {
   SND("beep", S_BEEP), SND("hello", S_HELLO), SND("happy", S_HAPPY), SND("sad", S_SAD),
-  SND("alarm", S_ALARM), SND("ok", S_OK), SND("song", S_SONG), SND("billie", S_BILLIE) };
+  SND("alarm", S_ALARM), SND("ok", S_OK), SND("song", S_SONG), SND("billie", S_BILLIE),
+  SND("kp0", S_KP0), SND("kp1", S_KP1), SND("kp2", S_KP2), SND("kp3", S_KP3) };
 static const uint8_t SOUND_COUNT = sizeof(SOUNDS) / sizeof(SOUNDS[0]);
 
 bool        soundOn = true;      // 'mute'로 끔
@@ -125,6 +135,7 @@ uint8_t     sndLen = 0, sndIdx = 0;
 uint32_t    sndNext = 0;
 uint32_t    sndUntil = 0;        // 이 시각까지 처음부터 다시 반복 (0 = 한 번만)
 static const uint8_t SND_BILLIE = 7;
+static const uint8_t SND_KP0 = 8;   // kp0~kp3 = 8~11
 
 static void playSound(uint8_t i) {
   if (!soundOn || i >= SOUND_COUNT) return;
