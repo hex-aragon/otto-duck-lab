@@ -42,6 +42,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .pop{position:fixed;z-index:20;display:none;padding:14px;width:min(360px,calc(100vw - 28px));background:var(--glass2)}
 .pop.show{display:grid;gap:10px}
 .pop h4{margin:0;font-size:13px;color:var(--muted);font-weight:600}
+#spWarn{display:none;padding:9px 11px;border-radius:10px;background:rgba(255,70,90,.14);border:1px solid rgba(255,90,110,.45);font-size:12.5px;line-height:1.5}
+#spWarn.show{display:block}
 .addr{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
 .btn{padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:13.5px;font-weight:600;color:var(--fg)}
 .btn:hover{background:rgba(255,255,255,.12)}
@@ -155,7 +157,11 @@ pre{margin:0;max-height:220px;overflow:auto;font-size:11.5px;color:var(--muted);
   <div class="row"><button class="btn" id="copyOtto">주소 복사</button><a class="btn" id="exOtto" target="_blank" rel="noopener" style="text-decoration:none">스캐너에서 보기 ↗</a></div>
   <h4>수수료 지갑 (devnet) · 잔액 <b id="spBal">-</b> SOL</h4>
   <div class="addr" id="spAddr">-</div>
-  <div class="row"><button class="btn pri" id="faucet">💧 시험 SOL 받기</button><button class="btn" id="refresh">새로고침</button></div>
+  <div id="spWarn">⚠️ <b>수수료 지갑이 비어 있어요.</b> TX는 이 지갑이 수수료를 내야 나가요. 아래 둘 중 하나:<br>① 위 주소로 devnet SOL 보내기 (팬텀 등 내 지갑 → devnet → 보내기, 또는 💧 시험 SOL 받기)<br>② 이미 SOL이 든 <b>devnet 전용</b> 지갑의 비밀키를 붙여 넣기</div>
+  <div class="row"><button class="btn pri" id="faucet">💧 시험 SOL 받기</button><button class="btn" id="copySp">주소 복사</button><button class="btn" id="refresh">새로고침</button></div>
+  <details><summary class="muted" style="cursor:pointer">수수료 지갑 바꾸기 (비밀키 붙여 넣기)</summary>
+    <div class="row"><input id="spKey" type="password" placeholder="base58 비밀키 (팬텀: 설정 → 비밀키 보기)" style="flex:1;min-width:0;padding:8px;border-radius:10px;background:#11131c;color:var(--fg);border:1px solid var(--stroke)"><button class="btn" id="spSet">바꾸기</button></div>
+    <div class="muted" style="font-size:11.5px">이 브라우저에만 저장돼요. 진짜 돈이 든 메인넷 지갑 키는 넣지 마세요.</div></details>
   <label class="chk"><input type="checkbox" id="autoScan"> TX 보내면 스캐너 바로 열기</label>
   <div class="muted">한 번 발행 = 트랜잭션 2개 · 약 0.008 SOL. 체인에는 움직임 요약과 원본 해시만 올라가요.</div>
 </div>
@@ -702,9 +708,14 @@ async function useSoftOtto(){ await loadChain(); if(ottoSigner) return; const s=
   softOtto=s?W.Keypair.fromSecretKey(Uint8Array.from(s)):W.Keypair.generate(); if(!s) store.set('softOtto',[...softOtto.secretKey]);
   const nacl=await import('https://esm.sh/tweetnacl@1.0.3'); const N=nacl.default||nacl;
   ottoSigner={publicKey:softOtto.publicKey,sign:async m=>N.sign.detached(m,softOtto.secretKey)}; showWallet(softOtto.publicKey,'· 연습용 키 (이 브라우저)'); }
-async function refresh(){ await loadChain(); try{ const b=await conn.getBalance(sponsor.publicKey); $('spBal').textContent=(b/1e9).toFixed(3); $('wSub').textContent=`devnet · 수수료 ${(b/1e9).toFixed(3)} SOL`; }catch(e){ $('wSub').textContent='devnet · 잔액 확인 실패'; } if(ottoSigner) loadCollection(); }
+let spLamports=null;
+async function refresh(){ await loadChain(); try{ const b=await conn.getBalance(sponsor.publicKey); spLamports=b; $('spWarn').classList.toggle('show',b<0.012e9); $('spBal').textContent=(b/1e9).toFixed(3); $('wSub').textContent=`devnet · 수수료 ${(b/1e9).toFixed(3)} SOL`; }catch(e){ $('wSub').textContent='devnet · 잔액 확인 실패'; } if(ottoSigner) loadCollection(); }
 $('faucet').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); }catch(e){} open('https://faucet.solana.com/','_blank'); toast('wait','수수료 주소 복사됨','faucet.solana.com에서 devnet 고르고 붙여 넣기'); };
 $('refresh').onclick=refresh;
+$('copySp').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); toast('ok','수수료 지갑 주소 복사됨',sponsor.publicKey.toBase58()); }catch(e){} };
+$('spSet').onclick=async()=>{ await loadChain(); try{ const k=W.Keypair.fromSecretKey(decode58($('spKey').value.trim())); sponsor=k; store.set('sponsor',[...k.secretKey]); $('spKey').value=''; $('spAddr').textContent=k.publicKey.toBase58(); toast('ok','수수료 지갑 바꿈',k.publicKey.toBase58()); refresh(); }
+  catch(e){ toast('err','비밀키가 맞지 않아요','base58 비밀키(64바이트)를 넣어 주세요'); } };
+function needFunds(){ $('walletMenu').classList.add('show'); placePop('walletMenu','wallet'); $('spWarn').classList.add('show'); }
 $('copyOtto').onclick=async()=>{ try{ await navigator.clipboard.writeText($('wFull').textContent); toast('ok','오또 주소 복사됨',''); }catch(e){} };
 
 function toast(kind,title,sub,href){ const d=document.createElement('div'); d.className='glass toast '+kind;
@@ -720,7 +731,7 @@ async function doMint(scanWin){
     await loadChain();
     if(!ottoSigner) await useSoftOtto();
     const bal=await conn.getBalance(sponsor.publicKey);
-    if(bal<0.012e9){ closeScan(); $('walletMenu').classList.add('show'); placePop('walletMenu','wallet'); throw new Error('수수료 지갑에 시험 SOL이 필요해요 → 💧 시험 SOL 받기'); }
+    spLamports=bal; if(bal<0.012e9){ closeScan(); needFunds(); throw new Error('수수료 지갑 잔액 '+(bal/1e9).toFixed(3)+' SOL → 오른쪽 위 지갑에서 SOL 넣기'); }
     const raw=rec.lines.join('\n'), hash=bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(raw))));
     const top=Object.entries(rec.acts).sort((a,b)=>b[1]-a[1])[0];
     const n=(await listMoments(ottoSigner.publicKey).catch(()=>[])).length+1;
@@ -758,7 +769,7 @@ async function doMint(scanWin){
   }catch(e){ closeScan(); toast('err','TX 실패',e.message); console.error(e); }
   finally{ minting=false; $('txBtn').disabled=false; $('txBtn').classList.remove('busy'); }
 }
-$('txBtn').onclick=()=>{ let w=null; if($('autoScan').checked){ w=open('about:blank','_blank'); try{ w.document.title='Otto TX…'; w.document.body.style.cssText='background:#07080c;color:#9aa0b2;font:16px sans-serif;display:grid;place-items:center;height:100vh;margin:0'; w.document.body.textContent='오또가 서명하는 중… 곧 스캐너로 넘어가요'; }catch(e){} } doMint(w); };
+$('txBtn').onclick=()=>{ if(spLamports!==null&&spLamports<0.012e9){ needFunds(); toast('err','TX 못 보냄','수수료 지갑이 비어 있어요 → 지갑 메뉴 확인'); return; } let w=null; if($('autoScan').checked){ w=open('about:blank','_blank'); try{ w.document.title='Otto TX…'; w.document.body.style.cssText='background:#07080c;color:#9aa0b2;font:16px sans-serif;display:grid;place-items:center;height:100vh;margin:0'; w.document.body.textContent='오또가 서명하는 중… 곧 스캐너로 넘어가요'; }catch(e){} } doMint(w); };
 addEventListener('keydown',e=>{ if(e.code==='Space'&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){ e.preventDefault(); if(!e.repeat) doMint(null); } });
 
 // ═══════════ 보관함 · 다시 보기 · 영상 · AI 데이터 · 해시 대조 ═══════════
