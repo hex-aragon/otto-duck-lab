@@ -1,0 +1,21 @@
+[package]
+name = "otto_moves"
+version = "0.1.0"
+edition = "2021"
+description = "오또 움직임 기록 검사 + MOVE 보상"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "otto_moves"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = { version = "0.31.1", default-features = false, features = ["token", "token_2022", "token_2022_extensions", "associated_token"] }
