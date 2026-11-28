@@ -53,9 +53,23 @@ otto-duck-lab/
 │  ├ gait.h               사인파 동작 (걷기 · 돌기 · 춤) — 순수 계산
 │  ├ imu.h                LSM6DS / MPU-6050 자동 감지, 기울기 추정
 │  └ posture.h            자세 분류: 규칙 또는 TinyML 모델(posture_model.h)
+├ firmware/otto_nano_walk/  지금 쓰는 Nano 키트 오또 펌웨어 (서보 · 도트 · 부저 · 초음파 · 블루투스, #A 각도 줄)
+├ firmware/otto_nu40_twin/  오또 등에 얹는 NU40 + IMU: 기울기 · 방향, 보드 안 ed25519 지갑 키 · 서명, 버튼 신호
 ├ web/index.html          조종 · 트림 · TinyML 학습기 (빌드 없음, 파일 하나)
-└ docs/                   계획 · 조사 문서
+├ web/otto-nano.html      📱 Nano 오또 리모컨 (폰 크롬 블루투스)
+├ web/otto-twin.html      🪞 실물을 따라 움직이는 3D 쌍둥이
+├ web/otto-pet.html       🐣 3D 다마고치 + 움직임 기록 → 솔라나 devnet 소장 토큰, 다시 보기 · 영상 · AI 데이터 · 해시 대조
+└ docs/                   계획 · 조사 문서 (docs/otto-physical-ai-map.html = 피지컬 AI · 블록체인 전체 그림)
 ```
+
+## 오또 펫 · 소장 토큰 (피지컬 AI × 블록체인)
+
+1. `firmware/otto_nu40_twin` 을 NU40 DK에 올린다 (보드 `nucode:nrf52:nu40dk`, 라이브러리 `Crypto` by Rhys Weatherley 필요). 처음 켤 때 보드가 지갑 키를 만든다.
+2. [web/otto-pet.html](https://hex-aragon.github.io/otto-duck-lab/web/otto-pet.html) → 🧭 NU40 연결 → 오또 지갑 주소가 뜬다. 📱 오또 연결까지 하면 다리 · 표정도 따라 움직인다.
+3. 💧 버튼으로 후원 지갑 주소를 복사해 [faucet.solana.com](https://faucet.solana.com)에서 devnet SOL을 받는다 (한 번 발행에 약 0.008 SOL).
+4. 오또를 움직이고 **NU40 버튼 · 스페이스바 · 발행 버튼**으로 신호 → "Otto Moment #n" 토큰이 오또 지갑에 쌓인다. 체인에는 요약과 원본 해시만 올라간다.
+
+> devnet(시험망) 전용. NU40에는 보안 칩이 없으므로 실제 자산 지갑으로 쓰지 않는다.
 
 ## 빠른 시작
 

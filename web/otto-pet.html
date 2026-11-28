@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OTTO LIVE</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#07080c; --glass:rgba(18,20,28,.58); --glass2:rgba(28,31,42,.72); --stroke:rgba(255,255,255,.09);
+  --fg:#f4f5f8; --muted:#9aa0b2; --dim:#6b7186;
+  --pink:#ff5fa2; --violet:#8b7bff; --cyan:#3fe0ff; --mint:#34e3a6; --amber:#ffc35c; --red:#ff5a6a;
+  --grad:linear-gradient(135deg,#ff5fa2,#8b7bff 55%,#3fe0ff);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
+  font:15px/1.45 "Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif;letter-spacing:-.01em}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+/* 폰 · 가벼운 화면: 3D 위 흐림(blur) 끄기 → 안드로이드 깜빡임 방지 */
+.lite .glass,.lite .drawer{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lite .glass{background:rgba(16,18,26,.9)} .lite .pop{background:rgba(24,27,38,.97)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid var(--stroke);border-radius:18px}
+.hud{position:fixed;z-index:5}
+#top{top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
+#top>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.brand b{font-size:15px;font-weight:800;letter-spacing:.14em}
+.brand .live{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--red);color:#fff;letter-spacing:.06em}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--stroke)}
+.pill i{width:7px;height:7px;border-radius:50%;background:#4a4f60}
+.pill.on{color:var(--fg)} .pill.on i{background:var(--mint);box-shadow:0 0 8px var(--mint)}
+.pill.sim.on i{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+#wallet{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 8px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--grad);box-shadow:inset 0 0 0 2px rgba(255,255,255,.18);cursor:pointer}
+.wtxt{display:grid;line-height:1.15;cursor:pointer}
+.wtxt b{white-space:nowrap;font-size:13.5px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:600}
+.wtxt small{font-size:11px;color:var(--muted)}
+#txBtn{position:relative;padding:9px 16px;border-radius:13px;font-weight:800;font-size:14px;color:#fff;background:var(--grad);box-shadow:0 6px 22px rgba(255,95,162,.35);letter-spacing:.02em}
+#txBtn:disabled{opacity:.55}
+#txBtn .spin{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;margin-right:6px;vertical-align:-2px}
+#txBtn.busy .spin{display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pop{position:fixed;z-index:20;display:none;padding:14px;width:min(360px,calc(100vw - 28px));background:var(--glass2)}
+.pop.show{display:grid;gap:10px}
+.pop h4{margin:0;font-size:13px;color:var(--muted);font-weight:600}
+#spWarn{display:none;padding:9px 11px;border-radius:10px;background:rgba(255,70,90,.14);border:1px solid rgba(255,90,110,.45);font-size:12.5px;line-height:1.5}
+#spWarn.show{display:block}
+.addr{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.05)}
+.btn{padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.07);border:1px solid var(--stroke);font-size:13.5px;font-weight:600;color:var(--fg)}
+.btn:hover{background:rgba(255,255,255,.12)}
+.btn.pri{background:var(--grad);border:0;color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:12.5px}
+#feed{top:calc(max(12px,env(safe-area-inset-top)) + 58px);right:14px;display:grid;gap:8px;width:min(330px,calc(100vw - 28px));pointer-events:none}
+.toast{pointer-events:auto;padding:10px 12px;display:grid;gap:3px;animation:in .35s cubic-bezier(.2,.9,.3,1.2)}
+.toast b{font-size:13.5px}
+.toast .sig{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--muted)}
+.toast a{color:var(--cyan);font-size:12.5px;text-decoration:none;font-weight:600}
+.toast.ok b::before{content:"✓ ";color:var(--mint)} .toast.err b::before{content:"✕ ";color:var(--red)} .toast.wait b::before{content:"◌ ";color:var(--amber)}
+@keyframes in{from{opacity:0;transform:translateY(-8px) scale(.97)}}
+#bubble{position:fixed;z-index:4;transform:translate(-50%,-100%);padding:8px 14px;border-radius:16px;font-size:14px;font-weight:600;white-space:nowrap;
+  background:rgba(255,255,255,.92);color:#151722;box-shadow:0 8px 30px rgba(0,0,0,.35);transition:opacity .3s;pointer-events:none}
+#bubble::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:rgba(255,255,255,.92);border-bottom:0}
+#stats{left:14px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 150px);padding:12px 14px;display:grid;gap:8px;width:220px}
+.meter{display:grid;grid-template-columns:52px 1fr 30px;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.meter span:last-child{text-align:right;color:var(--fg);font-weight:700}
+.meter i{height:5px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden}
+.meter i b{display:block;height:100%;border-radius:9px;transition:width .6s}
+.recline{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);border-top:1px solid var(--stroke);padding-top:8px}
+.recline b{color:var(--fg)}
+.rec-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;animation:bl 1.4s infinite}
+@keyframes bl{50%{opacity:.25}}
+@media (max-width:720px){#stats{display:none}}
+#deck{left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));width:min(980px,calc(100vw - 20px));padding:10px;display:grid;gap:8px}
+.songs{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;overflow-x:auto;scrollbar-width:none}
+.songs::-webkit-scrollbar{display:none}
+.song{position:relative;text-align:left;padding:12px 12px 10px;border-radius:14px;min-height:74px;overflow:hidden;border:1px solid var(--stroke);transition:transform .15s;color:#fff}
+.song:hover{transform:translateY(-2px)}
+.song b{display:block;font-size:15px;font-weight:800;letter-spacing:.02em}
+.song small{color:rgba(255,255,255,.8);font-size:11.5px}
+.song .bpm{position:absolute;right:10px;bottom:9px;font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.28)}
+.song.playing{outline:2px solid #fff;box-shadow:0 0 26px rgba(255,255,255,.25)}
+.s0{background:linear-gradient(135deg,#ff5fa2,#ff9a5c)} .s1{background:linear-gradient(135deg,#5b4bff,#22c7ff)}
+.s2{background:linear-gradient(135deg,#ff7ad9,#b07bff)} .s3{background:linear-gradient(135deg,#1f2a5c,#6a4cff)}
+.s4{background:linear-gradient(135deg,#e8173a,#ff6a3d 55%,#ffd23f)} .s4.empty{background:repeating-linear-gradient(135deg,#1a1d2b 0 10px,#22263a 10px 20px)}
+#midiDrawer select{width:100%;padding:9px;border-radius:10px;background:#11131c;color:var(--fg);border:1px solid var(--stroke)}
+.moves{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.moves::-webkit-scrollbar{display:none}
+.mv{flex:0 0 auto;padding:8px 12px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);font-size:13px;font-weight:600;white-space:nowrap}
+.mv:hover{background:rgba(255,255,255,.12)} .mv.stop{background:rgba(255,90,106,.18);border-color:rgba(255,90,106,.4)}
+#now{display:none;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+#now.show{display:flex}
+#now .bar{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+#now .bar b{display:block;height:100%;width:0;background:var(--grad)}
+#fab{right:14px;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 150px);display:grid;gap:8px}
+.fab{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:19px;position:relative}
+.fab em{position:absolute;top:-4px;right:-4px;font-style:normal;font-size:10.5px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--pink);display:grid;place-items:center}
+@media (max-width:720px){ #wSub{display:none} #connBtn{white-space:nowrap} .brand{padding:7px 10px;gap:8px} .brand b{letter-spacing:.08em} #fab{bottom:calc(max(14px,env(safe-area-inset-bottom)) + 170px)} .songs{grid-template-columns:repeat(5,150px)} .brand .pills{display:none} }
+.drawer{position:fixed;z-index:15;top:0;right:0;bottom:0;width:min(420px,100vw);padding:18px 16px;display:grid;grid-template-rows:auto 1fr;gap:12px;
+  background:rgba(12,13,19,.92);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-left:1px solid var(--stroke);transform:translateX(102%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.drawer.show{transform:none}
+.drawer header{display:flex;justify-content:space-between;align-items:center}
+.drawer header b{font-size:17px}
+.drawer .body{overflow:auto;display:grid;gap:10px;align-content:start;padding-bottom:30px}
+.card{border-radius:16px;padding:12px;border:1px solid var(--stroke);background:rgba(255,255,255,.04);display:grid;gap:8px}
+.card .h{display:flex;justify-content:space-between;align-items:center}
+.card .h b{font-size:14.5px}
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kv div{background:rgba(255,255,255,.04);border-radius:10px;padding:6px 8px;font-size:11px;color:var(--muted)}
+.kv div b{display:block;color:var(--fg);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hash{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini{padding:6px 9px;border-radius:9px;background:rgba(255,255,255,.07);font-size:12px;font-weight:600}
+.mini.ok{color:var(--mint)} .mini.bad{color:var(--red)}
+a{color:var(--cyan)}
+label.chk{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:4px 0}
+pre{margin:0;max-height:220px;overflow:auto;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.04);padding:10px;border-radius:10px}
+#connMenu .btn{width:100%;text-align:left}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="bubble">안녕, 나는 오또야</div>
+
+<div class="hud" id="top">
+  <div class="glass brand">
+    <b>OTTO</b><span class="live">LIVE</span>
+    <div class="pills">
+      <button class="pill" id="pNu"><i></i>NU40</button>
+      <button class="pill" id="pOtto"><i></i>OTTO</button>
+      <button class="pill sim" id="pSim"><i></i>SIM</button>
+    </div>
+    <button class="btn" id="connBtn" style="padding:5px 10px;font-size:12px">연결 ▾</button>
+  </div>
+  <div class="glass" id="wallet">
+    <div class="avatar" id="avatar"></div>
+    <div class="wtxt" id="wInfo"><b id="wAddr">지갑 없음</b><small id="wSub">devnet · 연결하면 생겨요</small></div>
+    <button id="txBtn" title="지금까지 움직임을 토큰으로 발행 (스페이스바 · NU40 버튼도 같음)"><span class="spin"></span>TX</button>
+  </div>
+</div>
+
+<div class="hud" id="feed"></div>
+
+<div class="glass pop" id="connMenu">
+  <h4>NU40 (몸 기울기 · 오또 지갑)</h4>
+  <button class="btn" id="cNu">💻 USB로 연결</button>
+  <button class="btn" id="cNuBle">📶 블루투스로 연결 (Otto-Twin-…)</button>
+  <h4>오또 본체 (다리 · 표정 · 춤)</h4>
+  <button class="btn" id="cOtto">📱 블루투스 (JDY-31)</button>
+  <button class="btn" id="cOttoCom">💻 USB / COM 포트</button>
+  <h4>로봇 없이</h4>
+  <button class="btn" id="cSim">🎮 미리 보기 (연습용 지갑)</button>
+  <div class="muted" id="status">크롬 · 엣지에서 돼요. 아이폰은 Bluefy 앱.</div>
+</div>
+
+<div class="glass pop" id="walletMenu">
+  <h4>오또 지갑 <span id="wKind" class="muted"></span></h4>
+  <div class="addr" id="wFull">-</div>
+  <div class="row"><button class="btn" id="copyOtto">주소 복사</button><a class="btn" id="exOtto" target="_blank" rel="noopener" style="text-decoration:none">스캐너에서 보기 ↗</a></div>
+  <h4>수수료 지갑 (devnet) · 잔액 <b id="spBal">-</b> SOL</h4>
+  <div class="addr" id="spAddr">-</div>
+  <div id="spWarn">⚠️ <b>수수료 지갑이 비어 있어요.</b> TX는 이 지갑이 수수료를 내야 나가요. 아래 둘 중 하나:<br>① 위 주소로 devnet SOL 보내기 (팬텀 등 내 지갑 → devnet → 보내기, 또는 💧 시험 SOL 받기)<br>② 이미 SOL이 든 <b>devnet 전용</b> 지갑의 비밀키를 붙여 넣기</div>
+  <div class="row"><button class="btn pri" id="faucet">💧 시험 SOL 받기</button><button class="btn" id="copySp">주소 복사</button><button class="btn" id="refresh">새로고침</button></div>
+  <details><summary class="muted" style="cursor:pointer">수수료 지갑 바꾸기 (비밀키 붙여 넣기)</summary>
+    <div class="row"><input id="spKey" type="password" placeholder="base58 비밀키 (팬텀: 설정 → 비밀키 보기)" style="flex:1;min-width:0;padding:8px;border-radius:10px;background:#11131c;color:var(--fg);border:1px solid var(--stroke)"><button class="btn" id="spSet">바꾸기</button></div>
+    <div class="muted" style="font-size:11.5px">이 브라우저에만 저장돼요. 진짜 돈이 든 메인넷 지갑 키는 넣지 마세요.</div></details>
+  <label class="chk"><input type="checkbox" id="autoScan"> TX 보내면 스캐너 바로 열기</label>
+  <div class="muted">한 번 발행 = 트랜잭션 2개 · 약 0.008 SOL. 체인에는 움직임 요약과 원본 해시만 올라가요.</div>
+</div>
+
+<div class="hud glass" id="stats">
+  <div class="meter"><span>기분</span><i><b id="bHappy" style="background:var(--pink)"></b></i><span id="vHappy">0</span></div>
+  <div class="meter"><span>에너지</span><i><b id="bEnergy" style="background:var(--amber)"></b></i><span id="vEnergy">0</span></div>
+  <div class="meter"><span>운동</span><i><b id="bFit" style="background:var(--mint)"></b></i><span id="vFit">0</span></div>
+  <div class="meter"><span>LV <b id="vLv" style="color:var(--fg)">1</b></span><i><b id="bXp" style="background:var(--violet)"></b></i><span id="vXp">0</span></div>
+  <div class="recline"><span><span class="rec-dot"></span>기록 <b id="sDur">0s</b></span><span><b id="sLines">0</b>줄</span><span>기울기 <b id="sTilt">0°</b></span></div>
+  <div class="recline" style="border:0;padding:0"><span>전압 <b id="vcc">-</b></span><span>수신 <b id="rate">-</b></span><span>방향 <b id="yaw">-</b></span></div>
+</div>
+
+<div class="hud" id="fab">
+  <button class="glass fab" id="openCol" title="보관함">🗂<em id="colN">0</em></button>
+  <button class="glass fab" id="openSet" title="설정">⚙︎</button>
+</div>
+
+<div class="hud glass" id="deck">
+  <div id="now"><span id="nowName">♪</span><div class="bar"><b id="nowBar"></b></div><span id="nowBpm"></span></div>
+  <div class="songs" id="songs"></div>
+  <div class="moves">
+    <button class="mv" data-c="w 4">▲ 앞</button><button class="mv" data-c="b 4">▼ 뒤</button><button class="mv" data-c="l 3">◀ 턴</button><button class="mv" data-c="r 3">턴 ▶</button>
+    <button class="mv" data-c="mj 10">🕺 빌리진</button><button class="mv" data-c="s 4">↔ 스윙</button><button class="mv" data-c="k 4">🩰 까치발</button><button class="mv" data-c="u 4">⬆⬇ 업다운</button>
+    <button class="mv" data-c="e heart">💗 하트</button><button class="mv" data-c="d">🎬 랜덤 무대</button><button class="mv stop" data-c="x">■ 멈춤</button>
+  </div>
+</div>
+
+<aside class="drawer" id="colDrawer">
+  <header><b>보관함 · Otto Moments</b><button class="btn" data-close>닫기</button></header>
+  <div class="body">
+    <div class="row"><button class="btn" id="replayNow">▶ 지금 기록 다시 보기</button><button class="btn" id="exportNow">🤖 지금 기록 AI 데이터</button></div>
+    <div id="cards" style="display:grid;gap:10px"><div class="muted">아직 없어요. 춤을 추고 TX를 눌러 보세요.</div></div>
+  </div>
+</aside>
+
+<aside class="drawer" id="midiDrawer">
+  <header><b>🎵 내 노래 · MIDI</b><button class="btn" data-close>닫기</button></header>
+  <div class="body">
+    <div class="card"><b id="mName">아직 없음</b><div class="muted" id="mInfo">.mid 파일을 넣으면 멜로디는 오또 부저로, 춤은 박자에 맞춰 자동으로 짜요.</div>
+      <div class="row"><button class="btn" id="mPick">📂 MIDI 파일 고르기</button></div>
+      <input type="file" id="mFile" accept=".mid,.midi,audio/midi" hidden></div>
+    <div class="card"><b>멜로디 줄 (오또 부저)</b><select id="mTrack"></select>
+      <div class="row"><label class="muted">높이</label><select id="mOct" style="width:auto"><option value="-2">2옥타브 내림</option><option value="-1">1옥타브 내림</option><option value="0" selected>자동</option><option value="1">1옥타브 올림</option><option value="2">2옥타브 올림</option></select></div>
+      <div class="row"><label class="muted">춤 느낌</label><select id="mStyle" style="width:auto"><option value="auto" selected>자동 (음이 많으면 세게)</option><option value="power">강하게 · 칼군무</option><option value="cute">귀엽게 · 통통</option><option value="chill">부드럽게</option></select></div>
+      <div class="row"><label class="muted">BPM</label><input id="mBpm" type="number" min="40" max="300" style="width:90px;padding:8px;border-radius:10px;background:#11131c;color:var(--fg);border:1px solid var(--stroke)"></div>
+      <label class="chk"><input type="checkbox" id="mAcc"> 폰 · 노트북 스피커로 반주도 같이 (멜로디 말고 나머지 줄)</label></div>
+    <div class="row"><button class="btn pri" id="mPlay" disabled>▶ 무대 시작</button><button class="btn" id="mStop">■ 멈춤</button></div>
+    <div class="muted">MIDI는 이 브라우저 안에서만 읽어요. 저장소에 올리지 않아요. 노래 파일은 MuseScore(악보 → 내보내기 → MIDI)나 직접 만든 .mid를 쓰세요.</div>
+  </div>
+</aside>
+
+<aside class="drawer" id="setDrawer">
+  <header><b>설정</b><button class="btn" data-close>닫기</button></header>
+  <div class="body">
+    <div class="card"><b>소리 · 카메라</b>
+      <label class="chk"><input type="checkbox" id="music"> 춤출 때 폰 · 노트북 스피커로 음악 (오또 부저와 함께)</label>
+      <label class="chk"><input type="checkbox" id="stageCam"> 춤출 때 무대 카메라 (천천히 돌기)</label>
+      <label class="chk"><input type="checkbox" id="hq"> 고화질 (빛 번짐 · 흐린 유리 · 부드러운 그림자) — 폰에서 깜빡이면 끄기</label></div>
+    <div class="card"><b>실물과 맞추기</b>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-flip="0"> 왼다리 반대</label><label class="chk"><input type="checkbox" data-flip="1"> 오른다리 반대</label>
+        <label class="chk"><input type="checkbox" data-flip="2"> 왼발 반대</label><label class="chk"><input type="checkbox" data-flip="3"> 오른발 반대</label>
+        <label class="chk"><input type="checkbox" id="flipP"> 앞뒤 기울기 반대</label><label class="chk"><input type="checkbox" id="flipR"> 좌우 기울기 반대</label><label class="chk"><input type="checkbox" id="flipY"> 도는 방향 반대</label>
+      </div>
+      <div class="row"><button class="btn" id="zero">NU40 지금 자세를 똑바로로</button></div>
+      <div class="muted">NU40은 오또 몸통에 단단히 붙이고 똑바로 세운 채 눌러 주세요. 전원은 보조배터리로 따로 (걸을 때 5V가 떨어지면 NU40도 꺼져요).</div></div>
+    <div class="card"><b>더 보기</b>
+      <div class="row"><a class="btn" href="../docs/otto-physical-ai-map.html" style="text-decoration:none">🗺 피지컬 AI 지도</a><a class="btn" href="otto-nano.html" style="text-decoration:none">📱 리모컨</a></div></div>
+    <div class="card"><b>받은 줄</b><pre id="log"></pre></div>
+  </div>
+</aside>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem('pet.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('pet.'+k,JSON.stringify(v));}catch(e){}}};
+function log(s){const l=$('log'); l.textContent+=s+'\n'; if(l.textContent.length>15000) l.textContent=l.textContent.slice(-12000);}
+const enc=new TextEncoder();
+
+// ═══════════ 펌웨어와 같은 표 ═══════════
+const ACTIONS=['home','walk_fwd','walk_back','turn_left','turn_right','updown','swing','moonwalk_left','moonwalk_right','tiptoe','bounce','wave','twist','shuffle','pose_l','pose_r','kick'];
+const ACT_KO={home:'쉬는 중',walk_fwd:'앞으로',walk_back:'뒤로',turn_left:'왼쪽 턴',turn_right:'오른쪽 턴',updown:'업다운',swing:'스윙',moonwalk_left:'문워크',moonwalk_right:'문워크',tiptoe:'까치발',bounce:'바운스',wave:'웨이브',twist:'트위스트',shuffle:'셔플',pose_l:'포인트 포즈',pose_r:'포인트 포즈',kick:'킥'};
+const FACES=[[0,0,0,0,0,0,0,0],[0,0x66,0x66,0x66,0,0,0x3C,0],[0,0,0,0x66,0,0,0x3C,0],[0,0x66,0x66,0,0,0x42,0x3C,0],
+ [0,0x66,0x99,0,0,0x7E,0x3C,0],[0,0x66,0x66,0,0,0x3C,0x42,0],[0,0x66,0x66,0,0x18,0x24,0x24,0x18],[0,0x66,0xFF,0xFF,0x7E,0x3C,0x18,0],
+ [0x18,0x3C,0x7E,0xDB,0x18,0x18,0x18,0x18],[0x18,0x18,0x18,0x18,0xDB,0x7E,0x3C,0x18],[0x10,0x30,0x60,0xFF,0xFF,0x60,0x30,0x10],
+ [0x08,0x0C,0x06,0xFF,0xFF,0x06,0x0C,0x08],[0x81,0x42,0x24,0x18,0x18,0x24,0x42,0x81],[255,255,255,255,255,255,255,255]];
+// K-pop 무대 느낌 루틴: 창작 멜로디 (실제 곡이 아님). 펌웨어 extras.h S_KP0~3과 같은 음, [Hz, 8분음표 수]
+const SONGS=[{"name":"POP STAR","bpm":120,"notes":[[659,1],[784,1],[880,2],[784,1],[659,1],[587,2],[523,1],[587,1],[659,1],[784,1],[659,2],[0,2],[880,1],[880,1],[784,1],[659,1],[587,1],[659,1],[784,2],[659,1],[587,1],[523,2],[587,2],[523,2]]},{"name":"HYPE STEP","bpm":128,"notes":[[440,1],[0,1],[440,1],[523,1],[659,2],[587,1],[523,1],[440,1],[0,1],[440,1],[392,1],[440,2],[0,2],[440,1],[523,1],[659,1],[784,1],[880,2],[784,1],[659,1],[587,2],[523,1],[587,1],[659,4]]},{"name":"CUTIE BOUNCE","bpm":110,"notes":[[523,1],[698,1],[880,1],[698,1],[784,2],[698,2],[659,1],[784,1],[1047,2],[880,2],[0,2],[698,1],[880,1],[1047,1],[880,1],[784,1],[698,1],[784,2],[880,2],[784,1],[659,1],[698,4]]},{"name":"MOON SHUFFLE","bpm":100,"notes":[[587,1],[698,1],[784,1],[880,1],[1047,1],[880,1],[784,2],[698,1],[784,1],[698,1],[587,1],[523,2],[587,2],[587,1],[698,1],[784,1],[880,2],[784,1],[698,1],[784,1],[880,2],[0,1],[698,1],[587,4]]}];
+// 펌웨어 otto_nano_walk.ino R0~R3과 같은 순서 [동작, 박]
+const ROUTINES=[
+ {sub:'걸그룹 포인트 안무 느낌',steps:[['bounce',4],['swing',4],['pose_l',2],['pose_r',2],['twist',4],['wave',4],['kick',4],['tiptoe',4],['bounce',4],['pose_l',2],['pose_r',2]]},
+ {sub:'보이그룹 칼군무 느낌',steps:[['shuffle',4],['twist',4],['kick',4],['pose_r',2],['pose_l',2],['shuffle',4],['wave',4],['updown',4],['pose_l',2],['pose_r',2],['kick',4]]},
+ {sub:'통통 튀는 큐트 콘셉트',steps:[['bounce',4],['tiptoe',4],['wave',4],['pose_l',2],['pose_r',2],['swing',4],['bounce',4],['pose_r',2],['pose_l',2]]},
+ {sub:'몽환 문워크 셔플',steps:[['moonwalk_left',4],['moonwalk_right',4],['shuffle',4],['wave',4],['twist',4],['pose_l',2],['pose_r',2],['moonwalk_left',4]]}];
+function gaitFor(a,h=25){ const G=(A,O,phi)=>({A,O,phi});
+  switch(a){
+    case 'walk_fwd': case 'walk_back': { const d=a==='walk_fwd'?1:-1; return G([30,30,20,20],[0,0,4,-4],[0,0,-90*d,-90*d]); }
+    case 'turn_left': return G([30,10,20,20],[0,0,4,-4],[0,0,-90,-90]);
+    case 'turn_right': return G([10,30,20,20],[0,0,4,-4],[0,0,-90,-90]);
+    case 'updown': return G([0,0,h,h],[0,0,h,-h],[0,0,-90,90]);
+    case 'swing': return G([0,0,h,h],[0,0,h/2,-h/2],[0,0,0,0]);
+    case 'moonwalk_left': case 'moonwalk_right': { const d=a==='moonwalk_left'?1:-1,ph=-90*d; return G([0,0,h,h],[0,0,h/2+2,-h/2-2],[0,0,ph,ph-60*d]); }
+    case 'tiptoe': return G([0,0,h,h],[0,0,h,-h],[0,0,0,0]);
+    case 'bounce': return G([0,0,h*.5,h*.5],[0,0,h*.5,-h*.5],[0,0,-90,90]);
+    case 'wave': return G([8,8,h,h],[0,0,0,0],[0,0,0,90]);
+    case 'twist': return G([25,25,0,0],[0,0,h/3,-h/3],[0,0,0,0]);
+    case 'shuffle': return G([20,20,15,15],[0,0,0,0],[0,180,90,90]);
+    case 'pose_l': return G([0,0,0,0],[12,-12,h,h/2],[0,0,0,0]);
+    case 'pose_r': return G([0,0,0,0],[-12,12,-h/2,-h],[0,0,0,0]);
+    case 'kick': return G([10,0,h*1.2,0],[0,0,h/2,-h/2],[0,0,0,0]);
+  }
+  return G([0,0,0,0],[0,0,0,0],[0,0,0,0]);
+}
+let period=1000;
+function angAt(a,t,ramp=true){ const g=gaitFor(a),r=ramp?Math.min(1,t/period):1,w=2*Math.PI*(t%period)/period; return g.A.map((A,i)=>90+g.O[i]+A*r*Math.sin(w+g.phi[i]*Math.PI/180)); }
+
+// ═══════════ 3D 무대 ═══════════
+const canvas=$('stage');
+// 화질: 폰(손가락 화면)이거나 좁은 화면이면 가볍게. ?hq=1 이면 고화질, 설정에서 바꾸면 기억
+const hqPref=new URLSearchParams(location.search).get('hq')??store.get('hq',null);
+let HQ=hqPref!=null?String(hqPref)==='1'||hqPref===true:!(matchMedia('(pointer:coarse)').matches||innerWidth<720);
+document.documentElement.classList.toggle('lite',!HQ);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:HQ,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,HQ?2:1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.92;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=HQ?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x07080c);
+scene.fog=new THREE.Fog(0x07080c,16,34);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+scene.environmentIntensity=0.55;
+const camera=new THREE.PerspectiveCamera(34,1,0.1,100);
+camera.position.set(6.4,3.9,10.2);
+const controls=new OrbitControls(camera,canvas);
+controls.target.set(0,1.45,0); controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.minDistance=5; controls.maxDistance=16; controls.maxPolarAngle=Math.PI*0.49; controls.enablePan=false;
+
+scene.add(new THREE.HemisphereLight(0xc9d4ff,0x1a1020,0.35));
+const key=new THREE.DirectionalLight(0xfff3e6,1.7); key.position.set(4,9,6); key.castShadow=true;
+key.shadow.mapSize.set(HQ?2048:1024,HQ?2048:1024); Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-5}); key.shadow.radius=6; key.shadow.bias=-0.0004;
+scene.add(key);
+const rimA=new THREE.SpotLight(0xff4fb0,22,24,0.5,0.7,1.6); rimA.position.set(-6,7,-5); rimA.target.position.set(0,1.4,0); scene.add(rimA,rimA.target);
+const rimB=new THREE.SpotLight(0x3fe0ff,22,24,0.5,0.7,1.6); rimB.position.set(6,6,-4); rimB.target.position.set(0,1.4,0); scene.add(rimB,rimB.target);
+const front=new THREE.PointLight(0xffffff,2.2,12,2); front.position.set(0,3,6); scene.add(front);
+
+const floor=new THREE.Mesh(new THREE.CircleGeometry(30,96),new THREE.MeshStandardMaterial({color:0x0b0c12,roughness:0.42,metalness:0.55}));
+floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+const disc=new THREE.Mesh(new THREE.CylinderGeometry(3.6,3.75,0.12,96),new THREE.MeshPhysicalMaterial({color:0x14161f,roughness:0.18,metalness:0.6,clearcoat:1,clearcoatRoughness:0.08}));
+disc.position.y=0.06; disc.receiveShadow=true; scene.add(disc);
+const ringMat=new THREE.MeshBasicMaterial({color:0xff5fa2,toneMapped:false});
+const ring=new THREE.Mesh(new THREE.TorusGeometry(3.68,0.025,12,160),ringMat); ring.rotation.x=Math.PI/2; ring.position.y=0.125; scene.add(ring);
+const ring2Mat=new THREE.MeshBasicMaterial({color:0x3fe0ff,transparent:true,opacity:.7,toneMapped:false});
+const ring2=new THREE.Mesh(new THREE.TorusGeometry(2.6,0.012,8,160),ring2Mat); ring2.rotation.x=Math.PI/2; ring2.position.y=0.125; scene.add(ring2);
+const beamGeo=new THREE.ConeGeometry(1.6,9,48,1,true); beamGeo.translate(0,-4.5,0);
+function beamMat(c){ return new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+  uniforms:{c:{value:new THREE.Color(c)},o:{value:0}},
+  vertexShader:'varying float v;void main(){v=uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform vec3 c;uniform float o;varying float v;void main(){gl_FragColor=vec4(c,o*pow(v,2.2)*.55);}'}); }
+const beams=[[-3.2,0xff4fb0,0.35],[3.2,0x3fe0ff,-0.35],[0,0xb38bff,0]].map(([x,c,rz])=>{ const m=new THREE.Mesh(beamGeo,beamMat(c)); m.position.set(x,9.5,-2.5); m.rotation.z=rz; scene.add(m); return m; });
+const sparkN=380, sparkPos=new Float32Array(sparkN*3), sparkSpd=new Float32Array(sparkN);
+for(let i=0;i<sparkN;i++){ const r=2+Math.random()*9,a=Math.random()*6.283; sparkPos[i*3]=Math.cos(a)*r; sparkPos[i*3+1]=Math.random()*9; sparkPos[i*3+2]=Math.sin(a)*r-2; sparkSpd[i]=.15+Math.random()*.5; }
+const sparkGeo=new THREE.BufferGeometry(); sparkGeo.setAttribute('position',new THREE.BufferAttribute(sparkPos,3));
+const dotTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d'); const r=g.createRadialGradient(32,32,0,32,32,32); r.addColorStop(0,'rgba(255,255,255,1)'); r.addColorStop(.35,'rgba(255,255,255,.6)'); r.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=r; g.fillRect(0,0,64,64); return new THREE.CanvasTexture(c); })();
+const sparkMat=new THREE.PointsMaterial({map:dotTex,size:0.09,color:0xffffff,transparent:true,opacity:.35,depthWrite:false,blending:THREE.AdditiveBlending});
+scene.add(new THREE.Points(sparkGeo,sparkMat));
+
+// ── 오또 캐릭터 (실물 키트 비율) ──
+const place=new THREE.Group(); scene.add(place);
+const lift=new THREE.Group(); place.add(lift);
+const tiltG=new THREE.Group(); lift.add(tiltG);
+const HIP=1.05;
+const shell=new THREE.MeshPhysicalMaterial({color:0xeee7df,roughness:0.38,metalness:0,clearcoat:1,clearcoatRoughness:0.12,sheen:0.25,sheenColor:new THREE.Color(0xffd6e8),sheenRoughness:0.6});
+const graphite=new THREE.MeshPhysicalMaterial({color:0x2a2d38,roughness:0.35,metalness:0.4,clearcoat:0.6,clearcoatRoughness:0.2});
+const limb=new THREE.MeshPhysicalMaterial({color:0xdfe2ea,roughness:0.28,metalness:0.15,clearcoat:0.8});
+const footMat=new THREE.MeshPhysicalMaterial({color:0xff6f9a,roughness:0.3,metalness:0.05,clearcoat:1,clearcoatRoughness:0.1});
+const visorM=new THREE.MeshPhysicalMaterial({color:0x0b0d14,roughness:0.08,metalness:0.2,clearcoat:1,clearcoatRoughness:0.02});
+function mesh(g,m,x,y,z,p=tiltG){ const o=new THREE.Mesh(g,m); o.position.set(x,y,z); o.castShadow=true; o.receiveShadow=true; p.add(o); return o; }
+mesh(new RoundedBoxGeometry(2.3,1.95,1.8,6,0.34),shell,0,HIP+1.2,0);
+mesh(new RoundedBoxGeometry(1.92,1.6,0.08,4,0.04),visorM,0,HIP+1.18,0.9);
+mesh(new RoundedBoxGeometry(2.02,0.36,1.5,4,0.14),graphite,0,HIP+0.07,0);
+const ringM=new THREE.MeshPhysicalMaterial({color:0xd9dde6,roughness:0.18,metalness:1});
+const lensM=new THREE.MeshPhysicalMaterial({color:0x050608,roughness:0.05,metalness:0.1,clearcoat:1,clearcoatRoughness:0});
+const irisM=new THREE.MeshBasicMaterial({color:new THREE.Color(0x3fe0ff).multiplyScalar(1.6),toneMapped:false});
+const eyes=[];
+[-0.46,0.46].forEach(x=>{
+  const g=new THREE.Group(); g.position.set(x,HIP+1.53,0.96); tiltG.add(g);
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(0.3,0.055,20,48),ringM));
+  const l=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.27,0.06,48),lensM); l.rotation.x=Math.PI/2; g.add(l);
+  const iris=new THREE.Mesh(new THREE.RingGeometry(0.1,0.135,40),irisM); iris.position.z=0.035; g.add(iris);
+  const hl=new THREE.Mesh(new THREE.CircleGeometry(0.05,16),new THREE.MeshBasicMaterial({color:0xffffff})); hl.position.set(0.09,0.09,0.04); g.add(hl);
+  eyes.push({g,iris});
+});
+const blushM=new THREE.MeshBasicMaterial({color:0xff6fa8,transparent:true,opacity:0.55});
+[-0.72,0.72].forEach(x=>{ const b=new THREE.Mesh(new THREE.CircleGeometry(0.11,24),blushM); b.position.set(x,HIP+1.18,0.95); tiltG.add(b); });
+const leds=new THREE.InstancedMesh(new RoundedBoxGeometry(0.062,0.062,0.025,2,0.012),new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}),64);
+const ledOn=new THREE.Color(0xff3d7f).multiplyScalar(3.2), ledOff=new THREE.Color(0x1c0a12);
+{ const m=new THREE.Matrix4(); let k=0; for(let r=0;r<8;r++)for(let c=0;c<8;c++){ m.setPosition(-0.2625+c*0.075,HIP+1.06-r*0.075,0.955); leds.setMatrixAt(k,m); leds.setColorAt(k,ledOff); k++; } }
+tiltG.add(leds);
+let face=1;
+function drawFace(f){ face=f; const rows=FACES[f]||FACES[0]; for(let r=0;r<8;r++)for(let c=0;c<8;c++) leds.setColorAt(r*8+c,(rows[r]&(0x80>>c))?ledOn:ledOff); leds.instanceColor.needsUpdate=true; }
+drawFace(1);
+const antM=new THREE.MeshBasicMaterial({color:new THREE.Color(0xff5fa2).multiplyScalar(2),toneMapped:false});
+mesh(new THREE.CylinderGeometry(0.035,0.035,0.42,12),graphite,0,HIP+2.35,0);
+mesh(new THREE.SphereGeometry(0.11,24,24),antM,0,HIP+2.6,0);
+const joints=[],feet=[];
+[[-0.6,0],[0.6,1]].forEach(([x,i])=>{
+  const hip=new THREE.Group(); hip.position.set(x,HIP,0); tiltG.add(hip);
+  mesh(new RoundedBoxGeometry(0.5,0.78,0.56,4,0.18),limb,0,-0.42,0,hip);
+  const ankle=new THREE.Group(); ankle.position.y=-0.82; hip.add(ankle);
+  feet.push(mesh(new RoundedBoxGeometry(0.98,0.24,1.3,4,0.1),footMat,x<0?-0.12:0.12,-0.12,0.15,ankle));
+  joints[i]={hip,ankle};
+});
+
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1),0.45,0.45,0.96); composer.addPass(bloom);
+composer.addPass(new OutputPass());
+// 크기가 정말 바뀔 때만, 잠깐 멈춘 뒤 한 번 (폰 주소창이 들어갔다 나올 때마다 버퍼를 새로 만들면 깜빡임)
+let lastW=0,lastH=0,rsT=0;
+function resize(){ const w=innerWidth,h=innerHeight; if(w===lastW&&Math.abs(h-lastH)<2) return; lastW=w; lastH=h;
+  renderer.setSize(w,h,false); composer.setSize(w,h); camera.aspect=w/h; camera.fov=w<720?52:32; camera.updateProjectionMatrix(); }
+addEventListener('resize',()=>{ clearTimeout(rsT); rsT=setTimeout(resize,150); }); resize();
+// 고화질인데 느리면(평균 35ms 넘게 3초) 자동으로 빛 번짐 끄기
+let slowN=0,slowAcc=0,slowT=performance.now();
+function watchSpeed(dt){ if(!HQ||hqPref!=null) return; slowAcc+=dt; slowN++; if(performance.now()-slowT<3000) return;
+  if(slowAcc/slowN>0.035){ HQ=false; document.documentElement.classList.add('lite'); renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); lastW=0; resize(); if($('hq')) $('hq').checked=false; }
+  slowAcc=0; slowN=0; slowT=performance.now(); }
+$('hq').checked=HQ; $('hq').onchange=e=>{ store.set('hq',e.target.checked?1:0); location.reload(); };
+
+// ═══════════ 상태 ═══════════
+const tgtAng=[90,90,90,90],curAng=[90,90,90,90];
+let flips=store.get('flips',[false,false,false,false]);
+document.querySelectorAll('[data-flip]').forEach(c=>{const i=+c.dataset.flip; c.checked=flips[i]; c.onchange=()=>{flips[i]=c.checked; store.set('flips',flips);};});
+[['flipP',false],['flipR',false],['flipY',false],['music',true],['stageCam',true],['autoScan',true]].forEach(([id,d])=>{ $(id).checked=store.get(id,d); $(id).onchange=e=>store.set(id,e.target.checked); });
+let source=null, action='home', actT0=0, lastA=0, aCount=0;
+let tilt={p:0,r:0},tiltCur={p:0,r:0},tiltRaw=null,zero=store.get('zero',{p:0,r:0,y:0}),yawRaw=0,nuSeen=0;
+const P=store.get('pet',{happy:70,energy:80,fit:0,xp:0,lv:1});
+const clamp=v=>Math.max(0,Math.min(100,v));
+function addXp(x){ P.xp+=x; while(P.xp>=100*P.lv){ P.xp-=100*P.lv; P.lv++; say(`레벨 업! LV ${P.lv} ✨`); } }
+function drawBars(){ const s=(k,v)=>{ $('v'+k).textContent=Math.round(v); $('b'+k).style.width=Math.round(v)+'%'; };
+  s('Happy',P.happy); s('Energy',P.energy); s('Fit',P.fit); $('vLv').textContent=P.lv; $('vXp').textContent=Math.round(P.xp); $('bXp').style.width=Math.round(100*P.xp/(100*P.lv))+'%'; }
+drawBars();
+let bubbleT=performance.now();
+function say(t){ $('bubble').textContent=t; $('bubble').style.opacity=1; bubbleT=performance.now(); }
+
+let rec; function newRec(){ rec={t0:Date.now(),lines:[],steps:0,danceMs:0,maxTilt:0,falls:0,acts:{},songs:[]}; } newRec();
+function recLine(src,line){ if(rec.lines.length<8000) rec.lines.push((Date.now()-rec.t0)+' '+src+' '+line); }
+function setAction(a){
+  if(a!==action){ actT0=performance.now(); recLine('L',String(ACTIONS.indexOf(a))); if(a!=='home') rec.acts[a]=(rec.acts[a]||0)+1; }
+  action=a;
+}
+
+// ═══════════ 음악: 웹오디오 신스 (리드 2겹 + 딜레이 + 베이스 + 킥 · 하이햇 · 클랩) ═══════════
+let ac=null, musicStop=null;
+function audio(){ if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); return ac; }
+function playSong(i,beats){
+  stopSong(); if(!$('music').checked) return;
+  const a=audio(), s=SONGS[i], e8=60/s.bpm/2, t0=a.currentTime+0.06, total=beats*60/s.bpm;
+  const master=a.createGain(); master.gain.value=0.5; master.connect(a.destination);
+  const comp=a.createDynamicsCompressor(); comp.connect(master);
+  const delay=a.createDelay(); delay.delayTime.value=e8*3; const fb=a.createGain(); fb.gain.value=0.25; delay.connect(fb); fb.connect(delay); const wet=a.createGain(); wet.gain.value=0.22; delay.connect(wet); wet.connect(comp);
+  const nodes=[];
+  const lead=(f,t,d)=>{ ['sawtooth','square'].forEach((type,k)=>{ const o=a.createOscillator(),g=a.createGain(),lp=a.createBiquadFilter();
+      o.type=type; o.frequency.value=f*(k?1.004:1); lp.type='lowpass'; lp.frequency.setValueAtTime(3200,t); lp.frequency.exponentialRampToValueAtTime(900,t+d);
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(k?0.05:0.08,t+0.012); g.gain.exponentialRampToValueAtTime(0.001,t+d*0.95);
+      o.connect(lp); lp.connect(g); g.connect(comp); g.connect(delay); o.start(t); o.stop(t+d); nodes.push(o); }); };
+  const bass=(f,t,d)=>{ const o=a.createOscillator(),g=a.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); o.connect(g); g.connect(comp); o.start(t); o.stop(t+d); nodes.push(o); };
+  const kick=t=>{ const o=a.createOscillator(),g=a.createGain(); o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(42,t+0.13); g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2); o.connect(g); g.connect(comp); o.start(t); o.stop(t+0.21); nodes.push(o); };
+  const nbuf=a.createBuffer(1,a.sampleRate*0.3,a.sampleRate); { const d=nbuf.getChannelData(0); for(let k=0;k<d.length;k++) d[k]=Math.random()*2-1; }
+  const noise=(t,d,hp,v)=>{ const n=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(); n.buffer=nbuf; f.type='highpass'; f.frequency.value=hp; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); n.connect(f); f.connect(g); g.connect(comp); n.start(t); n.stop(t+d); nodes.push(n); };
+  const loopLen=32*e8, root=Math.min(...s.notes.filter(n=>n[0]).map(n=>n[0]))/4;
+  for(let L=0;L*loopLen<total-0.01;L++){
+    const base=t0+L*loopLen; let t=base;
+    for(const [f,n] of s.notes){ if(f && t<t0+total) lead(f,t,n*e8*0.92); t+=n*e8; }
+    for(let k=0;k<32;k++){ const tt=base+k*e8; if(tt>=t0+total) break;
+      if(k%2===0) kick(tt); noise(tt,0.04,7000,k%2?0.06:0.03); if(k%4===2) noise(tt,0.16,1500,0.22);
+      if(k%2===0) bass(root*((k>>3)%2?1.335:1),tt,e8*1.6); }
+  }
+  musicStop=()=>{ nodes.forEach(n=>{try{n.stop();}catch(e){}}); master.disconnect(); };
+}
+function stopSong(){ if(musicStop){ musicStop(); musicStop=null; } }
+
+// ═══════════ 루틴 화면 (실물은 펌웨어 kp가 춤, 웹은 음악 · 조명 · 미리 보기) ═══════════
+let routine=null;
+function routineSegs(i){ const s=SONGS[i]; let t=0; return ROUTINES[i].steps.map(([act,b])=>{ const d=b*60000/s.bpm; const o={act,start:t,dur:d}; t+=d; return o; }); }
+function beginRoutineView(i){
+  if(midiStop) midiStop();
+  const segs=routineSegs(i), total=segs.reduce((a,s)=>a+s.dur,0);
+  routine={i,bpm:SONGS[i].bpm,t0:performance.now(),segs,total}; period=120000/SONGS[i].bpm;
+  document.querySelectorAll('.song').forEach((b,k)=>b.classList.toggle('playing',k===i));
+  $('now').classList.add('show'); $('nowName').textContent='♪ '+SONGS[i].name; $('nowBpm').textContent=SONGS[i].bpm+' BPM';
+  rec.songs.push(SONGS[i].name);
+  playSong(i,total/(60000/SONGS[i].bpm));
+  say(SONGS[i].name+' 무대 시작! 🎤');
+}
+function endRoutineView(){ if(midiStop) midiStop(); if(!routine) return; routine=null; stopSong(); period=1000; document.querySelectorAll('.song').forEach(b=>b.classList.remove('playing')); $('now').classList.remove('show'); }
+
+// ═══════════ 그리기 루프 ═══════════
+const box=new THREE.Box3(), headTop=new THREE.Vector3();
+let tPrev=performance.now(), tick=0, beatPulse=0, dragging=false;
+controls.addEventListener('start',()=>dragging=true); controls.addEventListener('end',()=>dragging=false);
+function frame(now){
+  const dt=Math.min(0.1,(now-tPrev)/1000); tPrev=now;
+  if(source==='replay') replayStep(now);
+  else if(source==='sim') simStep(now);
+  else if(source==='otto'){ if(routine && now-routine.t0>routine.total+600) endRoutineView(); if(now-lastA>1500) guess(now); }
+  const k=1-Math.pow(0.0008,dt);
+  for(let i=0;i<4;i++) curAng[i]+=(tgtAng[i]-curAng[i])*k;
+  const s=i=>(flips[i]?-1:1)*(curAng[i]-90)*Math.PI/180;
+  joints[0].hip.rotation.y=s(0); joints[1].hip.rotation.y=s(1); joints[0].ankle.rotation.z=s(2); joints[1].ankle.rotation.z=s(3);
+  tiltCur.p+=(tilt.p-tiltCur.p)*k; tiltCur.r+=(tilt.r-tiltCur.r)*k;
+  tiltG.rotation.set(($('flipP').checked?-1:1)*tiltCur.p*Math.PI/180,0,-($('flipR').checked?-1:1)*tiltCur.r*Math.PI/180);
+  lift.position.y=0; place.updateMatrixWorld(true);
+  let minY=1e9; feet.forEach(f=>{ box.setFromObject(f); minY=Math.min(minY,box.min.y); }); lift.position.y=0.12-minY;
+  place.rotation.y=(nuSeen&&now-nuSeen<2000)?(($('flipY').checked?-1:1)*(yawRaw-zero.y)*Math.PI/180):0;
+  const look=Math.sin(now/1700)*0.05; eyes.forEach(e=>{ e.iris.position.x=look; e.iris.position.y=Math.sin(now/2300)*0.03; });
+  const blink=(now%4200)<120; eyes.forEach(e=>e.g.scale.y=blink?0.15:1);
+  const bpm=routine?routine.bpm:120, beat=routine?((now-routine.t0)/(60000/bpm))%1:0;
+  beatPulse=routine?Math.pow(1-beat,3):beatPulse*0.92;
+  const target=routine?1:action!=='home'?0.35:0;
+  beams.forEach((b,i)=>{ const u=b.material.uniforms.o; u.value+=((target*(0.55+0.45*beatPulse))-u.value)*0.12; b.rotation.z+=Math.sin(now/900+i)*0.0015; });
+  rimA.intensity=rimB.intensity=22+60*beatPulse*(routine?1:0);
+  bloom.strength=0.45+0.3*beatPulse;
+  ringMat.color.setHSL((now/6000)%1,0.85,0.6); ring2Mat.color.setHSL((now/6000+0.5)%1,0.85,0.6);
+  antM.color.setHSL((now/3000)%1,0.9,0.55).multiplyScalar(1.6+beatPulse*2);
+  if(routine && source!=='replay') $('nowBar').style.width=(Math.min(1,(now-routine.t0)/routine.total)*100)+'%';
+  const pos=sparkGeo.attributes.position.array; for(let i=0;i<sparkN;i++){ pos[i*3+1]+=sparkSpd[i]*dt*(routine?2.2:0.6); if(pos[i*3+1]>9) pos[i*3+1]=0; } sparkGeo.attributes.position.needsUpdate=true;
+  sparkMat.opacity=0.25+0.5*beatPulse*(routine?1:0);
+  if(routine && $('stageCam').checked && !dragging){ const a=now/9000, R=Math.hypot(camera.position.x,camera.position.z); camera.position.x+=(Math.sin(a)*R-camera.position.x)*0.01; camera.position.z+=(Math.cos(a)*R-camera.position.z)*0.01; }
+  controls.update();
+  headTop.set(0,HIP+2.95,0); tiltG.localToWorld(headTop); headTop.project(camera);
+  $('bubble').style.left=((headTop.x+1)/2*innerWidth)+'px'; $('bubble').style.top=((1-headTop.y)/2*innerHeight)+'px';
+  if(now-bubbleT>4200){ $('bubble').style.opacity=0; if(now-bubbleT>9000) say(idleTalk()); }
+  tick+=dt; if(tick>=1){ tick-=1; petTick(); }
+  watchSpeed(dt); if(HQ) composer.render(); else renderer.render(scene,camera); requestAnimationFrame(frame);
+}
+function petTick(){
+  const moving=action!=='home';
+  if(moving){ P.energy=clamp(P.energy-1); P.fit=clamp(P.fit+1.4); addXp(1);
+    if(action.startsWith('walk')) rec.steps+=Math.round(1000/period); else if(!action.startsWith('turn')){ rec.danceMs+=1000; P.happy=clamp(P.happy+1.2); } }
+  else { P.energy=clamp(P.energy+0.6); P.happy=clamp(P.happy-0.04); }
+  drawBars(); store.set('pet',P);
+  $('sDur').textContent=Math.round((Date.now()-rec.t0)/1000)+'s'; $('sLines').textContent=rec.lines.length.toLocaleString(); $('sTilt').textContent=Math.round(rec.maxTilt)+'°';
+  $('rate').textContent=aCount+'/s'; aCount=0;
+}
+function idleTalk(){
+  if(P.energy<20) return '조금 졸려… 💤';
+  if(action!=='home') return (ACT_KO[action]||'')+' 중!';
+  return ['무대 골라 줘! 아래 카드 🎤','나를 눌러 봐 👆','TX 누르면 지금 순간이 기록돼 🪙','같이 춤출까?'][Math.floor(Math.random()*4)];
+}
+requestAnimationFrame(frame);
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(); let downXY=null;
+canvas.addEventListener('pointerdown',e=>downXY=[e.clientX,e.clientY]);
+canvas.addEventListener('pointerup',e=>{ if(!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>4) return;
+  ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(ndc,camera);
+  if(ray.intersectObject(tiltG,true).length){ P.happy=clamp(P.happy+6); addXp(2); drawBars(); say(['헤헤 간지러워 💕','기분 최고!','또 해 줘!'][Math.floor(Math.random()*3)]); beatPulse=1; } });
+
+// ═══════════ 받은 줄 ═══════════
+function splitter(fn){ let b=''; return t=>{ b+=t; let i; while((i=b.indexOf('\n'))>=0){ const l=b.slice(0,i).replace(/\r/g,'').trim(); b=b.slice(i+1); if(l) fn(l); } }; }
+const onOtto=splitter(line=>{
+  if(line.startsWith('#A ')){ const n=line.slice(3).split(' ').map(Number);
+    if(n.length>=4&&n.slice(0,4).every(Number.isFinite)){ for(let i=0;i<4;i++) tgtAng[i]=n[i]; aCount++; lastA=performance.now(); recLine('A',line.slice(3)); }
+    if(Number.isFinite(n[4])&&n[4]!==face) drawFace(n[4]); return; }
+  if(line.startsWith('#D ')){ const [,vcc,vmin,act]=line.slice(3).split(' ').map(Number);
+    $('vcc').textContent=(vcc/1000).toFixed(2)+'V'; $('vcc').style.color=vcc<4300?'var(--red)':'';
+    if(ACTIONS[act]&&ACTIONS[act]!==action) setAction(ACTIONS[act]); recLine('D',line.slice(3)); return; }
+  if(line.startsWith('#B ')){ say('앗, 어지러워 (오또 보드 재시작 · 전원 확인)'); log(line); endRoutineView(); return; }
+  if(line.startsWith('#')) return;
+  log(line);
+  const rt=line.match(/^> 루틴 (\d)/); if(rt){ beginRoutineView(+rt[1]); return; }
+  const m=line.match(/^> (\w+) x\d+, 주기 (\d+)ms/); if(m){ period=+m[2]; setAction(m[1]); }
+  if(/끝, 차렷|> 차렷/.test(line)){ setAction('home'); endRoutineView(); }
+});
+let ottoPub=null, pendingSig=null, fallen=false;
+const onNu=splitter(line=>{
+  if(line.startsWith('#T ')){
+    const [ms,p,r,y,g,a]=line.slice(3).split(' ').map(Number);
+    tiltRaw={p,r}; yawRaw=y; nuSeen=performance.now();
+    const w=v=>((v+540)%360)-180; tilt={p:w(p-zero.p),r:w(r-zero.r)};
+    const tm=Math.max(Math.abs(tilt.p),Math.abs(tilt.r)); if(tm>rec.maxTilt) rec.maxTilt=tm;
+    if(tm>60&&!fallen){ fallen=true; rec.falls++; P.happy=clamp(P.happy-8); say('아야! 넘어졌어 😢'); } if(tm<25) fallen=false;
+    $('yaw').textContent=w(y-zero.y).toFixed(0)+'°'; if(source!=='otto') aCount++;
+    recLine('T',`${p} ${r} ${y} ${g} ${a}`); return; }
+  log('[NU40] '+line);
+  if(line.startsWith('#I ')){ const [hex,imu]=line.slice(3).split(' '); setOttoKey(hexToBytes(hex),'· NU40 보드 안의 키 · '+imu); return; }
+  if(line.startsWith('#G ')){ if(pendingSig){ pendingSig.res(hexToBytes(line.slice(3).trim())); pendingSig=null; } return; }
+  if(line.startsWith('#K ')){ say('신호 받았어! 기록할게 🪙'); doMint(null); return; }
+  if(line.startsWith('#E ')&&pendingSig&&/sign/.test(line)){ pendingSig.rej(new Error(line)); pendingSig=null; }
+});
+$('zero').onclick=()=>{ if(tiltRaw){ zero={...tiltRaw,y:yawRaw}; store.set('zero',zero); say('이제 이 자세가 똑바로야!'); } };
+
+// ═══════════ 연결 ═══════════
+const SPP='00001101-0000-1000-8000-00805f9b34fb';
+const NUS={svc:'6e400001-b5a3-f393-e0a9-e50e24dcca9e',rx:'6e400002-b5a3-f393-e0a9-e50e24dcca9e',tx:'6e400003-b5a3-f393-e0a9-e50e24dcca9e'};
+let ottoWrite=null, nuWrite=null;
+const pill=(id,on)=>$(id).classList.toggle('on',on);
+async function openSerial(opts,baud,onText){
+  if(!navigator.serial) throw new Error('이 브라우저는 시리얼 연결을 지원하지 않아요 (크롬·엣지, 안드로이드 크롬 137+)');
+  const port=await navigator.serial.requestPort(opts); await port.open({baudRate:baud});
+  const dec=new TextDecoderStream(); port.readable.pipeTo(dec.writable).catch(()=>{});
+  const rd=dec.readable.getReader();
+  (async()=>{ try{ for(;;){ const {value,done}=await rd.read(); if(done) break; onText(value); } }catch(e){ $('status').textContent='연결 끊김: '+e.message; } })();
+  const w=port.writable.getWriter(); return d=>w.write(d);
+}
+async function connectOtto(opts){ try{ ottoWrite=await openSerial(opts,9600,onOtto); source='otto'; pill('pOtto',true); pill('pSim',false); closePops(); say('오또 몸이랑 연결됐어!'); }catch(e){ $('status').textContent='오또 연결 실패: '+e.message; } }
+$('cOtto').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP],filters:[{bluetoothServiceClassId:SPP}]});
+$('cOttoCom').onclick=()=>connectOtto({allowedBluetoothServiceClassIds:[SPP]});
+$('cNu').onclick=async()=>{ try{ nuWrite=await openSerial({filters:[{usbVendorId:0x239A}]},115200,onNu); await nuWrite(enc.encode('id\n')); pill('pNu',true); closePops(); }catch(e){ $('status').textContent='NU40 연결 실패: '+e.message; } };
+$('cNuBle').onclick=async()=>{
+  try{ if(!navigator.bluetooth) throw new Error('이 브라우저는 BLE를 지원하지 않아요 (크롬·엣지, 아이폰은 Bluefy)');
+    const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Otto-Twin'}],optionalServices:[NUS.svc]});
+    const gatt=await dev.gatt.connect(), svc=await gatt.getPrimaryService(NUS.svc);
+    const rx=await svc.getCharacteristic(NUS.rx), tx=await svc.getCharacteristic(NUS.tx), dec=new TextDecoder();
+    await tx.startNotifications(); tx.addEventListener('characteristicvaluechanged',e=>onNu(dec.decode(e.target.value)));
+    let q=Promise.resolve(); nuWrite=d=>(q=q.then(async()=>{ for(let i=0;i<d.length;i+=180) await rx.writeValueWithResponse(d.slice(i,i+180)); }));
+    dev.addEventListener('gattserverdisconnected',()=>{ pill('pNu',false); nuWrite=null; });
+    await nuWrite(enc.encode('id\n')); pill('pNu',true); closePops();
+  }catch(e){ $('status').textContent='NU40 블루투스 실패: '+e.message; } };
+$('cSim').onclick=$('pSim').onclick=e=>{ e&&e.stopPropagation&&e.stopPropagation(); source='sim'; pill('pSim',true); closePops(); say('미리 보기 모드! 아래 무대를 골라 봐'); if(!ottoPub) useSoftOtto(); };
+async function send(c){
+  audio();
+  if(source==='otto'&&ottoWrite){ try{ await ottoWrite(enc.encode(c+'\n')); log('> '+c);}catch(e){log('보내기 실패: '+e.message);} return; }
+  if(source!=='sim'){ source='sim'; pill('pSim',true); if(!ottoPub) useSoftOtto(); }
+  simCommand(c);
+}
+document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+$('songs').innerHTML=SONGS.map((s,i)=>`<button class="song s${i}" data-song="${i}"><span class="bpm">${s.bpm} BPM</span><b>${s.name}</b><small>${ROUTINES[i].sub}</small></button>`).join('');
+document.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>send('kp '+b.dataset.song));
+$('songs').insertAdjacentHTML('beforeend','<button class="song s4 empty" id="mCard"><span class="bpm">MIDI</span><b>🎵 내 노래</b><small>.mid 넣으면 오또가 불러요</small></button>');
+
+// ═══════════ 🎵 내 노래 (MIDI → 오또 부저 멜로디 + 박자 맞춘 자동 안무) ═══════════
+// 펌웨어: n <Hz> <ms> 음 하나 · bpm <n> 박자 · dn <동작 번호> <ms> 차렷 없이 다음 동작
+let MIDI=null, midiStop=null;
+const hzOf=m=>440*Math.pow(2,(m-69)/12);
+$('mCard').onclick=()=>{ closeDrawers(); $('midiDrawer').classList.add('show'); if(!MIDI) $('mFile').click(); };
+$('mPick').onclick=()=>$('mFile').click();
+$('mFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return;
+  try{ const {Midi}=await import('https://esm.sh/@tonejs/midi@2.0.28'); MIDI=new Midi(await f.arrayBuffer()); MIDI.fileName=f.name.replace(/\.midi?$/i,''); }
+  catch(err){ $('mInfo').textContent='MIDI를 못 읽었어요: '+err.message; return; }
+  const tr=MIDI.tracks.map((t,i)=>({i,t})).filter(o=>o.t.notes.length&&!o.t.instrument.percussion);
+  if(!tr.length){ $('mInfo').textContent='음이 든 줄이 없어요'; return; }
+  const score=o=>{ const n=o.t.notes, avg=n.reduce((a,x)=>a+x.midi,0)/n.length; return (/melod|vocal|voice|lead|main|보컬|멜로디|노래/i.test(o.t.name)?1e6:0)+n.length*Math.max(0,avg-48); };
+  const best=tr.slice().sort((a,b)=>score(b)-score(a))[0];
+  $('mTrack').innerHTML=tr.map(o=>`<option value="${o.i}"${o===best?' selected':''}>${o.i+1}. ${o.t.name||o.t.instrument.name||'이름 없음'} · ${o.t.notes.length}음</option>`).join('');
+  const bpm=Math.round(MIDI.header.tempos[0]?.bpm||120); $('mBpm').value=bpm;
+  $('mName').textContent=MIDI.fileName; $('mInfo').textContent=`${Math.round(MIDI.duration)}초 · ${bpm} BPM · 줄 ${tr.length}개`;
+  $('mCard').classList.remove('empty'); $('mCard').querySelector('b').textContent='🎵 '+MIDI.fileName; $('mCard').querySelector('small').textContent='내 노래 · 다시 누르면 설정'; $('mCard').querySelector('.bpm').textContent=bpm+' BPM';
+  $('mPlay').disabled=false; e.target.value=''; };
+// 한 줄을 단선율로 (같은 때 울리는 음 중 가장 높은 음, 다음 음이 오면 끊음)
+function melodyOf(track,oct){ const ns=track.notes.slice().sort((a,b)=>a.time-b.time||b.midi-a.midi), out=[];
+  for(const n of ns){ const last=out[out.length-1]; if(last&&n.time-last.time<0.03){ continue; } out.push({time:n.time,dur:n.duration,midi:n.midi}); }
+  for(let k=0;k<out.length-1;k++) out[k].dur=Math.min(out[k].dur,out[k+1].time-out[k].time);
+  const med=out.map(n=>n.midi).sort((a,b)=>a-b)[out.length>>1]||72;
+  const shift=12*(Math.round((81-med)/12)+oct);   // 부저가 잘 들리는 A5(880Hz) 근처로
+  return out.map(n=>({...n,midi:Math.max(36,Math.min(108,n.midi+shift))})); }
+// 4박(한 마디)마다 동작 하나, 4마디째엔 포인트 포즈 둘. 음이 많은 마디일수록 센 동작
+const POOL={power:['shuffle','kick','twist','bounce','updown'],cute:['bounce','tiptoe','wave','swing','bounce'],chill:['wave','swing','tiptoe','updown']};
+function choreo(mel,bpm,style,total){ const bar=4*60/bpm, segs=[]; let k=0;
+  for(let t=0;t<total;t+=bar,k++){ const cnt=mel.filter(n=>n.time>=t&&n.time<t+bar).length;
+    const pool=POOL[style!=='auto'?style:cnt>=8?'power':cnt>=4?'cute':'chill'];
+    if(k%4===3){ segs.push({act:'pose_l',start:t*1000,dur:bar*500},{act:'pose_r',start:t*1000+bar*500,dur:bar*500}); continue; }
+    segs.push({act:pool[k%pool.length],start:t*1000,dur:bar*1000}); }
+  return segs; }
+function synthNote(a,dest,f,t,d,type,v){ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+0.01); g.gain.setValueAtTime(v,t+Math.max(0.01,d-0.03)); g.gain.linearRampToValueAtTime(0,t+d); o.connect(g); g.connect(dest); o.start(t); o.stop(t+d+0.02); return o; }
+$('mPlay').onclick=()=>{ if(!MIDI) return; if(midiStop) midiStop(); endRoutineView();
+  const ti=+$('mTrack').value, mel=melodyOf(MIDI.tracks[ti],+$('mOct').value), bpm=Math.max(40,Math.min(300,+$('mBpm').value||120));
+  const total=Math.max(...mel.map(n=>n.time+n.dur)), segs=choreo(mel,bpm,$('mStyle').value,total), live=source==='otto'&&ottoWrite;
+  closeDrawers();
+  // 소리: 오또 연결이면 부저, 아니면 폰에서 부저 소리 흉내 · 반주는 체크하면
+  const a=audio(), t0a=a.currentTime+0.35, master=a.createGain(); master.gain.value=0.35; master.connect(a.destination); const osc=[];
+  if(!live) for(const n of mel) osc.push(synthNote(a,master,hzOf(n.midi),t0a+n.time,Math.max(0.03,n.dur*0.95),'square',0.12));
+  if($('mAcc').checked) MIDI.tracks.forEach((t,i)=>{ if(i===ti) return; for(const n of t.notes){ if(t.instrument.percussion){ if(n.midi===36||n.midi===35) osc.push(synthNote(a,master,60,t0a+n.time,0.12,'sine',0.5)); continue; }
+      osc.push(synthNote(a,master,hzOf(n.midi),t0a+n.time,Math.min(2,n.duration),'triangle',0.05*n.velocity)); } });
+  // 오또로 보낼 줄: 박자 → 동작 · 음
+  const q=[]; if(live){ q.push({t:-300,c:'bpm '+bpm});
+    for(const s of segs) q.push({t:s.start,c:`dn ${ACTIONS.indexOf(s.act)} ${Math.round(s.dur+150)}`});
+    for(const n of mel) q.push({t:n.time*1000,c:`n ${Math.round(hzOf(n.midi))} ${Math.max(30,Math.round(n.dur*1000-15))}`});
+    q.push({t:total*1000+100,c:'x'}); q.sort((x,y)=>x.t-y.t); }
+  const T0=performance.now()+350; let qi=0, chain=Promise.resolve();
+  const timer=setInterval(()=>{ const now=performance.now()-T0;
+    while(qi<q.length&&q[qi].t<=now+15){ const c=q[qi++].c; chain=chain.then(()=>ottoWrite(enc.encode(c+'\n'))).catch(()=>{}); if(c[0]!=='n') log('> '+c); } },10);
+  routine={i:-1,bpm,t0:T0,segs,total:total*1000}; period=120000/bpm;
+  if(!live){ source='sim'; pill('pSim',true); if(!ottoPub) useSoftOtto(); sim={act:'routine'}; }
+  document.querySelectorAll('.song').forEach(b=>b.classList.toggle('playing',b.id==='mCard'));
+  $('now').classList.add('show'); $('nowName').textContent='♪ '+MIDI.fileName; $('nowBpm').textContent=bpm+' BPM';
+  rec.songs.push(MIDI.fileName.slice(0,24)); say(MIDI.fileName+' 무대 시작! 🎤');
+  midiStop=()=>{ midiStop=null; clearInterval(timer); osc.forEach(o=>{try{o.stop();}catch(e){}}); try{ master.disconnect(); }catch(e){}
+    if(live&&qi<q.length) chain.then(()=>ottoWrite(enc.encode('x\n'))).catch(()=>{}); };
+};
+$('mStop').onclick=()=>{ closeDrawers(); send('x'); };
+
+// ═══════════ 미리 보기 ═══════════
+let sim={act:'home',t0:0,dur:0};
+const SIMC={w:'walk_fwd',b:'walk_back',l:'turn_left',r:'turn_right',u:'updown',s:'swing',m:'moonwalk_left',mj:'moonwalk_left',k:'tiptoe'};
+function simCommand(c){ const [cmd,arg]=c.split(' ');
+  if(cmd==='x'||cmd==='h'){ sim={act:'home'}; endRoutineView(); setAction('home'); drawFace(1); return; }
+  if(cmd==='e'){ const i=['off','eyes','blink','smile','happy','sad','surprise','heart'].indexOf(arg); if(i>=0){ drawFace(i); if(arg==='heart'){ P.happy=clamp(P.happy+4); beatPulse=1; } } return; }
+  if(cmd==='kp'){ sim={act:'routine'}; beginRoutineView(Math.max(0,Math.min(3,+arg||0))); return; }
+  if(cmd==='d'){ simCommand('kp '+Math.floor(Math.random()*4)); return; }
+  const a=SIMC[cmd]; if(!a) return; endRoutineView(); const n=+arg||4;
+  sim={act:a,t0:performance.now(),dur:cmd==='mj'?n*1000:n*period}; drawFace(a.startsWith('walk')?3:4); setAction(a);
+  if(cmd==='mj') say('빌리진~ 🕺'); }
+function simStep(now){
+  let v;
+  if(routine){ const t=now-routine.t0;
+    if(t>=routine.total){ endRoutineView(); sim={act:'home'}; setAction('home'); drawFace(1); say('무대 끝! 박수 👏'); for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+    const seg=routine.segs.find(s=>t<s.start+s.dur); if(action!==seg.act){ setAction(seg.act); drawFace(seg.act.startsWith('pose')?7:seg.act==='kick'?6:4); }
+    v=angAt(seg.act,t-seg.start,false); }
+  else if(sim.act==='home'){ for(let i=0;i<4;i++) tgtAng[i]=90; return; }
+  else { const t=now-sim.t0; if(t>=sim.dur){ sim={act:'home'}; setAction('home'); drawFace(1); return; } v=angAt(sim.act,t); }
+  for(let i=0;i<4;i++) tgtAng[i]=v[i];
+  if(!simStep.n||now-simStep.n>=100){ simStep.n=now; recLine('A',v.map(Math.round).join(' ')+' '+face); aCount++; }
+}
+function guess(now){ if(routine){ const t=now-routine.t0, seg=routine.segs.find(s=>t<s.start+s.dur); if(seg){ const v=angAt(seg.act,t-seg.start,false); for(let i=0;i<4;i++) tgtAng[i]=v[i]; return; } }
+  const v=action==='home'?[90,90,90,90]:angAt(action,now-actT0); for(let i=0;i<4;i++) tgtAng[i]=v[i]; }
+
+// ═══════════ 솔라나 (devnet) ═══════════
+const RPC=new URLSearchParams(location.search).get('rpc')||'https://api.devnet.solana.com';
+const isDev=RPC.includes('devnet');
+const txUrl=sig=>isDev?`https://solscan.io/tx/${sig}?cluster=devnet`:`https://explorer.solana.com/tx/${sig}?cluster=custom&customUrl=${encodeURIComponent(RPC)}`;
+const addrUrl=a=>isDev?`https://solscan.io/account/${a}?cluster=devnet`:`https://explorer.solana.com/address/${a}?cluster=custom&customUrl=${encodeURIComponent(RPC)}`;
+let W,T,MD,Buf,conn,sponsor,softOtto=null,ottoSigner=null;
+async function loadChain(){
+  if(W) return;
+  [W,T,MD,{Buffer:Buf}]=await Promise.all([import('https://esm.sh/@solana/web3.js@1.98.0'),import('https://esm.sh/@solana/spl-token@0.4.9?deps=@solana/web3.js@1.98.0'),
+    import('https://esm.sh/@solana/spl-token-metadata@0.1.6?deps=@solana/web3.js@1.98.0'),import('https://esm.sh/buffer@6.0.3')]);
+  conn=new W.Connection(RPC,'confirmed');
+  const imp=location.hash.match(/import=([1-9A-HJ-NP-Za-km-z]+)/);
+  if(imp){ try{ store.set('sponsor',[...W.Keypair.fromSecretKey(decode58(imp[1])).secretKey]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); }
+  const s=store.get('sponsor',null); sponsor=s?W.Keypair.fromSecretKey(Uint8Array.from(s)):W.Keypair.generate(); if(!s) store.set('sponsor',[...sponsor.secretKey]);
+  $('spAddr').textContent=sponsor.publicKey.toBase58();
+}
+const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function decode58(s){ let n=0n; for(const c of s) n=n*58n+BigInt(B58.indexOf(c)); const o=[]; while(n>0n){ o.unshift(Number(n%256n)); n/=256n; } for(const c of s){ if(c==='1') o.unshift(0); else break; } return Uint8Array.from(o); }
+function hexToBytes(h){ const b=new Uint8Array(h.length/2); for(let i=0;i<b.length;i++) b[i]=parseInt(h.substr(i*2,2),16); return b; }
+const bytesToHex=b=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+function showWallet(pk,kind){ const a=pk.toBase58(); ottoPub=a; $('wAddr').textContent=a.slice(0,4)+'…'+a.slice(-4); $('wFull').textContent=a; $('wKind').textContent=kind; $('exOtto').href=addrUrl(a);
+  const by=pk.toBytes(); $('avatar').style.background=`conic-gradient(from ${by[0]}deg,hsl(${by[1]*1.4},90%,62%),hsl(${by[2]*1.4},90%,58%),hsl(${by[3]*1.4},90%,62%),hsl(${by[1]*1.4},90%,62%))`; refresh(); }
+async function setOttoKey(bytes,kind){ await loadChain(); const pk=new W.PublicKey(bytes);
+  ottoSigner={publicKey:pk,sign:msg=>new Promise((res,rej)=>{ if(!nuWrite) return rej(new Error('NU40 연결이 끊겼어요')); pendingSig={res,rej};
+    setTimeout(()=>{ if(pendingSig){ pendingSig=null; rej(new Error('NU40 서명 응답 없음')); } },10000); nuWrite(enc.encode('sign '+bytesToHex(msg)+'\n')).catch(rej); })};
+  softOtto=null; showWallet(pk,kind); say('내 지갑이 연결됐어 👛'); }
+async function useSoftOtto(){ await loadChain(); if(ottoSigner) return; const s=store.get('softOtto',null);
+  softOtto=s?W.Keypair.fromSecretKey(Uint8Array.from(s)):W.Keypair.generate(); if(!s) store.set('softOtto',[...softOtto.secretKey]);
+  const nacl=await import('https://esm.sh/tweetnacl@1.0.3'); const N=nacl.default||nacl;
+  ottoSigner={publicKey:softOtto.publicKey,sign:async m=>N.sign.detached(m,softOtto.secretKey)}; showWallet(softOtto.publicKey,'· 연습용 키 (이 브라우저)'); }
+let spLamports=null;
+async function refresh(){ await loadChain(); try{ const b=await conn.getBalance(sponsor.publicKey); spLamports=b; $('spWarn').classList.toggle('show',b<0.012e9); $('spBal').textContent=(b/1e9).toFixed(3); $('wSub').textContent=`devnet · 수수료 ${(b/1e9).toFixed(3)} SOL`; }catch(e){ $('wSub').textContent='devnet · 잔액 확인 실패'; } if(ottoSigner) loadCollection(); }
+$('faucet').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); }catch(e){} open('https://faucet.solana.com/','_blank'); toast('wait','수수료 주소 복사됨','faucet.solana.com에서 devnet 고르고 붙여 넣기'); };
+$('refresh').onclick=refresh;
+$('copySp').onclick=async()=>{ await loadChain(); try{ await navigator.clipboard.writeText(sponsor.publicKey.toBase58()); toast('ok','수수료 지갑 주소 복사됨',sponsor.publicKey.toBase58()); }catch(e){} };
+$('spSet').onclick=async()=>{ await loadChain(); try{ const k=W.Keypair.fromSecretKey(decode58($('spKey').value.trim())); sponsor=k; store.set('sponsor',[...k.secretKey]); $('spKey').value=''; $('spAddr').textContent=k.publicKey.toBase58(); toast('ok','수수료 지갑 바꿈',k.publicKey.toBase58()); refresh(); }
+  catch(e){ toast('err','비밀키가 맞지 않아요','base58 비밀키(64바이트)를 넣어 주세요'); } };
+function needFunds(){ $('walletMenu').classList.add('show'); placePop('walletMenu','wallet'); $('spWarn').classList.add('show'); }
+$('copyOtto').onclick=async()=>{ try{ await navigator.clipboard.writeText($('wFull').textContent); toast('ok','오또 주소 복사됨',''); }catch(e){} };
+
+function toast(kind,title,sub,href){ const d=document.createElement('div'); d.className='glass toast '+kind;
+  d.innerHTML=`<b>${title}</b>${sub?`<span class="sig">${sub}</span>`:''}${href?`<a href="${href}" target="_blank" rel="noopener">스캐너에서 보기 ↗</a>`:''}`;
+  $('feed').prepend(d); while($('feed').children.length>4) $('feed').lastChild.remove(); setTimeout(()=>{ d.style.transition='opacity .6s'; d.style.opacity=0; setTimeout(()=>d.remove(),700); },kind==='wait'?9000:16000); return d; }
+
+// TX: 새 Token-2022 민트 1개 = "Otto Moment #n" (공급 1 고정). 메타데이터 = 움직임 요약 + 원본 SHA-256
+let minting=false;
+async function doMint(scanWin){
+  if(minting) return; minting=true; $('txBtn').disabled=true; $('txBtn').classList.add('busy');
+  const closeScan=()=>{ try{ scanWin&&scanWin.close(); }catch(e){} };
+  try{
+    await loadChain();
+    if(!ottoSigner) await useSoftOtto();
+    const bal=await conn.getBalance(sponsor.publicKey);
+    spLamports=bal; if(bal<0.012e9){ closeScan(); needFunds(); throw new Error('수수료 지갑 잔액 '+(bal/1e9).toFixed(3)+' SOL → 오른쪽 위 지갑에서 SOL 넣기'); }
+    const raw=rec.lines.join('\n'), hash=bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(raw))));
+    const top=Object.entries(rec.acts).sort((a,b)=>b[1]-a[1])[0];
+    const n=(await listMoments(ottoSigner.publicKey).catch(()=>[])).length+1;
+    const fields={when:new Date().toISOString().slice(0,19)+'Z',sec:Math.round((Date.now()-rec.t0)/1000),steps:rec.steps,danceSec:Math.round(rec.danceMs/1000),
+      stage:rec.songs.slice(-3).join('+')||'-',best:top?ACT_KO[top[0]]:'쉬기',maxTilt:Math.round(rec.maxTilt),falls:rec.falls,mood:P.happy>70?'신남':P.happy>40?'보통':'심심',level:P.lv,lines:rec.lines.length,sha256:hash,src:source==='sim'?'preview':(nuSeen?'nu40':'nano')};
+    const mint=W.Keypair.generate(), otto=ottoSigner.publicKey, PID=T.TOKEN_2022_PROGRAM_ID;
+    const name=`Otto Moment #${n}`, uri=`https://hex-aragon.github.io/otto-duck-lab/web/otto-pet.html#m=${mint.publicKey.toBase58()}`;
+    const kv=Object.entries(fields).map(([k,v])=>[k,String(v)]);
+    const md={mint:mint.publicKey,updateAuthority:otto,name,symbol:'OTTO',uri,additionalMetadata:kv};
+    const mintLen=T.getMintLen([T.ExtensionType.MetadataPointer]);
+    const lamports=await conn.getMinimumBalanceForRentExemption(mintLen+T.TYPE_SIZE+T.LENGTH_SIZE+MD.pack(md).length);
+    const ata=T.getAssociatedTokenAddressSync(mint.publicKey,otto,false,PID);
+    const tx1=new W.Transaction().add(W.SystemProgram.createAccount({fromPubkey:sponsor.publicKey,newAccountPubkey:mint.publicKey,space:mintLen,lamports,programId:PID}),
+      T.createInitializeMetadataPointerInstruction(mint.publicKey,otto,mint.publicKey,PID),T.createInitializeMintInstruction(mint.publicKey,0,otto,null,PID),
+      MD.createInitializeInstruction({programId:PID,metadata:mint.publicKey,updateAuthority:otto,mint:mint.publicKey,mintAuthority:otto,name,symbol:'OTTO',uri}));
+    const tx2=new W.Transaction(); for(const [k,v] of kv) tx2.add(MD.createUpdateFieldInstruction({programId:PID,metadata:mint.publicKey,updateAuthority:otto,field:k,value:v}));
+    tx2.add(T.createAssociatedTokenAccountIdempotentInstruction(sponsor.publicKey,ata,otto,mint.publicKey,PID),T.createMintToInstruction(mint.publicKey,ata,otto,1,[],PID),
+      T.createSetAuthorityInstruction(mint.publicKey,otto,T.AuthorityType.MintTokens,null,[],PID));
+    const tw=toast('wait',`${name} 서명 중…`,softOtto?'연습용 키':'NU40 파란 불이 깜빡여요');
+    const sigs=[];
+    for(const [i,tx,extra] of [[1,tx1,[mint]],[2,tx2,[]]]){
+      tx.feePayer=sponsor.publicKey; tx.recentBlockhash=(await conn.getLatestBlockhash()).blockhash; tx.partialSign(sponsor,...extra);
+      tx.addSignature(otto,Buf.from(await ottoSigner.sign(new Uint8Array(tx.serializeMessage()))));
+      if(!tx.verifySignatures()) throw new Error('서명 확인 실패');
+      const s=await conn.sendRawTransaction(tx.serialize());
+      if(i===1 && scanWin && !scanWin.closed) scanWin.location.href=txUrl(s);
+      toast('wait',`TX ${i}/2 전송`,s.slice(0,22)+'…',txUrl(s));
+      await conn.confirmTransaction(s,'confirmed'); sigs.push(s);
+    }
+    tw.remove();
+    toast('ok',`${name} 발행 완료`,`오또 지갑 ${otto.toBase58().slice(0,6)}… · ${sigs[1].slice(0,16)}…`,txUrl(sigs[1]));
+    saveRaw(mint.publicKey.toBase58(),raw); log('발행 '+name+' '+mint.publicKey.toBase58()+' '+sigs.join(' '));
+    say(`${name} 기록 완료! 🪙`); beatPulse=1; addXp(20); P.happy=clamp(P.happy+10); drawBars(); store.set('pet',P);
+    newRec(); refresh();
+  }catch(e){ closeScan(); toast('err','TX 실패',e.message); console.error(e); }
+  finally{ minting=false; $('txBtn').disabled=false; $('txBtn').classList.remove('busy'); }
+}
+$('txBtn').onclick=()=>{ if(spLamports!==null&&spLamports<0.012e9){ needFunds(); toast('err','TX 못 보냄','수수료 지갑이 비어 있어요 → 지갑 메뉴 확인'); return; } let w=null; if($('autoScan').checked){ w=open('about:blank','_blank'); try{ w.document.title='Otto TX…'; w.document.body.style.cssText='background:#07080c;color:#9aa0b2;font:16px sans-serif;display:grid;place-items:center;height:100vh;margin:0'; w.document.body.textContent='오또가 서명하는 중… 곧 스캐너로 넘어가요'; }catch(e){} } doMint(w); };
+addEventListener('keydown',e=>{ if(e.code==='Space'&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){ e.preventDefault(); if(!e.repeat) doMint(null); } });
+
+// ═══════════ 보관함 · 다시 보기 · 영상 · AI 데이터 · 해시 대조 ═══════════
+async function listMoments(owner){ const res=await conn.getParsedTokenAccountsByOwner(owner,{programId:T.TOKEN_2022_PROGRAM_ID});
+  const mints=res.value.filter(a=>a.account.data.parsed.info.tokenAmount.uiAmount===1).map(a=>a.account.data.parsed.info.mint); const out=[];
+  for(const m of mints){ try{ const md=await T.getTokenMetadata(conn,new W.PublicKey(m),'confirmed',T.TOKEN_2022_PROGRAM_ID); if(md&&md.symbol==='OTTO') out.push({mint:m,md}); }catch(e){} }
+  return out.sort((a,b)=>parseInt(b.md.name.split('#')[1])-parseInt(a.md.name.split('#')[1])); }
+function card(m){ const f=Object.fromEntries(m.md.additionalMetadata);
+  return `<div class="card"><div class="h"><b>🪙 ${m.md.name}</b><a href="${addrUrl(m.mint)}" target="_blank" rel="noopener" style="font-size:12px">스캐너 ↗</a></div>
+  <div class="kv"><div>무대<b>${f.stage||'-'}</b></div><div>춤<b>${f.danceSec||0}s</b></div><div>걸음<b>${f.steps||0}</b></div><div>최대 기울기<b>${f.maxTilt||0}°</b></div><div>기분<b>${f.mood||'-'}</b></div><div>LV<b>${f.level||1}</b></div></div>
+  <div class="hash">sha256 ${f.sha256||''}</div><div class="muted" style="font-size:11.5px">${f.when||''} · ${f.lines||0}줄 · ${f.src||''}</div>
+  <div class="row"><button class="mini" data-replay="${m.mint}">▶ 다시 보기</button><button class="mini" data-video="${m.mint}">🎬 영상</button><button class="mini" data-export="${m.mint}">🤖 데이터</button><button class="mini" data-verify="${m.mint}" data-hash="${f.sha256||''}">🔒 대조</button></div></div>`; }
+async function loadCollection(){ try{ const list=await listMoments(ottoSigner.publicKey); $('colN').textContent=list.length;
+  $('cards').innerHTML=list.length?list.map(card).join(''):'<div class="muted">아직 없어요. 춤을 추고 TX를 눌러 보세요.</div>'; }catch(e){} }
+function saveRaw(m,raw){ try{ localStorage.setItem('pet.raw.'+m,raw); }catch(e){ log('원본 저장 실패: '+e.message); } }
+function loadRaw(m){ try{ return localStorage.getItem('pet.raw.'+m); }catch(e){ return null; } }
+const sha256hex=async t=>bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(t))));
+const parseRaw=raw=>raw.split('\n').filter(Boolean).map(l=>{ const [t,src,...v]=l.split(' '); return {t:+t,src,v:v.map(Number)}; });
+function toDataset(raw,meta){ let act='home',last={servo:[90,90,90,90],face:1,pitch:null,roll:null,yaw:null,gyro:null,accMg:null}; const samples=[];
+  for(const r of parseRaw(raw)){ if(r.src==='D'){ act=ACTIONS[r.v[3]]||act; continue; } if(r.src==='L'){ act=ACTIONS[r.v[0]]||act; continue; }
+    if(r.src==='A'){ last.servo=r.v.slice(0,4); last.face=r.v[4]; } if(r.src==='T'){ [last.pitch,last.roll,last.yaw,last.gyro,last.accMg]=r.v; }
+    samples.push({t_ms:r.t,label:act,...JSON.parse(JSON.stringify(last))}); }
+  return {format:'otto-motion/v1',robot:'Otto DIY (SG90 x4) + NU40 DK + LSM6DS IMU',...meta,
+    columns:{t_ms:'기록 시작부터 ms',label:'동작 이름',servo:'[왼다리,오른다리,왼발,오른발] 도, 90=차렷',face:'도트 표정 번호',pitch:'앞뒤 기울기 도',roll:'좌우 기울기 도',yaw:'도는 방향 도',gyro:'자이로 크기 도/초',accMg:'가속도 크기 mg'},
+    samples,raw_sha256:meta.sha256,raw_lines:raw.split('\n').length}; }
+function download(name,blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
+let rp=null,rpPrev=null,recorder=null;
+function startReplay(raw,title){ const rows=parseRaw(raw); if(!rows.length){ say('다시 볼 기록이 없어요'); return; }
+  const orig=rows.map(r=>r.t); let play=0; rows.forEach((r,i)=>{ if(i) play+=Math.min(1000,Math.max(0,orig[i]-orig[i-1])); r.t=play; });
+  rpPrev=source; source='replay'; rp={rows,i:0,t0:performance.now()}; closeDrawers(); say('🎬 '+title+' 다시 보기'); }
+function replayStep(now){ const el=now-rp.t0;
+  while(rp.i<rp.rows.length&&rp.rows[rp.i].t<=el){ const r=rp.rows[rp.i++];
+    if(r.src==='A'){ for(let i=0;i<4;i++) tgtAng[i]=r.v[i]; if(r.v[4]!==face) drawFace(r.v[4]); }
+    else if(r.src==='T'){ const w=v=>((v+540)%360)-180; tilt={p:w(r.v[0]-zero.p),r:w(r.v[1]-zero.r)}; }
+    else if(r.src==='D'||r.src==='L'){ const a=ACTIONS[r.src==='D'?r.v[3]:r.v[0]]; if(a) action=a; } }
+  if(rp.i>=rp.rows.length){ if(recorder) setTimeout(()=>recorder&&recorder.stop(),700); source=rpPrev; rp=null; action='home'; for(let i=0;i<4;i++) tgtAng[i]=90; say('다시 보기 끝 🎬'); } }
+function recordReplay(raw,title,mint){ if(!canvas.captureStream||!window.MediaRecorder){ say('이 브라우저는 영상 저장을 못 해요'); return; }
+  const chunks=[]; recorder=new MediaRecorder(canvas.captureStream(30),{mimeType:MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm',videoBitsPerSecond:6e6});
+  recorder.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  recorder.onstop=()=>{ download(`otto-${(mint||'now').slice(0,8)}.webm`,new Blob(chunks,{type:'video/webm'})); toast('ok','영상 저장 완료',title); recorder=null; };
+  recorder.start(); startReplay(raw,title); }
+$('replayNow').onclick=()=>startReplay(rec.lines.join('\n'),'지금 기록');
+$('exportNow').onclick=async()=>{ const raw=rec.lines.join('\n'); if(!raw) return say('아직 기록이 없어요');
+  download('otto-motion-now.json',new Blob([JSON.stringify(toDataset(raw,{name:'지금 기록 (발행 전)',robot_wallet:ottoPub,sha256:await sha256hex(raw)}),null,1)],{type:'application/json'})); };
+$('cards').addEventListener('click',async e=>{ const b=e.target.closest('button'); if(!b) return;
+  const mint=b.dataset.replay||b.dataset.export||b.dataset.verify||b.dataset.video; if(!mint) return; const raw=loadRaw(mint);
+  const title=b.closest('.card').querySelector('b').textContent.replace('🪙 ','');
+  if(!raw){ toast('err','원본 없음','원본은 발행한 브라우저에만 있어요 (체인에는 해시만)'); return; }
+  if(b.dataset.replay) startReplay(raw,title);
+  if(b.dataset.video) recordReplay(raw,title,mint);
+  if(b.dataset.export) download(`otto-motion-${mint.slice(0,8)}.json`,new Blob([JSON.stringify(toDataset(raw,{name:title,mint,robot_wallet:ottoPub,sha256:await sha256hex(raw)}),null,1)],{type:'application/json'}));
+  if(b.dataset.verify){ const ok=(await sha256hex(raw))===b.dataset.hash; b.textContent=ok?'✓ 원본 그대로':'✕ 원본 바뀜'; b.className='mini '+(ok?'ok':'bad');
+    toast(ok?'ok':'err',ok?'위변조 없음':'원본이 바뀌었어요',ok?'원본 해시 = 체인에 남은 해시':'체인 해시와 다름'); } });
+
+// ═══════════ 팝오버 · 서랍 ═══════════
+function placePop(id,anchor){ const r=$(anchor).getBoundingClientRect(), p=$(id); p.style.top=(r.bottom+8)+'px';
+  if(r.left>innerWidth/2){ p.style.right=Math.max(14,innerWidth-r.right)+'px'; p.style.left='auto'; } else { p.style.left=Math.max(14,r.left)+'px'; p.style.right='auto'; } }
+function closePops(){ document.querySelectorAll('.pop').forEach(p=>p.classList.remove('show')); }
+function closeDrawers(){ document.querySelectorAll('.drawer').forEach(d=>d.classList.remove('show')); }
+$('connBtn').onclick=e=>{ e.stopPropagation(); const s=!$('connMenu').classList.contains('show'); closePops(); if(s){ $('connMenu').classList.add('show'); placePop('connMenu','connBtn'); } };
+const openWallet=async e=>{ e.stopPropagation(); const s=!$('walletMenu').classList.contains('show'); closePops(); if(s){ await loadChain(); $('walletMenu').classList.add('show'); placePop('walletMenu','wallet'); refresh(); } };
+$('wInfo').onclick=openWallet; $('avatar').onclick=openWallet;
+$('pNu').onclick=$('pOtto').onclick=e=>$('connBtn').onclick(e);
+document.addEventListener('click',e=>{ if(!e.target.closest('.pop')&&!e.target.closest('#wallet')&&!e.target.closest('.brand')) closePops(); });
+$('openCol').onclick=()=>{ closeDrawers(); $('colDrawer').classList.add('show'); if(ottoSigner) loadCollection(); };
+$('openSet').onclick=()=>{ closeDrawers(); $('setDrawer').classList.add('show'); };
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeDrawers);
+
+(async()=>{ await loadChain(); refresh();
+  const mm=location.hash.match(/m=([1-9A-HJ-NP-Za-km-z]{32,44})/);
+  if(mm){ try{ const md=await T.getTokenMetadata(conn,new W.PublicKey(mm[1]),'confirmed',T.TOKEN_2022_PROGRAM_ID); $('cards').insertAdjacentHTML('afterbegin',card({mint:mm[1],md})); $('colDrawer').classList.add('show'); }catch(e){} }
+  if(/sim/.test(location.hash)) $('cSim').click();
+})();
+</script>
+</body>
+</html>
